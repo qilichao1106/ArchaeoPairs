@@ -1,0 +1,28 @@
+# ============ Python ============
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+dist/
+build/
+
+# ============ 运行时产物（管线输出，不入库） ============
+data/
+
+# ============ 样本数据（外置，见 examples/MANIFEST.md） ============
+examples/奉节白帝城*/
+examples/images/
+
+# ============ 智能体/工具隐私目录 ============
+.workbuddy/
+.trash/
+
+# ============ 办公/编辑临时文件 ============
+~$*
+*.tmp
+
+# ============ 操作系统 ============
+Thumbs.db
+.DS_Store

@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://archaeopairs/schemas/pair.schema.json",
+  "title": "pair",
+  "description": "A7 产物·最终训练样本。每件器物一条。",
+  "type": "object",
+  "required": ["artifact_id", "description", "line_drawing", "case_type", "provenance", "confidence", "state", "idem_key", "trace_id"],
+  "additionalProperties": false,
+  "properties": {
+    "artifact_id": { "type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$", "description": "归一化器物号，Pair 唯一键" },
+    "original_id": { "type": "string", "description": "原始器物号(圈号/全角保留)" },
+    "description": { "type": "string", "minLength": 1, "description": "正文按器物号切分的单件描述；图注/图题归图像元数据不并入" },
+    "line_drawing": { "type": "string", "description": "单件器物子图路径(白底+比例尺+旋转校正)" },
+    "plate_photo": { "type": ["string", "null"], "description": "彩板照片路径(若有)" },
+    "image_meta": { "type": "object", "additionalProperties": false,
+      "properties": {
+        "figure_no": { "type": "string" }, "caption": { "type": "string" }, "note_text": { "type": "string" }
+      }, "description": "图题/图注归此处，不入 description" },
+    "case_type": { "enum": ["rule_a", "rule_b", "plate"] },
+    "provenance": { "type": "object", "required": ["source", "agents"], "additionalProperties": false,
+      "properties": { "source": { "enum": ["both", "note_only", "body_only", "vlm_arbitrated"] }, "agents": { "type": "array", "items": { "type": "string" } } } },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "review_flag": { "type": "boolean" },
+    "state": { "enum": ["draft", "high_conf", "reviewed", "rejected"] },
+    "idem_key": { "type": "string", "description": "book_id:figure_id:rule_version:prompt_version" },
+    "trace_id": { "type": "string", "description": "thread_id，贯穿审计" }
+  },
+  "examples": [{
+    "artifact_id": "M4-2", "original_id": "M4:2",
+    "description": "瓷碗，敞口，圆唇，弧腹，圈足。口径12cm，足径5cm，高6cm。",
+    "line_drawing": "data/baidicheng/segments/图二○_1_M4-2.png", "plate_photo": null,
+    "image_meta": { "figure_no": "图二○", "caption": "白帝庙遗址地层出土宋代瓷器、缸胎器", "note_text": "1.瓷碗(M4:2)" },
+    "case_type": "rule_a", "provenance": { "source": "both", "agents": ["A1a", "A1b", "A4", "A5", "A7"] },
+    "confidence": 0.95, "review_flag": false, "state": "high_conf",
+    "idem_key": "baidicheng:fig-0025:r1:p1", "trace_id": "baidicheng:fig-0025:r1:p1"
+  }]
+}

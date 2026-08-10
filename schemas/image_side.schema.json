@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://archaeopairs/schemas/image_side.schema.json",
+  "title": "image_side",
+  "description": "A3 产物：图内 OCR 证据链③ + 完备性。",
+  "type": "object",
+  "required": ["figure_id", "complete", "seq_set"],
+  "additionalProperties": false,
+  "properties": {
+    "figure_id": { "type": "string", "pattern": "^fig-\\d+$" },
+    "complete": { "type": "boolean", "description": "true=case1 图内含图题/图注；false=case2" },
+    "ocr_title": { "type": ["string", "null"], "description": "图底图题 OCR 文本（case1）" },
+    "seq_set": { "type": "array", "items": { "type": "string", "pattern": "^\\d+$" } },
+    "seq_to_id": { "type": "object", "patternProperties": { "^\\d+$": { "type": "array", "items": { "type": "string" } } }, "description": "图内序号旁标注的器物号 OCR（稀疏）" },
+    "scales": { "type": "array", "items": { "type": "object", "required": ["label", "text"], "additionalProperties": false,
+      "properties": {
+        "label": { "type": ["string", "null"], "description": "比例尺左侧序号文本(1./2.)，无则 null" },
+        "seqs": { "type": "array", "items": { "type": "string" }, "description": "该比例尺绑定的 seq" },
+        "text": { "type": "string", "description": "刻度文本如 0-6厘米" },
+        "orientation": { "enum": ["horizontal", "vertical"] }
+      } } },
+    "orientation": { "enum": ["horizontal", "vertical"], "description": "整体排版方向" },
+    "ocr_confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "examples": [{
+    "figure_id": "fig-0025", "complete": false, "ocr_title": null,
+    "seq_set": ["1", "2"], "seq_to_id": {},
+    "scales": [{ "label": null, "seqs": ["1", "2"], "text": "0-6厘米", "orientation": "horizontal" }],
+    "orientation": "horizontal", "ocr_confidence": 0.92
+  }]
+}

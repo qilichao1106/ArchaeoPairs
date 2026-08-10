@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://archaeopairs/schemas/vision_segments.schema.json",
+  "title": "vision_segments",
+  "description": "A5 产物：类型A器物线图的掩膜级分割结果。",
+  "type": "object",
+  "required": ["figure_id", "artifacts", "alarms"],
+  "additionalProperties": false,
+  "properties": {
+    "figure_id": { "type": "string", "pattern": "^fig-\\d+$" },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["artifact_id", "seqs", "mask_path", "rotation"], "additionalProperties": false,
+        "properties": {
+          "artifact_id": { "type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$", "description": "归一化器物号(:→-)" },
+          "original_id": { "type": "string", "description": "原始器物号(圈号/全角保留)" },
+          "seqs": { "type": "array", "items": { "type": "string" }, "description": "归组到该器物的图内序号(规则B可多seq)" },
+          "mask_path": { "type": "string", "description": "白底子图路径 原图名_seq_器物号.png" },
+          "bbox": { "type": "array", "items": { "type": "number" }, "minItems": 4, "maxItems": 4 },
+          "scale_cm": { "type": ["string", "null"], "description": "绑定比例尺文本" },
+          "scale_source": { "enum": ["hard", "global_shared", "ambiguous"] },
+          "rotation": { "enum": [0, 90, 180, 270], "description": "整体旋转校正角度" },
+          "views": { "type": "array", "items": { "type": "string" }, "description": "局部视图说明(主视图/侧视/纹饰展开)" }
+        }
+      }
+    },
+    "alarms": { "type": "array", "items": { "enum": ["E_MASK_INCOMPLETE", "E_SCALE_AMBIGUOUS", "E_SEQ_NOTFOUND", "E_NOSCOPE_MULTI"] } }
+  },
+  "examples": [{
+    "figure_id": "fig-0025",
+    "artifacts": [{
+      "artifact_id": "M4-2", "original_id": "M4:2", "seqs": ["1"],
+      "mask_path": "data/baidicheng/segments/图二○_1_M4-2.png",
+      "bbox": [120, 80, 300, 260], "scale_cm": "0-6厘米", "scale_source": "global_shared",
+      "rotation": 0, "views": ["主视图"]
+    }],
+    "alarms": []
+  }]
+}

@@ -1,0 +1,23 @@
+# flags.schema.yaml — 三层配置 global / agent / rule
+# 规范V硬约束项标注 [不可关]，禁做可关闭 flag（红线）
+global:
+  deployment: local_private        # 本地私有化，数据不出域
+  gpu_mem_limit_gb: 16             # 单卡显存限额
+  log_level: INFO
+  alert_channel: dingtalk_webhook
+
+agent:
+  A6.enabled: true                 # 彩板解析；无彩板报告可关
+  A2.vlm_threshold: 0.9            # 图类判定置信阈值
+  A4.vlm_arbitration: true        # 冲突才升级 VLM
+  A8.readback: true               # 质检回读
+
+rule:
+  mask_segmentation: strict       # [不可关] 掩膜分割，禁 bbox
+  seq_hard_match: strict           # [不可关] 序号硬匹配，禁坐标距离
+  scale_three_level: strict        # [不可关] 比例尺三级归属
+  alarm_then_human: strict         # [不可关] 报警即人工，禁猜测配对/禁自动回退
+  scale_policy: strict             # [不可关]（占位，保规范项不可关语义）
+  shared_scale_copy: true          # 全局唯一比例尺复制并入各子图
+  rotation_unify: horizontal       # 统一旋转至横向
+  dynamic_margin_pct: 0.03         # 子图动态留白 2%-5%
