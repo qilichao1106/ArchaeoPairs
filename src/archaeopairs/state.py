@@ -1,80 +1,159 @@
-# -*- coding: utf-8 -*-
-"""共享 State（黑板）与通信协议（方案 §3.4）。
+"""数据契约（对齐《技术方案 V0.1》§6.1 / §3.4.2）。
 
-设计要点：
-- Agent 间不直接调用，仅读写 PairState 的 typed 字段；
-- 每次跨 Agent 写入由编排层追加 AgentMessage 审计链（trace_id 贯穿）；
-- State 可整体 JSON 序列化，供 checkpoint 持久化与 interrupt/resume 恢复。
+八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
+全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
 """
 from __future__ import annotations
 
-import time
-from dataclasses import dataclass, field, asdict
-from typing import Any
+from typing import Literal, Optional, TypedDict
+
+from pydantic import BaseModel, Field
+
+# ---- 枚举（§4.2 / §4.5 / §6.2，落入 Literal） ----
+ImageType = Literal["line_drawing", "plate_artifact", "plate_scene", "discarded"]
+CaseType = Literal[
+    "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing", "plate", "discarded"
+]
+FigureStatus = Literal[
+    "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_PLATE", "ALIGNED",
+    "SEG_DIAGNOSED", "SEGMENTED", "ASM_VALIDATED", "OUTPUT",
+    "PENDING_REVIEW", "EXCLUDED", "FAILED", "DEGRADED",
+]
+DefectType = Literal[
+    "under_seg", "over_seg", "mask_incomplete", "scale_mismatch", "seq_mismatch",
+    "ocr_miss", "group_error", "text_split_err", "orientation_err", "view_split",
+]
+
+# ---- 子模型 ----
+class NoteItem(BaseModel):
+    """图注语法解析结果（§4.3.1）。"""
+    seq: str = Field(description="图内序号原文，如 '1'/'1-4'/'2,3'")
+    seq_list: list[int] = Field(default_factory=list)
+    name: Optional[str] = None
+    artifact_ids: list[str] = Field(default_factory=list)
 
 
-@dataclass
-class AgentMessage:
+class TextArtifact(BaseModel):
+    """正文切分输出（§4.3.2）。"""
+    artifact_id: str
+    text: str
+    source_para_ids: list[str] = Field(default_factory=list)
+    markers: list[str] = Field(default_factory=list)
+    figure_refs: list[str] = Field(default_factory=list)
+    confidence: float = Field(1.0, ge=0, le=1)
+
+
+class SeqAnnotation(BaseModel):
+    """S4 图内序号标注（§4.4）。"""
+    text: str
+    bbox: tuple[int, int, int, int]
+    group: Optional[list[int]] = None
+
+
+class ScaleAnnotation(BaseModel):
+    """S4 比例尺标注（§4.4）。"""
+    text: str
+    bbox: tuple[int, int, int, int]
+    unit: str = "cm"
+    value: Optional[float] = None
+    seq_ref: Optional[str] = None
+
+
+class FusedMapping(BaseModel):
+    """S5 融合仲裁输出（§4.5）。"""
+    seq_to_artifact: dict[str, str] = Field(default_factory=dict)
+    case_type: CaseType
+    available_chains: tuple[bool, bool, bool] = (False, False, False)
+    confidence: float = Field(0.0, ge=0, le=1)
+
+
+class MaskRecord(BaseModel):
+    """S6 掩膜记录（§4.6，掩膜三件套）。"""
+    mask_rle: str
+    bbox: tuple[int, int, int, int]
+    area: int
+    seq: Optional[str] = None
+    artifact_id: Optional[str] = None
+    note_text_region: Optional[str] = None
+    scale_level: Literal[1, 2, 3] = 2
+
+
+class Defect(BaseModel):
+    type: DefectType
+    location: Optional[str] = None
+    severity: Literal["low", "mid", "high"] = "mid"
+
+
+class DiagnosticReport(BaseModel):
+    """S9 诊断报告（§4.9 / §5.2）。"""
     trace_id: str
-    src: str                 # from（字段名 from 与关键字冲突，落盘时改名）
-    dst: str
-    type: str                # produce / update / alarm / review
-    payload_ref: str         # 产物字段名或文件路径
-    schema_version: str = "v1"
-    ts: float = field(default_factory=time.time)
-
-    def to_dict(self) -> dict:
-        d = asdict(self)
-        d["from"] = d.pop("src")
-        return d
-
-    @staticmethod
-    def from_dict(d: dict) -> "AgentMessage":
-        d = dict(d)
-        d["src"] = d.pop("from", "")
-        return AgentMessage(**d)
+    report_id: str
+    figure_id: str
+    defect_list: list[Defect] = Field(default_factory=list)
+    target_agent: Optional[Literal["S3", "S4", "S6", "S8"]] = None
+    correction_action: Optional[str] = None
+    action_params: dict = Field(default_factory=dict)
+    expected_result: Optional[str] = None
+    iteration: int = Field(0, ge=0, le=3)
 
 
-@dataclass
-class PairState:
-    """单 figure 处理的全生命周期状态（字段分组对应方案 §3.4）。"""
-    # ---- 标识
-    book_id: str = ""
-    figure_id: str = ""
+class PairRecord(BaseModel):
+    """S8 Pair 产出（§4.8 / §7）。"""
+    book_id: str
+    artifact_id: str
+    image_path: str
+    description_text: Optional[str] = None
+    provenance: dict = Field(default_factory=dict)
+    quality_flags: dict = Field(default_factory=dict)
+
+
+class FigureState(BaseModel):
+    """单图生命周期状态（§6.1 / §6.2）。"""
+    book_id: str
+    figure_id: str
+    fileref: str
+    caption: Optional[str] = None
+    figure_note: Optional[str] = None
+    parent_section_id: Optional[str] = None
+    image_type: Optional[ImageType] = None
+    status: FigureStatus = "INIT"
+    iteration: int = 0
+    exclude_reason: Optional[str] = None
     trace_id: str = ""
-    rule_version: str = "r1"
-    prompt_version: str = "p1"
-    # ---- 产物（各 Agent 写入）
-    figure_index: dict = field(default_factory=dict)    # A0
-    text_note: dict = field(default_factory=dict)       # A1a
-    artifact_records: list = field(default_factory=list)  # A1b（报告级，按 figure 过滤使用）
-    text_side: dict = field(default_factory=dict)       # A1c
-    image_side: dict = field(default_factory=dict)      # A3
-    figure_type: str = ""                               # A2: type_a/plate/non
-    fused_mapping: dict = field(default_factory=dict)   # A4
-    vision_segments: dict = field(default_factory=dict)  # A5
-    plate_segments: dict = field(default_factory=dict)  # A6
-    pairs: list = field(default_factory=list)           # A7
-    # ---- 运行态
-    agent_states: dict = field(default_factory=dict)    # agent -> idle/running/failed/...
-    errors: list = field(default_factory=list)          # [{code,agent,message}]
-    confidence: float = 0.0
-    review_flag: bool = False
-    need_rerun: list = field(default_factory=list)
-    current_node: str = ""                              # 编排层恢复锚点
-    # ---- 审计链
-    messages: list = field(default_factory=list)        # [AgentMessage.to_dict()]
 
-    @property
-    def idem_key(self) -> str:
-        return f"{self.book_id}:{self.figure_id}:{self.rule_version}:{self.prompt_version}"
 
-    def record(self, msg: AgentMessage) -> None:
-        self.messages.append(msg.to_dict())
+class PipelineFlags(BaseModel):
+    """Feature Flag（§7.5）。硬约束不在此、不可关。"""
+    s3_llm_confirm: bool = True
+    s9_loop: bool = True
+    cross_fig_merge: bool = False
+    rotation_correct: bool = True
+    require_human: bool = False
 
-    def to_dict(self) -> dict:
-        return asdict(self)
 
-    @staticmethod
-    def from_dict(d: dict) -> "PairState":
-        return PairState(**{k: v for k, v in d.items() if k in PairState.__dataclass_fields__})
+# ---- LangGraph 全局 State（shared 字段；node-local 不进） ----
+class GraphState(TypedDict, total=False):
+    book_id: str
+    figure_id: str
+    fileref: str
+    caption: Optional[str]
+    figure_note: Optional[str]
+    parent_section_id: Optional[str]
+    image_type: Optional[ImageType]
+    note_items: list[NoteItem]
+    text_artifacts: list[TextArtifact]
+    seq_annotations: list[SeqAnnotation]
+    scale_annotations: list[ScaleAnnotation]
+    fused: Optional[dict]
+    case_type: Optional[CaseType]
+    confidence: float
+    masks: list[dict]
+    assembled: bool
+    pair_records: list[dict]
+    diagnostic: Optional[dict]
+    iteration: int
+    defect_history: list[int]
+    status: FigureStatus
+    exclude_reason: Optional[str]
+    trace_id: str
+    flags: dict

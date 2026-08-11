@@ -1,1 +1,2 @@
-# -*- coding: utf-8 -*-
+"""ArchaeoPairs 包入口。"""
+__version__ = "0.1.0"

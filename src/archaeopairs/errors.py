@@ -1,49 +1,133 @@
-# -*- coding: utf-8 -*-
-"""错误码与异常定义（对应方案 §4 各 Agent 卡片 error_schema）。
+"""错误与异常体系（对齐《技术方案 V0.1》§6.4 错误码字典 E100–E1100）。
 
-约定：
-- 任何不确定场景一律 fail-closed：抛出 ReviewRequired 或直接 halt，禁止猜测配对。
-- ErrorCode 枚举与 schemas/vision_segments.schema.json 的 alarms 枚举保持一致。
+统一继承链：ArchaeoPairsError -> 各 E-code 异常。硬约束违规抛
+HardConstraintError，不可被 Feature Flag 关闭。编排层统一捕获并映射为
+状态转移（PENDING_REVIEW / FAILED / DEGRADED）。
 """
-from enum import Enum
+from __future__ import annotations
 
 
-class ErrorCode(str, Enum):
-    # A0 预处理
-    E_XML_INVALID = "E_XML_INVALID"          # DocBook 结构校验失败 → halt
-    E_FILE_MISSING = "E_FILE_MISSING"        # imagedata fileref 指向文件缺失 → 复核
-    # A1b 正文
-    E_REF_NOFIGURE = "E_REF_NOFIGURE"        # 正文引用未命中 figure → 低置信
-    # A1c 聚合
-    E_TEXT_SIDE_MISSING = "E_TEXT_SIDE_MISSING"  # 双文本源均失败 → A4 走 image_only
-    # A4 融合
-    E_SEQ_UNRESOLVABLE = "E_SEQ_UNRESOLVABLE"    # 三源冲突不可解 → 复核（禁猜测）
-    # A5 分割（与 vision_segments.schema.json alarms 对齐）
-    E_MASK_INCOMPLETE = "E_MASK_INCOMPLETE"      # 掩膜轮廓不完整 → 复核
-    E_SCALE_AMBIGUOUS = "E_SCALE_AMBIGUOUS"      # 多比例尺无序号归属（三级报警）
-    E_SEQ_NOTFOUND = "E_SEQ_NOTFOUND"            # 图底有序号但图面找不到对应线图
-    E_NOSCOPE_MULTI = "E_NOSCOPE_MULTI"          # 无序号多器物图 → 复核
-    # A6 彩板
-    E_PLATE_MISALIGN = "E_PLATE_MISALIGN"        # 条目号三方对齐失败 → 复核
-    # A7 组装
-    E_KEY_MISSING = "E_KEY_MISSING"              # join 键缺失 → 复核
-    E_SCHEMA_VIOLATION = "E_SCHEMA_VIOLATION"    # 产物 schema 违例 → halt
+class ArchaeoPairsError(Exception):
+    """基类：携带错误码与可重试标记。"""
+
+    code = "E000"
+    retryable = False
+
+    def __init__(self, message: str = "", *, retryable: bool | None = None) -> None:
+        super().__init__(message or self.__doc__ or self.code)
+        if retryable is not None:
+            self.retryable = retryable
 
 
-class AgentError(Exception):
-    """Agent 执行错误。fatal=True 时 halt 整个 figure；否则入复核队列。"""
+class HardConstraintError(ArchaeoPairsError):
+    """硬约束违规（掩膜禁 bbox/序号硬匹配/报警即停），不可关。"""
 
-    def __init__(self, code: ErrorCode, message: str, fatal: bool = False):
-        super().__init__(f"[{code.value}] {message}")
-        self.code = code
-        self.fatal = fatal
+    code = "E090"
 
 
-class ReviewRequired(Exception):
-    """触发人工复核（interrupt）：编排层捕获后持久化现场并置 blocked_review。"""
+# ---- XML / 摄入 ----
+class E100XmlParseError(ArchaeoPairsError):
+    """DocBook 解析失败。"""
+    code = "E100"
 
-    def __init__(self, code: ErrorCode, kind: str, payload_ref: str, message: str = ""):
-        super().__init__(f"[{code.value}] {message}")
-        self.code = code
-        self.kind = kind              # mapping / mask / text / qc（对应 review_tasks.kind）
-        self.payload_ref = payload_ref
+
+class E101MediaMissingError(ArchaeoPairsError):
+    """媒体文件缺失。"""
+    code = "E101"
+
+
+class E102ContractViolationError(ArchaeoPairsError):
+    """上游输入契约违约（caption 无 role / figure-title 缺失）。"""
+    code = "E102"
+
+
+# ---- S2 ----
+class E200LowConfidenceClassifyError(ArchaeoPairsError):
+    """图类判定低置信。"""
+    code = "E200"
+
+
+# ---- S3 ----
+class E300NoteParseError(ArchaeoPairsError):
+    """图注解析失败。"""
+    code = "E300"
+
+
+class E301LowConfidenceSplitError(ArchaeoPairsError):
+    """正文切分低置信。"""
+    code = "E301"
+
+
+# ---- S4 ----
+class E400OcrAllFailError(ArchaeoPairsError):
+    """OCR 全失败（链③缺失→降级）。"""
+    code = "E400"
+    retryable = True
+
+
+class E401OcrMissKeySeqError(ArchaeoPairsError):
+    """OCR 漏读关键序号。"""
+    code = "E401"
+
+
+# ---- S5 ----
+class E500ChainConflictError(ArchaeoPairsError):
+    """三链冲突。"""
+    code = "E500"
+
+
+# ---- S6 ----
+class E600SamFailError(ArchaeoPairsError):
+    """SAM 失败。"""
+    code = "E600"
+    retryable = True
+
+
+# ---- S7 ----
+class E700PlateLayoutError(ArchaeoPairsError):
+    """图版版面识别失败。"""
+    code = "E700"
+
+
+# ---- S8 ----
+class E800GroupFailError(ArchaeoPairsError):
+    """归组失败。"""
+    code = "E800"
+
+
+# ---- S9 ----
+class E900SuperviseFailError(ArchaeoPairsError):
+    """Supervisor 诊断失败。"""
+    code = "E900"
+    retryable = True
+
+
+# ---- 网关 / 存储 ----
+class E1000ServiceUnavailableError(ArchaeoPairsError):
+    """VLM/SAM/OCR 服务不可用（服务级降级）。"""
+    code = "E1000"
+    retryable = True
+
+
+class E1100StorageError(ArchaeoPairsError):
+    """磁盘满 / 写入失败。"""
+    code = "E1100"
+
+
+# ---- 异常报警（硬约束，§6.3 E001–E007） ----
+class AlarmError(HardConstraintError):
+    """E001–E007 异常报警，触发即 PENDING_REVIEW、禁输出 PNG。"""
+
+    code = "E001"
+
+
+ERROR_REGISTRY: dict[str, type[ArchaeoPairsError]] = {
+    cls.code: cls
+    for cls in [
+        E100XmlParseError, E101MediaMissingError, E102ContractViolationError,
+        E200LowConfidenceClassifyError, E300NoteParseError, E301LowConfidenceSplitError,
+        E400OcrAllFailError, E401OcrMissKeySeqError, E500ChainConflictError,
+        E600SamFailError, E700PlateLayoutError, E800GroupFailError, E900SuperviseFailError,
+        E1000ServiceUnavailableError, E1100StorageError,
+    ]
+}

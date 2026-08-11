@@ -1,0 +1,23 @@
+# thresholds.example.yaml — 阈值常量表（复制为 thresholds.yaml 后编辑；真实配置不入库）
+mask:
+  iou_target: 0.85
+seq:
+  match_accuracy_target: 0.95
+artifact_id:
+  naming_accuracy_target: 0.98
+text:
+  recall_target: 0.92
+loop:
+  max_iteration: 3            # 迭代上限（硬约束，不可被 flag 关闭）
+  no_improve_rounds: 2        # 连续无改善轮数
+cost:
+  per_figure_cap_cny: 2.0     # 单图成本帽（§5.9.3）
+confidence:
+  chain123: 0.95
+  chain12: 0.85
+  chain13: 0.85
+  chain23: 0.70
+  chain2: 0.60
+  chain3: 0.50
+review:
+  pending_pause_ratio: 0.20   # 分报告自适应（§9.3）

@@ -1,0 +1,7 @@
+# flags.example.yaml — Feature Flag（复制为 flags.yaml 后编辑；真实配置不入库）
+# 可选逻辑可开关；硬约束（掩膜/硬匹配/比例尺三级/报警即人工/禁猜测/禁回退）不在此清单、不可关。
+s3_llm_confirm: true     # S3 低置信 LLM 二次确认
+s9_loop: true            # S9 Supervisor 闭环
+cross_fig_merge: false   # 跨图合并（P0 默认关）
+rotation_correct: true   # 纵横向旋转校正
+require_human: false     # P0 关闭人工 interrupt；生产开

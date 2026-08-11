@@ -1,20 +1,66 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "archaeopairs"
 version = "0.1.0"
-description = "考古报告图文Pair数据构造（多智能体·双源三链对齐·fail-closed）"
+description = "考古报告图文 Pair 数据构造多智能体管线（LangGraph 编排），依据《技术方案 V0.1》"
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = []
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "科学出版社 数字技术部" }]
+# 依赖一律当前最新稳定版（见 requirements.lock），精确锁定
+dependencies = [
+    "langgraph==1.2.11",
+    "langgraph-checkpoint-sqlite==3.1.1",
+    "langchain-core==1.5.3",
+    "pydantic==2.13.4",
+    "pydantic-settings==2.15.0",
+    "SQLAlchemy==2.0.51",
+    "PyYAML==6.0.3",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=7"]
+dev = [
+    "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "pytest-cov==7.1.0",
+    "ruff==0.16.2",
+    "mypy==2.3.0",
+]
+# 生产模型/存储/Web 后端（能力接口可替换；P0 测试用 mock，无需安装）
+prod = [
+    "fastapi",
+    "minio",
+    "transformers",
+    "torch",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["src/archaeopairs"]
+
+[tool.coverage.report]
+fail_under = 0

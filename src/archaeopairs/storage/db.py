@@ -1,91 +1,74 @@
-# -*- coding: utf-8 -*-
-"""存储层：SQLite DDL 初始化与产物目录（方案 §6.2，含附录C-B4 修复）。
-
-B4 修复落点：review_tasks 复核锚点改为版本无关的 (figure_id, kind)，
-idem_key 仅作幂等键；figures.state 枚举增补 'assembled'（与 A7 卡片对齐）。
-"""
+"""存储层：SQLAlchemy 模型（对应 ddl.sql）+ 会话管理（§6.5 / 9.x）。"""
 from __future__ import annotations
 
-import sqlite3
-from pathlib import Path
+from datetime import datetime, timezone
 
-DDL = """
-PRAGMA journal_mode=WAL;
-PRAGMA foreign_keys=ON;
-CREATE TABLE IF NOT EXISTS books (
-  book_id TEXT PRIMARY KEY, title TEXT NOT NULL,
-  isbn TEXT, pub_date TEXT, ingested_at TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS figures (
-  figure_id TEXT PRIMARY KEY, book_id TEXT NOT NULL REFERENCES books(book_id),
-  figure_no TEXT, fileref TEXT NOT NULL,
-  case_type TEXT CHECK (case_type IN ('rule_a','rule_b','plate','non')),
-  state TEXT NOT NULL DEFAULT 'indexed'
-        CHECK (state IN ('indexed','processing','assembled','blocked_review','final','rejected')),
-  idem_key TEXT UNIQUE NOT NULL, trace_id TEXT,
-  confidence REAL, updated_at TEXT NOT NULL);
-CREATE INDEX IF NOT EXISTS idx_figures_book ON figures(book_id);
-CREATE INDEX IF NOT EXISTS idx_figures_state ON figures(state);
-CREATE TABLE IF NOT EXISTS artifacts (
-  artifact_id TEXT NOT NULL, book_id TEXT NOT NULL REFERENCES books(book_id),
-  figure_id TEXT NOT NULL REFERENCES figures(figure_id),
-  class TEXT, confidence REAL,
-  review_flag INTEGER NOT NULL DEFAULT 0 CHECK (review_flag IN (0,1)),
-  PRIMARY KEY (artifact_id, book_id));
-CREATE TABLE IF NOT EXISTS review_tasks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  figure_id TEXT NOT NULL REFERENCES figures(figure_id),
-  kind TEXT NOT NULL CHECK (kind IN ('mapping','mask','text','qc')),
-  anchor TEXT NOT NULL,              -- B4: 版本无关复合锚 figure_id:kind（resume 锚点）
-  thread_id TEXT NOT NULL,           -- 运行期 trace（含版本），仅溯源不作锚
-  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','assigned','done')),
-  assignee TEXT, created_at TEXT NOT NULL, closed_at TEXT,
-  UNIQUE (figure_id, kind, status)   -- 同 figure 同类型仅一条 open 任务
-);
-CREATE INDEX IF NOT EXISTS idx_review_status ON review_tasks(status);
-CREATE TABLE IF NOT EXISTS agent_metrics (
-  id INTEGER PRIMARY KEY AUTOINCREMENT, trace_id TEXT NOT NULL,
-  agent TEXT NOT NULL, calls INTEGER NOT NULL DEFAULT 0,
-  successes INTEGER NOT NULL DEFAULT 0, p99_ms REAL, ts TEXT NOT NULL);
-"""
-
-SUBDIRS = ["raw", "index", "sides", "fused", "segments", "pairs", "review", "logs"]
+from sqlalchemy import BigInteger, DateTime, Integer, Text, UniqueConstraint, create_engine
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
+from sqlalchemy.types import JSON
 
 
-def init_db(db_path: str) -> sqlite3.Connection:
-    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    conn.executescript(DDL)
-    return conn
+def _json_type():
+    try:
+        return JSONB()
+    except Exception:
+        return JSON()
 
 
-def init_book_dirs(root: str, book_id: str) -> Path:
-    base = Path(root) / book_id
-    for d in SUBDIRS:
-        (base / d).mkdir(parents=True, exist_ok=True)
-    return base
+class Base(DeclarativeBase):
+    pass
 
 
-def upsert_figure(conn: sqlite3.Connection, state, status: str) -> None:
-    conn.execute(
-        """INSERT INTO figures(figure_id, book_id, figure_no, fileref, case_type,
-                               state, idem_key, trace_id, confidence, updated_at)
-           VALUES(?,?,?,?,?,?,?,?,?,datetime('now'))
-           ON CONFLICT(figure_id) DO UPDATE SET
-             state=excluded.state, idem_key=excluded.idem_key,
-             confidence=excluded.confidence, updated_at=excluded.updated_at""",
-        (state.figure_id, state.book_id,
-         state.figure_index.get("figure_no", {}).get("norm", ""),
-         state.figure_index.get("fileref", ""),
-         {"rule_a": "rule_a", "rule_b": "rule_b", "plate": "plate"}.get(
-             (state.fused_mapping or {}).get("case_type", ""), "non")
-         if state.figure_type != "non" else "non",
-         status, state.idem_key, state.trace_id, state.confidence))
+class FigureStateRow(Base):
+    __tablename__ = "figure_states"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    book_id: Mapped[str] = mapped_column(Text)
+    figure_id: Mapped[str] = mapped_column(Text)
+    fileref: Mapped[str] = mapped_column(Text)
+    caption: Mapped[str | None] = mapped_column(Text)
+    figure_note: Mapped[str | None] = mapped_column(Text)
+    parent_section_id: Mapped[str | None] = mapped_column(Text)
+    image_type: Mapped[str | None] = mapped_column(Text)
+    case_type: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(Text, default="INIT")
+    iteration: Mapped[int] = mapped_column(Integer, default=0)
+    rule_version: Mapped[str] = mapped_column(Text, default="r1")
+    prompt_version: Mapped[str] = mapped_column(Text, default="p1")
+    judge_prompt_version: Mapped[str] = mapped_column(Text, default="j1")
+    exclude_reason: Mapped[str | None] = mapped_column(Text)
+    trace_id: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    __table_args__ = (
+        UniqueConstraint("book_id", "figure_id", "rule_version", "prompt_version",
+                         "judge_prompt_version", name="uq_figure_idem"),
+    )
 
 
-def open_review_task(conn: sqlite3.Connection, state, kind: str) -> None:
-    conn.execute(
-        """INSERT OR IGNORE INTO review_tasks(figure_id, kind, anchor, thread_id,
-                                              status, created_at)
-           VALUES(?,?,?,?,'open',datetime('now'))""",
-        (state.figure_id, kind, f"{state.figure_id}:{kind}", state.trace_id))
-    conn.commit()
+class PairRecordRow(Base):
+    __tablename__ = "pair_records"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    book_id: Mapped[str] = mapped_column(Text)
+    artifact_id: Mapped[str] = mapped_column(Text)
+    image_path: Mapped[str] = mapped_column(Text)
+    description_text: Mapped[str | None] = mapped_column(Text)
+    provenance: Mapped[dict | None] = mapped_column(JSON)
+    quality_flags: Mapped[dict | None] = mapped_column(JSON)
+    __table_args__ = (UniqueConstraint("book_id", "artifact_id", name="uq_pair_key"),)
+
+
+class ReviewTaskRow(Base):
+    __tablename__ = "review_tasks"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    figure_state_id: Mapped[int] = mapped_column(BigInteger)
+    event_id: Mapped[str] = mapped_column(Text, unique=True)
+    ls_task_id: Mapped[str | None] = mapped_column(Text)
+    payload: Mapped[dict | None] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(Text, default="OPEN")
+
+
+def make_session_factory(database_url: str = "sqlite:///archaeopairs.sqlite3"):
+    engine = create_engine(database_url)
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)
