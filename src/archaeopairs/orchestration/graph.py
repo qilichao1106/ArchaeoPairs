@@ -16,7 +16,8 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
         g.add_node(name, fn)
 
     g.add_edge(START, "parse_report")
-    g.add_edge("parse_report", "classify_figure")
+    g.add_conditional_edges("parse_report", routing.route_s1,
+                            {"classify_figure": "classify_figure", END: END})
     g.add_conditional_edges("classify_figure", routing.route_classify,
                             ["parse_text", "parse_image", "parse_plate", END])
     g.add_edge("parse_text", "fuse")

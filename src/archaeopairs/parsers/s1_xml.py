@@ -72,3 +72,20 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                 itype = "line_drawing"
             ground[fid] = {"seqs": seqs, "artifact_ids": arts, "image_type": itype}
     return figures, ground, violations
+
+
+def parse_body(xml_path: str | Path) -> list[dict]:
+    """提取正文段落（链②语料），供 S3 正文切分。"""
+    tree = ET.parse(str(xml_path))
+    root = tree.getroot()
+    for el in root.iter():
+        if isinstance(el.tag, str) and "}" in el.tag:
+            el.tag = el.tag.split("}", 1)[1]
+    out: list[dict] = []
+    for i, p in enumerate(root.iter("para")):
+        if p.get("role") == "figure-note":
+            continue
+        text = "".join(p.itertext()).strip()
+        if text:
+            out.append({"id": f"p{i}", "text": text})
+    return out

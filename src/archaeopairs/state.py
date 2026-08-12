@@ -2,6 +2,8 @@
 
 八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
 全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
+整改：FusedMapping 支持 seq→多 artifact（同号/区间拆 Pair）；新增
+alarms/degraded/body_paras 支撑硬约束报警与链②正文切分。
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ DefectType = Literal[
     "under_seg", "over_seg", "mask_incomplete", "scale_mismatch", "seq_mismatch",
     "ocr_miss", "group_error", "text_split_err", "orientation_err", "view_split",
 ]
+AlarmCode = Literal["E001", "E002", "E003", "E004", "E005", "E006", "E007"]
 
 # ---- 子模型 ----
 class NoteItem(BaseModel):
@@ -60,11 +63,12 @@ class ScaleAnnotation(BaseModel):
 
 
 class FusedMapping(BaseModel):
-    """S5 融合仲裁输出（§4.5）。"""
-    seq_to_artifact: dict[str, str] = Field(default_factory=dict)
+    """S5 融合仲裁输出（§4.5）。seq→多 artifact 以支撑同号/区间拆 Pair。"""
+    seq_to_artifacts: dict[str, list[str]] = Field(default_factory=dict)
     case_type: CaseType
     available_chains: tuple[bool, bool, bool] = (False, False, False)
     confidence: float = Field(0.0, ge=0, le=1)
+    conflicts: list[str] = Field(default_factory=list, description="链① vs 链③ 序号冲突")
 
 
 class MaskRecord(BaseModel):
@@ -76,6 +80,7 @@ class MaskRecord(BaseModel):
     artifact_id: Optional[str] = None
     note_text_region: Optional[str] = None
     scale_level: Literal[1, 2, 3] = 2
+    incomplete: bool = Field(False, description="轮廓不完整/共享基准线残缺（E006）")
 
 
 class Defect(BaseModel):
@@ -95,6 +100,7 @@ class DiagnosticReport(BaseModel):
     action_params: dict = Field(default_factory=dict)
     expected_result: Optional[str] = None
     iteration: int = Field(0, ge=0, le=3)
+    escalation_level: int = Field(1, ge=1, le=3, description="逐级升级档位")
 
 
 class PairRecord(BaseModel):
@@ -139,14 +145,17 @@ class GraphState(TypedDict, total=False):
     caption: Optional[str]
     figure_note: Optional[str]
     parent_section_id: Optional[str]
+    body_paras: list[dict]
     image_type: Optional[ImageType]
-    note_items: list[NoteItem]
-    text_artifacts: list[TextArtifact]
-    seq_annotations: list[SeqAnnotation]
-    scale_annotations: list[ScaleAnnotation]
+    note_items: list[dict]
+    text_artifacts: list[dict]
+    seq_annotations: list[dict]
+    scale_annotations: list[dict]
     fused: Optional[dict]
     case_type: Optional[CaseType]
     confidence: float
+    degraded: bool
+    alarms: list[AlarmCode]
     masks: list[dict]
     assembled: bool
     pair_records: list[dict]

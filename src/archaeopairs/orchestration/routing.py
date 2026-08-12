@@ -9,6 +9,12 @@ _TEXT_DEFECTS = {"text_split_err"}
 _GROUP_DEFECTS = {"group_error", "view_split"}
 
 
+def route_s1(state: dict):
+    if state.get("status") == "EXCLUDED":
+        return END
+    return "classify_figure"
+
+
 def route_classify(state: dict):
     it = state.get("image_type")
     if it == "line_drawing":
@@ -19,12 +25,15 @@ def route_classify(state: dict):
 
 
 def route_fuse(state: dict):
-    if state.get("case_type") == "seq_missing":
+    # 硬约束报警 / 序号缺失 / 降级 → 直接复核，不分割
+    if state.get("alarms") or state.get("case_type") == "seq_missing" or state.get("degraded"):
         return "bridge_review"
     return "segment"
 
 
 def route_supervise(state: dict, max_iteration: int = 3, loop_enabled: bool = True):
+    if state.get("status") == "PENDING_REVIEW" or state.get("alarms"):
+        return "bridge_review"
     diag = state.get("diagnostic") or {}
     defects = {d.get("type") for d in diag.get("defect_list", [])}
     assembled = state.get("assembled", False)

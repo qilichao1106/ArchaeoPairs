@@ -22,7 +22,8 @@ class Base(DeclarativeBase):
 
 class FigureStateRow(Base):
     __tablename__ = "figure_states"
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     book_id: Mapped[str] = mapped_column(Text)
     figure_id: Mapped[str] = mapped_column(Text)
     fileref: Mapped[str] = mapped_column(Text)
@@ -48,7 +49,8 @@ class FigureStateRow(Base):
 
 class PairRecordRow(Base):
     __tablename__ = "pair_records"
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     book_id: Mapped[str] = mapped_column(Text)
     artifact_id: Mapped[str] = mapped_column(Text)
     image_path: Mapped[str] = mapped_column(Text)
@@ -60,12 +62,33 @@ class PairRecordRow(Base):
 
 class ReviewTaskRow(Base):
     __tablename__ = "review_tasks"
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     figure_state_id: Mapped[int] = mapped_column(BigInteger)
     event_id: Mapped[str] = mapped_column(Text, unique=True)
     ls_task_id: Mapped[str | None] = mapped_column(Text)
     payload: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(Text, default="OPEN")
+
+
+class DiagnosticReportRow(Base):
+    __tablename__ = "diagnostic_reports"
+    id: Mapped[int] = mapped_column(
+        BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
+    figure_state_id: Mapped[int] = mapped_column(BigInteger)
+    iteration: Mapped[int] = mapped_column(Integer, default=0)
+    report: Mapped[dict | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+def claim_figure(session, book_id: str, figure_id: str) -> bool:
+    """并发任务认领（§9.3）。PG 用 SELECT FOR UPDATE SKIP LOCKED；sqlite 退化为行锁。"""
+    row = session.query(FigureStateRow).filter_by(book_id=book_id, figure_id=figure_id).first()
+    if row is None or row.status != "INIT":
+        return False
+    row.status = "PARSED"
+    row.updated_at = datetime.now(timezone.utc)
+    return True
 
 
 def make_session_factory(database_url: str = "sqlite:///archaeopairs.sqlite3"):

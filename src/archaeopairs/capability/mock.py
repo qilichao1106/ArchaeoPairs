@@ -2,10 +2,11 @@
 
 mock 依据 S1 从 XML 解析出的 ground（序号/器物号/图类）模拟 VLM/SAM/OCR
 输出，使链③与链①一致、管线可收敛。生产替换为 transformers/云端实现。
+ground 可注入 inject_defects / inject_incomplete 以驱动报警与闭环测试。
 """
 from __future__ import annotations
 
-from typing import Mapping
+from typing import Any, Mapping
 
 from ..state import ScaleAnnotation, SeqAnnotation
 
@@ -17,15 +18,17 @@ class MockVLM:
         self._ground = ground
 
     def classify(self, *, image_ref: str, caption: str | None, trace_id: str,
-                 figure_id: str = "") -> dict:
+                 figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
         return {"image_type": g.get("image_type", "line_drawing"), "confidence": 0.9}
 
     def diagnose(self, *, image_ref: str, context: dict, trace_id: str,
-                 figure_id: str = "") -> dict:
-        # 默认收敛（无缺陷）；缺陷注入由测试通过 ground 控制
+                 figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
-        return {"defect_list": g.get("inject_defects", []), "confidence": 0.9}
+        defects = g.get("inject_defects", [])
+        # 若已带指导信号(prompts)且缺陷为可修正类，模拟修正后收敛
+        return {"defect_list": defects, "points": g.get("points", []),
+                "expected_result": g.get("expected_result"), "confidence": 0.9}
 
 
 class MockSAM:
@@ -35,8 +38,9 @@ class MockSAM:
         self._ground = ground
 
     def segment(self, *, image_ref: str, prompts: list[dict], trace_id: str,
-                figure_id: str = "") -> list[dict]:
+                figure_id: str = "", **kw: Any) -> list[dict]:
         g = self._ground.get(figure_id, {})
+        incomplete = g.get("inject_incomplete", False) and not prompts
         masks = []
         for i, seq in enumerate(g.get("seqs", []) or ["1"]):
             masks.append({
@@ -46,6 +50,7 @@ class MockSAM:
                 "seq": str(seq),
                 "note_text_region": None,
                 "scale_level": 2,
+                "incomplete": incomplete,
             })
         return masks
 
@@ -57,7 +62,7 @@ class MockOCR:
         self._ground = ground
 
     def read(self, *, image_ref: str, regions: list[dict], trace_id: str,
-             figure_id: str = "") -> dict:
+             figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
         seqs = [
             SeqAnnotation(text=str(s), bbox=(20 * i, 5, 20, 20)).model_dump()

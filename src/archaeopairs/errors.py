@@ -114,11 +114,54 @@ class E1100StorageError(ArchaeoPairsError):
     code = "E1100"
 
 
-# ---- 异常报警（硬约束，§6.3 E001–E007） ----
+# ---- 异常报警（硬约束，§6.3 E001–E007），触发即 PENDING_REVIEW、禁输出 PNG ----
 class AlarmError(HardConstraintError):
-    """E001–E007 异常报警，触发即 PENDING_REVIEW、禁输出 PNG。"""
+    """E001–E007 异常报警基类。"""
 
+    code = "E000"
+
+
+class E001SeqNoDrawingAlarm(AlarmError):
+    """图注声明某 seq，但图面未找到标注该 seq 的线图。"""
     code = "E001"
+
+
+class E002DrawingNoSeqAlarm(AlarmError):
+    """图面存在标注 seq 的线图，但图注无对应声明。"""
+    code = "E002"
+
+
+class E003ScaleUnmatchedAlarm(AlarmError):
+    """图面多个带序号比例尺，无法与任一线图 seq 对应。"""
+    code = "E003"
+
+
+class E004ScaleNoSeqAlarm(AlarmError):
+    """某比例尺无序号且全图存在多个比例尺（三级规则第三级）。"""
+    code = "E004"
+
+
+class E005MultiNoSeqListAlarm(AlarmError):
+    """图面存在多个器物线图，但图注无序号列表。"""
+    code = "E005"
+
+
+class E006MaskIncompleteAlarm(AlarmError):
+    """密集排列器物共享公共基准线，分割后掩膜残缺。"""
+    code = "E006"
+
+
+class E007OtherHardConstraintAlarm(AlarmError):
+    """附录 A 第二篇定义的其他硬约束场景。"""
+    code = "E007"
+
+
+ALARM_CLASSES: dict[str, type[AlarmError]] = {
+    "E001": E001SeqNoDrawingAlarm, "E002": E002DrawingNoSeqAlarm,
+    "E003": E003ScaleUnmatchedAlarm, "E004": E004ScaleNoSeqAlarm,
+    "E005": E005MultiNoSeqListAlarm, "E006": E006MaskIncompleteAlarm,
+    "E007": E007OtherHardConstraintAlarm,
+}
 
 
 ERROR_REGISTRY: dict[str, type[ArchaeoPairsError]] = {

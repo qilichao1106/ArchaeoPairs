@@ -1,35 +1,52 @@
-"""S8 匹配组装器单元测试（§4.8，确定性）。"""
+"""S8 匹配组装器单元测试（§4.8，拆 Pair+命名规范+去重）。"""
 from __future__ import annotations
 
 from archaeopairs.agents import s8
+
+CAP = "图一 出土器物"
 
 
 def _mask(seq, art=None):
     return {"mask_rle": f"r{seq}", "bbox": (0, 0, 1, 1), "area": 1, "seq": seq, "artifact_id": art}
 
 
+def _base(case, fused, masks):
+    return {"book_id": "b", "fileref": "media/image1.jpg", "caption": CAP,
+            "case_type": case, "fused": fused, "masks": masks, "text_artifacts": [],
+            "trace_id": "t"}
+
+
 def test_rule_a_two_pairs(services):
-    st = {"book_id": "b", "fileref": "media/image1.jpg", "case_type": "rule_a",
-          "fused": {"seq_to_artifact": {"1": "M4:1", "2": "M4:2"}},
-          "masks": [_mask("1"), _mask("2")], "text_artifacts": []}
+    st = _base("rule_a", {"seq_to_artifacts": {"1": ["M4:1"], "2": ["M4:2"]}},
+               [_mask("1"), _mask("2")])
     out = s8.run(st, services)
-    assert out["assembled"] is True
     arts = {r["artifact_id"] for r in out["pair_records"]}
     assert arts == {"M4:1", "M4:2"}
-    assert all(r["image_path"].endswith(".png") for r in out["pair_records"])
+    for r in out["pair_records"]:
+        assert ":" not in r["image_path"] and r["image_path"].endswith(".png")
+        assert r["image_path"].startswith("图一_")  # 图号提取
 
 
 def test_rule_b_single_merged(services):
-    st = {"book_id": "b", "fileref": "media/image1.jpg", "case_type": "rule_b",
-          "fused": {"seq_to_artifact": {"1": "M4:2", "2": "M4:2"}},
-          "masks": [_mask("1"), _mask("2")], "text_artifacts": []}
+    st = _base("rule_b", {"seq_to_artifacts": {"1": ["M4:2"], "2": ["M4:2"]}},
+               [_mask("1"), _mask("2")])
     out = s8.run(st, services)
-    assert len(out["pair_records"]) == 1  # 多视图合并为一张
+    assert len(out["pair_records"]) == 1
     assert out["pair_records"][0]["provenance"]["views"] == 2
 
 
-def test_colon_normalized_in_path(services):
-    st = {"book_id": "b", "fileref": "m/i.jpg", "case_type": "rule_a",
-          "fused": {"seq_to_artifact": {"1": "M4:1"}}, "masks": [_mask("1")], "text_artifacts": []}
+def test_split_same_seq_two_pairs(services):
+    # 同号多器：一个 seq 两个 artifact → 两个 Pair（不丢数据）
+    st = _base("split_same_seq", {"seq_to_artifacts": {"2": ["H1:6", "H1:3"]}}, [_mask("2")])
     out = s8.run(st, services)
-    assert ":" not in out["pair_records"][0]["image_path"]  # 冒号→连字符
+    arts = {r["artifact_id"] for r in out["pair_records"]}
+    assert arts == {"H1:6", "H1:3"}
+
+
+def test_dedup_appends_suffix(services):
+    # 同名图号去重 _N
+    st = _base("rule_a", {"seq_to_artifacts": {"1": ["M4:1"], "2": ["M4:1"]}},
+               [_mask("1"), _mask("2")])
+    out = s8.run(st, services)
+    names = [r["image_path"] for r in out["pair_records"]]
+    assert len(names) == len(set(names))

@@ -10,9 +10,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from archaeopairs.agents import Services
 from archaeopairs.capability import MockOCR, MockSAM, MockVLM
+from archaeopairs.capability.compose import MockCompositor
 from archaeopairs.config import load_flags, load_thresholds
 from archaeopairs.gateway import Gateway
+from archaeopairs.integrations import MockReviewBridge
 from archaeopairs.parsers import s1_xml
+from archaeopairs.storage import LocalObjectStore
 
 SYNTH_XML = """<book>
 <section>

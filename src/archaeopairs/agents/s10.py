@@ -1,19 +1,41 @@
-"""S10 调度复核桥接器（§4.10）。Node: 输出/人工复核桥接（interrupt）。"""
+"""S10 调度复核桥接器（§4.10）。Node: 输出/人工复核桥接（interrupt+幂等回写）。
+
+整改：处理 E001–E007/seq_missing/降级/迭代上限；经 LS 桥接创建复核任务
+（event_id 幂等）；require_human 时 interrupt 挂起等待 resume。
+"""
 from __future__ import annotations
+
+import uuid
 
 from langgraph.types import interrupt
 
 from . import Services
 
 
+def _is_pending(state: dict, max_iteration: int) -> bool:
+    if state.get("alarms"):
+        return True
+    if state.get("case_type") == "seq_missing":
+        return True
+    if state.get("degraded"):
+        return True
+    hist = state.get("defect_history") or [0]
+    return hist[-1] > 0 and state.get("iteration", 0) >= max_iteration
+
+
 def run(state: dict, svc: Services) -> dict:
-    pending = (state.get("case_type") == "seq_missing") or (
-        bool(state.get("defect_history")) and state.get("defect_history", [0])[-1] > 0
-        and state.get("iteration", 0) >= svc.thresholds.max_iteration
-    )
-    if pending:
+    if _is_pending(state, svc.thresholds.max_iteration):
+        event_id = f"{state['figure_id']}:{uuid.uuid4()}"
+        if svc.review_bridge is not None:
+            svc.review_bridge.create_task(
+                figure_id=state["figure_id"], event_id=event_id,
+                payload={"alarms": state.get("alarms", []),
+                         "case_type": state.get("case_type")},
+            )
         if svc.flags.require_human:
             # 挂起等待 Label Studio 复核回灌（Command(resume=...) 恢复）
-            interrupt({"figure_id": state["figure_id"], "reason": "PENDING_REVIEW"})
-        return {"status": "PENDING_REVIEW", "review_events": [{"type": "pending"}]}
+            interrupt({"figure_id": state["figure_id"], "reason": "PENDING_REVIEW",
+                       "event_id": event_id})
+        return {"status": "PENDING_REVIEW",
+                "review_events": [{"type": "pending", "event_id": event_id}]}
     return {"status": "OUTPUT", "review_events": [{"type": "output"}]}
