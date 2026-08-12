@@ -13,7 +13,7 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
     g = StateGraph(GraphState)
     fns = nodes.build_nodes(svc)
     for name, fn in fns.items():
-        g.add_node(name, fn)
+        g.add_node(name, fn)  # type: ignore[call-overload]
 
     g.add_edge(START, "parse_report")
     g.add_conditional_edges("parse_report", routing.route_s1,

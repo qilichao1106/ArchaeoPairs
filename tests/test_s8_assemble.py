@@ -50,3 +50,12 @@ def test_dedup_appends_suffix(services):
     out = s8.run(st, services)
     names = [r["image_path"] for r in out["pair_records"]]
     assert len(names) == len(set(names))
+
+
+def test_unmapped_mask_pending_not_silent(services):
+    st = _base("rule_a", {"seq_to_artifacts": {"1": ["M4:1"]}},
+               [_mask("1"), _mask("9")])
+    out = s8.run(st, services)
+    assert out["status"] == "PENDING_REVIEW"
+    assert out["alarms"] == ["E002"]
+    assert out["pair_records"] == []

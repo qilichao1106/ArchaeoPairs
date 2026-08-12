@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from ..state import (
     DiagnosticReport,
     FigureState,
@@ -15,7 +17,7 @@ from ..state import (
     TextArtifact,
 )
 
-CORE_MODELS = {
+CORE_MODELS: dict[str, type[BaseModel]] = {
     "FigureState": FigureState,
     "TextArtifact": TextArtifact,
     "SeqAnnotation": SeqAnnotation,

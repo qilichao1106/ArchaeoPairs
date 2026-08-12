@@ -25,14 +25,15 @@ def route_classify(state: dict):
 
 
 def route_fuse(state: dict):
-    # 硬约束报警 / 序号缺失 / 降级 → 直接复核，不分割
-    if state.get("alarms") or state.get("case_type") == "seq_missing" or state.get("degraded"):
+    if state.get("alarms"):
+        return "bridge_review"
+    if state.get("case_type") == "seq_missing" and not state.get("degraded"):
         return "bridge_review"
     return "segment"
 
 
 def route_supervise(state: dict, max_iteration: int = 3, loop_enabled: bool = True):
-    if state.get("status") == "PENDING_REVIEW" or state.get("alarms"):
+    if state.get("status") == "PENDING_REVIEW" or state.get("alarms") or state.get("no_improve"):
         return "bridge_review"
     diag = state.get("diagnostic") or {}
     defects = {d.get("type") for d in diag.get("defect_list", [])}

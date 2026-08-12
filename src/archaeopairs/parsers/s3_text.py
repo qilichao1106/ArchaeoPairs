@@ -25,12 +25,15 @@ def split_body(paragraphs: list[tuple[str, str]]) -> list[TextArtifact]:
                                         source_para_ids=[pid], confidence=0.95))
                 last_anchor = anchors[0]
             else:
-                # 多锚点：按锚点切分（简化：每个锚点一条，文本共享）
-                for a in anchors:
-                    out.append(TextArtifact(artifact_id=a, text=raw,
+                matches = list(ARTIFACT_RE.finditer(text))
+                for idx, m in enumerate(matches):
+                    start = m.start()
+                    end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+                    seg = text[start:end].strip()
+                    out.append(TextArtifact(artifact_id=m.group(0), text=seg,
                                             source_para_ids=[pid], markers=["multi_anchor"],
                                             confidence=0.8))
-                last_anchor = anchors[-1]
+                last_anchor = matches[-1].group(0)
         else:
             markers: list[str] = []
             conf = 0.6

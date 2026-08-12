@@ -19,8 +19,7 @@ from .gateway import Gateway
 from .integrations import MockReviewBridge
 from .orchestration import build_graph
 from .parsers import s1_xml
-from .storage import (DiagnosticReportRow, FigureStateRow, LocalObjectStore,
-                      PairRecordRow, make_session_factory)
+from .storage import DiagnosticReportRow, FigureStateRow, LocalObjectStore, PairRecordRow, make_session_factory
 
 _VERSIONS = ("r1", "p1", "j1")
 

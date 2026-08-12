@@ -13,12 +13,14 @@ from . import Services
 
 
 def _is_pending(state: dict, max_iteration: int) -> bool:
-    if state.get("alarms"):
+    if state.get("alarms") or state.get("no_improve"):
         return True
-    if state.get("case_type") == "seq_missing":
+    if state.get("case_type") == "seq_missing" and not state.get("degraded"):
         return True
     if state.get("degraded"):
-        return True
+        fused = state.get("fused") or {}
+        if not fused.get("seq_to_artifacts"):
+            return True
     hist = state.get("defect_history") or [0]
     return hist[-1] > 0 and state.get("iteration", 0) >= max_iteration
 

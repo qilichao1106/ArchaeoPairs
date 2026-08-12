@@ -4,8 +4,14 @@ from __future__ import annotations
 import pytest
 
 from archaeopairs.errors import E1100StorageError
-from archaeopairs.storage import (DiagnosticReportRow, FigureStateRow, PairRecordRow,
-                                  LocalObjectStore, claim_figure, make_session_factory)
+from archaeopairs.storage import (
+    DiagnosticReportRow,
+    FigureStateRow,
+    LocalObjectStore,
+    PairRecordRow,
+    claim_figure,
+    make_session_factory,
+)
 
 
 def test_tables_created(tmp_path):

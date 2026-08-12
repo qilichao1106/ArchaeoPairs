@@ -82,13 +82,11 @@ class DiagnosticReportRow(Base):
 
 
 def claim_figure(session, book_id: str, figure_id: str) -> bool:
-    """并发任务认领（§9.3）。PG 用 SELECT FOR UPDATE SKIP LOCKED；sqlite 退化为行锁。"""
-    row = session.query(FigureStateRow).filter_by(book_id=book_id, figure_id=figure_id).first()
-    if row is None or row.status != "INIT":
-        return False
-    row.status = "PARSED"
-    row.updated_at = datetime.now(timezone.utc)
-    return True
+    """Concurrent claim: atomic UPDATE only claims INIT rows."""
+    n = session.query(FigureStateRow).filter_by(
+        book_id=book_id, figure_id=figure_id, status="INIT"
+    ).update({"status": "PARSED", "updated_at": datetime.now(timezone.utc)})
+    return n == 1
 
 
 def make_session_factory(database_url: str = "sqlite:///archaeopairs.sqlite3"):

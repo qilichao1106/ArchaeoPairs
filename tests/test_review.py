@@ -47,3 +47,13 @@ def test_s10_creates_review_task_idempotent(base_state, synth_book, tmp_path):
     ev = out["review_events"][0]["event_id"]
     assert svc.review_bridge.callback(event_id=ev, result={}) is True
     assert svc.review_bridge.callback(event_id=ev, result={}) is False  # 幂等去重
+
+
+def test_s10_no_improve_pending(base_state, synth_book, tmp_path):
+    _, ground, _ = synth_book
+    svc = _services(ground, tmp_path)
+    st = dict(base_state)
+    st["no_improve"] = True
+    st["defect_history"] = [3, 3]
+    out = __import__("archaeopairs.agents.s10", fromlist=["s10"]).run(st, svc)
+    assert out["status"] == "PENDING_REVIEW"

@@ -4,8 +4,9 @@
 """
 from __future__ import annotations
 
-from ..errors import E006MaskIncompleteAlarm, HardConstraintError
+from ..errors import E004ScaleNoSeqAlarm, E006MaskIncompleteAlarm, HardConstraintError
 from . import Services
+from .alarms import assign_scales
 
 
 def run(state: dict, svc: Services) -> dict:
@@ -19,5 +20,13 @@ def run(state: dict, svc: Services) -> dict:
         if not m.get("mask_rle"):
             raise HardConstraintError("mask 必须为掩膜(RLE)，禁 bbox")
     if any(m.get("incomplete") for m in masks):
-        raise E006MaskIncompleteAlarm("共享基准线致掩膜残缺")
+        raise E006MaskIncompleteAlarm("shared baseline incomplete")
+    seqs = [str(m.get("seq")) for m in masks if m.get("seq")]
+    scale_map, scale_alarms = assign_scales(state.get("scale_annotations", []), seqs)
+    if scale_alarms:
+        raise E004ScaleNoSeqAlarm("multi-scale without seq no hard match")
+    hard = {v for v in scale_map.values() if v != "shared"}
+    shared = "shared" in scale_map.values()
+    for m in masks:
+        m["scale_level"] = 1 if str(m.get("seq")) in hard else 2 if shared else 3
     return {"masks": masks, "status": "SEG_DIAGNOSED"}

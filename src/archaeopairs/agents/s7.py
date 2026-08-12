@@ -7,6 +7,7 @@ from __future__ import annotations
 import re
 
 from .. import naming
+from ..parsers import s3_note
 from . import Services
 
 _PLATE_NO_RE = re.compile(r"(图版|圖版)\s*([0-9]+|[一二三四五六七八九十百千]+)")
@@ -19,8 +20,13 @@ def run(state: dict, svc: Services) -> dict:
     caption = state.get("caption") or ""
     m = _PLATE_NO_RE.search(caption)
     plate_no = f"{m.group(1)}{m.group(2)}" if m else naming.extract_fig_number(caption)
-    g = svc.ground.get(state["figure_id"], {})
-    arts = g.get("artifact_ids") or [state["figure_id"].split(":")[-1]]
+    items = s3_note.parse_note(state.get("figure_note") or "")
+    arts = [a for it in items for a in it.artifact_ids]
+    if not arts:
+        arts = [a for a in dict.fromkeys(t.get("artifact_id", "") for t in state.get("text_artifacts", [])) if a]
+    if not arts:
+        return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
+                "exclude_reason": "plate_artifact_id_missing"}
     records = [{
         "book_id": state["book_id"],
         "artifact_id": a,

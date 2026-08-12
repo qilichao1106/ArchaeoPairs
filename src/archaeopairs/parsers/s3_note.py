@@ -56,7 +56,7 @@ def parse_note_rule(text: str) -> list[NoteItem]:
     art_spans += [m.span() for m in COMPONENT_RE.finditer(text)]
 
     def _in_art(span: tuple[int, int]) -> bool:
-        return any(s <= span[0] and span[1] <= e for s, e in art_spans)
+        return any(s <= span[0] < e for s, e in art_spans)
 
     heads = [m for m in _HEAD_RE.finditer(text) if not _in_art(m.span("seq"))]
     items: list[NoteItem] = []

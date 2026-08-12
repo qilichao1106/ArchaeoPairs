@@ -34,3 +34,19 @@ def test_route_supervise_targets():
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "ocr_miss"}]}}) == "parse_image"
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "text_split_err"}]}}) == "parse_text"  # noqa: E501
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "group_error"}]}}) == "assemble"
+
+
+def test_route_supervise_no_improve_escalates():
+    st = {"no_improve": True, "assembled": False, "iteration": 0,
+          "diagnostic": {"defect_list": [{"type": "under_seg"}]}}
+    assert routing.route_supervise(st) == "bridge_review"
+
+
+def test_route_fuse_degraded_chain_continues():
+    st = {"alarms": [], "case_type": "seq_missing", "degraded": True}
+    assert routing.route_fuse(st) == "segment"
+
+
+def test_route_fuse_seq_missing_without_evidence_reviews():
+    st = {"alarms": [], "case_type": "seq_missing", "degraded": False}
+    assert routing.route_fuse(st) == "bridge_review"

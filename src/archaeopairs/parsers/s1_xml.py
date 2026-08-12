@@ -14,6 +14,7 @@ from ..state import FigureState
 from . import s3_note
 
 _PLATE_RE = re.compile(r"图版|圖版")
+_PLATE_SCENE_RE = re.compile(r"墓葬|室墓|夯土|发掘|场景|隔梁|地层|遗迹")
 _DISCARD_RE = re.compile(r"平面|剖面|墓室|地层|遗迹|区位|位置示意")
 
 
@@ -62,10 +63,14 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
             ))
             # ground：供 mock 能力接口
             items = s3_note.parse_note(note_text)
-            seqs = [str(s) for it in items for s in (it.seq_list or [it.seq])]
+            seqs: list[str] = []
+            for it in items:
+                seqs.extend(str(s) for s in it.seq_list)
+                if not it.seq_list and it.seq:
+                    seqs.append(str(it.seq))
             arts = [a for it in items for a in it.artifact_ids]
             if _PLATE_RE.search(caption):
-                itype = "plate_artifact"
+                itype = "plate_scene" if _PLATE_SCENE_RE.search(caption) else "plate_artifact"
             elif _DISCARD_RE.search(caption) and not items:
                 itype = "discarded"
             else:

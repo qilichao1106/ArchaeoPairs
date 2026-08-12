@@ -23,6 +23,11 @@ def run(state: dict, svc: Services) -> dict:
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
     registry: dict[str, int] = {}
     records: list[dict] = []
+    unmatched = [m.get("seq") for m in masks
+                 if m.get("seq") is not None and str(m.get("seq")) not in seq_to_arts]
+    if unmatched:
+        return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
+                "alarms": ["E002"], "exclude_reason": "unmapped_mask"}
 
     def _emit(art: str, seq: str | None, ms: list[dict], views: int) -> None:
         name = naming.build_image_name(fig_number, seq, art)
@@ -42,8 +47,8 @@ def run(state: dict, svc: Services) -> dict:
             _emit(art, None, masks, views=len(masks))
     else:
         for m in masks:
-            arts = seq_to_arts.get(str(m.get("seq")), [])
-            for art in arts:
+            art_list = seq_to_arts.get(str(m.get("seq")), [])
+            for art in art_list:
                 _emit(art, str(m.get("seq")), [m], views=1)
 
     return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}

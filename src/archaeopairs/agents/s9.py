@@ -23,8 +23,9 @@ def run(state: dict, svc: Services) -> dict:
 
     th = svc.thresholds
     # 连续两轮无改善 → 不收敛
-    no_improve = len(history) >= 2 and history[-1] >= history[-2]
     converged = len(defects) == 0
+    no_improve = (not converged and len(history) >= th.no_improve_rounds
+                  and history[-1] >= history[-2])
     if not converged and not no_improve and svc.flags.s9_loop and iteration < th.max_iteration:
         iteration += 1
     escalation = min(iteration + 1, 3)
@@ -43,5 +44,6 @@ def run(state: dict, svc: Services) -> dict:
         "action_params": action_params, "expected_result": resp.get("expected_result"),
         "iteration": iteration, "escalation_level": escalation,
     }
+    status = "PENDING_REVIEW" if (no_improve and not converged) else "SEG_DIAGNOSED"
     return {"diagnostic": diagnostic, "iteration": iteration,
-            "defect_history": history, "status": "SEG_DIAGNOSED"}
+            "defect_history": history, "no_improve": bool(no_improve), "status": status}

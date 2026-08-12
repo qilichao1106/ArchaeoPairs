@@ -10,7 +10,9 @@ from . import Services
 
 def run(state: dict, svc: Services) -> dict:
     note_items = s3_note.parse_note(state.get("figure_note") or "")
-    paras = [(p.get("id", ""), p.get("text", "")) for p in state.get("body_paras", [])]
+    note_arts = {a for it in note_items for a in it.artifact_ids}
+    paras = [(p.get("id", ""), p.get("text", "")) for p in state.get("body_paras", [])
+             if not note_arts or any(a in p.get("text", "") for a in note_arts)]
     text_artifacts = s3_text.split_body(paras)
     return {
         "note_items": [n.model_dump() for n in note_items],

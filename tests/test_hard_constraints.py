@@ -4,7 +4,7 @@ from __future__ import annotations
 import pytest
 
 from archaeopairs.agents import s6, s10
-from archaeopairs.errors import HardConstraintError
+from archaeopairs.errors import E004ScaleNoSeqAlarm, HardConstraintError
 
 
 def test_mask_must_not_be_bbox(services, base_state):
@@ -36,3 +36,19 @@ def test_hard_constraint_not_flag_closable(services, base_state):
     services.sam.segment = lambda **kw: [{"bbox": (0, 0, 1, 1)}]
     with pytest.raises(HardConstraintError):
         s6.run(base_state, services)
+
+
+def test_s6_assign_shared_scale(services, base_state):
+    st = dict(base_state)
+    st["scale_annotations"] = [{"seq_ref": None}]
+    st["trace_id"] = "t-scale"
+    out = s6.run(st, services)
+    assert all(m["scale_level"] == 2 for m in out["masks"])
+
+
+def test_s6_scale_level3_raises_alarm(services, base_state):
+    st = dict(base_state)
+    st["scale_annotations"] = [{"seq_ref": "1"}, {"seq_ref": None}]
+    st["trace_id"] = "t-scale3"
+    with pytest.raises(E004ScaleNoSeqAlarm):
+        s6.run(st, services)

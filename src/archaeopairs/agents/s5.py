@@ -5,7 +5,9 @@
 """
 from __future__ import annotations
 
-from ..state import FusedMapping
+from typing import cast
+
+from ..state import CaseType, FusedMapping
 from . import Services
 from .alarms import _note_seqs, _ocr_seqs, detect_alarms
 
@@ -31,7 +33,7 @@ def run(state: dict, svc: Services) -> dict:
     chains = (bool(note_items), bool(text_art), bool(seq_ann))
 
     alarms = detect_alarms(state)
-    case = _case(note_items)
+    case = cast(CaseType, _case(note_items))
 
     # seq -> [artifacts]（多值，不截断）
     seq_to_arts: dict[str, list[str]] = {}

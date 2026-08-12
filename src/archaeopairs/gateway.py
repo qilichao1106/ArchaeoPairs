@@ -60,7 +60,8 @@ class Gateway:
              trace_id: str, cost: float = 0.0, **kwargs: Any) -> Any:
         key = f"{service}:{figure_id}:{trace_id}"
         if key in self._replay:
-            self.calls.append({"key": key, "mode": "replay"})
+            self.calls.append({"key": key, "mode": "replay", "request": kwargs,
+                               "response": self._replay[key]})
             return self._replay[key]
         if self._circuit_open(service):
             raise E1000ServiceUnavailableError(f"{service} circuit open")
@@ -84,7 +85,8 @@ class Gateway:
             break
         self._failures[service] = 0
         self.cost_by_figure[figure_id] = self.cost_by_figure.get(figure_id, 0.0) + cost
-        self.calls.append({"key": key, "mode": "live", "ts": time.time()})
+        self.calls.append({"key": key, "mode": "live", "ts": time.time(),
+                           "request": kwargs, "response": result})
         return result
 
     def reset_figure(self, figure_id: str) -> None:

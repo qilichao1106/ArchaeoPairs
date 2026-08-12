@@ -162,6 +162,7 @@ class GraphState(TypedDict, total=False):
     diagnostic: Optional[dict]
     iteration: int
     defect_history: list[int]
+    no_improve: bool
     status: FigureStatus
     exclude_reason: Optional[str]
     trace_id: str
