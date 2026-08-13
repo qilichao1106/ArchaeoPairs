@@ -15,6 +15,8 @@ def run(state: dict, svc: Services) -> dict:
     resp = svc.gateway.call(
         "vlm", svc.vlm.diagnose, figure_id=state["figure_id"], trace_id=state["trace_id"],
         image_ref=state["fileref"], context={"assembled": state.get("assembled", False)},
+        operation="diagnose", iteration=state.get("iteration", 0),
+        cost=svc.thresholds.model_costs.get("vlm", 0.0),
     )
     defects = resp.get("defect_list", [])
     iteration = state.get("iteration", 0)

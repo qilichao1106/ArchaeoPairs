@@ -54,6 +54,8 @@ class PairRecordRow(Base):
     book_id: Mapped[str] = mapped_column(Text)
     artifact_id: Mapped[str] = mapped_column(Text)
     image_path: Mapped[str] = mapped_column(Text)
+    candidate_images: Mapped[list | None] = mapped_column(JSON)
+    image_merge_mode: Mapped[str] = mapped_column(Text, default="line_only")
     description_text: Mapped[str | None] = mapped_column(Text)
     provenance: Mapped[dict | None] = mapped_column(JSON)
     quality_flags: Mapped[dict | None] = mapped_column(JSON)

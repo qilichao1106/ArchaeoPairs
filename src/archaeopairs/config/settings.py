@@ -24,6 +24,9 @@ class Thresholds(BaseModel):
     max_iteration: int = 3
     no_improve_rounds: int = 2
     per_figure_cap_cny: float = 2.0
+    model_costs: dict[str, float] = Field(default_factory=lambda: {
+        "vlm": 0.05, "sam": 0.01, "ocr": 0.005,
+    })
     confidence: dict[str, float] = Field(default_factory=lambda: {
         "chain123": 0.95, "chain12": 0.85, "chain13": 0.85,
         "chain23": 0.70, "chain2": 0.60, "chain3": 0.50,
@@ -50,6 +53,7 @@ def load_thresholds() -> Thresholds:
         flat["no_improve_rounds"] = raw["loop"].get("no_improve_rounds", 2)
     if "cost" in raw:
         flat["per_figure_cap_cny"] = raw["cost"].get("per_figure_cap_cny", 2.0)
+        flat["model_costs"] = raw["cost"].get("model_costs", {})
     if "confidence" in raw:
         flat["confidence"] = raw["confidence"]
     if "review" in raw:

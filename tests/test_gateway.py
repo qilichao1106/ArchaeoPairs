@@ -55,3 +55,16 @@ def test_reset_figure_bounded():
     gw.cost_by_figure["f"] = 0.5
     gw.reset_figure("f")
     assert "f" not in gw.cost_by_figure
+
+
+def test_call_accumulates_cost():
+    gw = Gateway()
+    gw.call("vlm", lambda **kw: "ok", figure_id="f", trace_id="t", cost=0.2,
+            operation="classify", iteration=0)
+    assert gw.cost_by_figure["f"] == 0.2
+
+
+def test_replay_key_uses_operation_and_iteration():
+    gw = Gateway(replay={"vlm:classify:f:0": "ok"})
+    assert gw.call("vlm", lambda **kw: "live", figure_id="f", trace_id="t",
+                   operation="classify", iteration=0) == "ok"

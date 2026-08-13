@@ -36,6 +36,8 @@ def run(state: dict, svc: Services) -> dict:
             svc.compositor.compose(image_path=name, masks=ms, trace_id=state["trace_id"])
         records.append(PairRecord(
             book_id=book_id, artifact_id=art, image_path=name,
+            candidate_images=[],
+            image_merge_mode="line_only",
             description_text=desc.get(art),
             provenance={"case": case, "seqs": [m.get("seq") for m in ms], "views": views},
         ).model_dump())

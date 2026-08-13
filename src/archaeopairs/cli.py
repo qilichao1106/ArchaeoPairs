@@ -91,6 +91,8 @@ def _persist(session_factory, fig, result: dict) -> None:
         for pr in result.get("pair_records", []):
             s.add(PairRecordRow(book_id=pr["book_id"], artifact_id=pr["artifact_id"],
                                 image_path=pr["image_path"],
+                                candidate_images=pr.get("candidate_images", []),
+                                image_merge_mode=pr.get("image_merge_mode", "line_only"),
                                 description_text=pr.get("description_text"),
                                 provenance=pr.get("provenance"),
                                 quality_flags=pr.get("quality_flags")))

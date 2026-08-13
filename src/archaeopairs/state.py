@@ -62,6 +62,14 @@ class ScaleAnnotation(BaseModel):
     seq_ref: Optional[str] = None
 
 
+class ImageRef(BaseModel):
+    """Pair 候选图像引用，保留同 artifact_id 的跨图/图版候选。"""
+    path: str
+    role: Literal["line_drawing", "plate", "candidate"] = "line_drawing"
+    source_figure_id: Optional[str] = None
+    confidence: Optional[float] = Field(None, ge=0, le=1)
+
+
 class FusedMapping(BaseModel):
     """S5 融合仲裁输出（§4.5）。seq→多 artifact 以支撑同号/区间拆 Pair。"""
     seq_to_artifacts: dict[str, list[str]] = Field(default_factory=dict)
@@ -81,6 +89,8 @@ class MaskRecord(BaseModel):
     note_text_region: Optional[str] = None
     scale_level: Literal[1, 2, 3] = 2
     incomplete: bool = Field(False, description="轮廓不完整/共享基准线残缺（E006）")
+    aux_regions: dict = Field(default_factory=dict, description="并入掩膜的说明文字/比例尺区域")
+    rotation: Optional[str] = Field(None, description="整图旋转校正标记")
 
 
 class Defect(BaseModel):
@@ -108,6 +118,8 @@ class PairRecord(BaseModel):
     book_id: str
     artifact_id: str
     image_path: str
+    candidate_images: list[ImageRef] = Field(default_factory=list)
+    image_merge_mode: Literal["line_only", "plate_only", "line_plus_plate", "multi_candidate"] = "line_only"
     description_text: Optional[str] = None
     provenance: dict = Field(default_factory=dict)
     quality_flags: dict = Field(default_factory=dict)
@@ -151,6 +163,7 @@ class GraphState(TypedDict, total=False):
     text_artifacts: list[dict]
     seq_annotations: list[dict]
     scale_annotations: list[dict]
+    orientation: Optional[str]
     fused: Optional[dict]
     case_type: Optional[CaseType]
     confidence: float

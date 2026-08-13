@@ -21,11 +21,15 @@ def test_tables_created(tmp_path):
         s.flush()
         fs = s.query(FigureStateRow).first()
         s.add(DiagnosticReportRow(figure_state_id=fs.id, iteration=0, report={"x": 1}))
-        s.add(PairRecordRow(book_id="b", artifact_id="M4:1", image_path="p.png"))
+        s.add(PairRecordRow(book_id="b", artifact_id="M4:1", image_path="p.png",
+                            candidate_images=[{"path": "plate.png", "role": "plate"}],
+                            image_merge_mode="line_plus_plate"))
         s.commit()
     with sf() as s:
         assert s.query(DiagnosticReportRow).count() == 1
-        assert s.query(PairRecordRow).count() == 1
+        pair = s.query(PairRecordRow).one()
+        assert pair.candidate_images == [{"path": "plate.png", "role": "plate"}]
+        assert pair.image_merge_mode == "line_plus_plate"
 
 
 def test_claim_figure(tmp_path):

@@ -57,8 +57,9 @@ class Gateway:
         return False
 
     def call(self, service: str, fn: Callable[..., Any], *, figure_id: str,
-             trace_id: str, cost: float = 0.0, **kwargs: Any) -> Any:
-        key = f"{service}:{figure_id}:{trace_id}"
+             trace_id: str, cost: float = 0.0, operation: str = "call",
+             iteration: int = 0, **kwargs: Any) -> Any:
+        key = f"{service}:{operation}:{figure_id}:{iteration}"
         if key in self._replay:
             self.calls.append({"key": key, "mode": "replay", "request": kwargs,
                                "response": self._replay[key]})

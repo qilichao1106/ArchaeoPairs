@@ -8,8 +8,11 @@ def run(state: dict, svc: Services) -> dict:
     resp = svc.gateway.call(
         "ocr", svc.ocr.read, figure_id=state["figure_id"], trace_id=state["trace_id"],
         image_ref=state["fileref"], regions=[],
+        operation="read", iteration=state.get("iteration", 0),
+        cost=svc.thresholds.model_costs.get("ocr", 0.0),
     )
     return {
         "seq_annotations": resp["seqs"],
         "scale_annotations": resp["scales"],
+        "orientation": resp.get("orientation", "h"),
     }

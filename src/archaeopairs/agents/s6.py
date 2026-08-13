@@ -9,12 +9,33 @@ from . import Services
 from .alarms import assign_scales
 
 
+def _merge_text_scale_masks(masks: list[dict], seq_annotations: list[dict],
+                            scale_annotations: list[dict]) -> list[dict]:
+    """按 seq 归属，将说明文字与比例尺区域并入线图掩膜。"""
+    for mask in masks:
+        seq = str(mask.get("seq")) if mask.get("seq") is not None else None
+        text_regions = []
+        for ann in seq_annotations:
+            group = ann.get("group") or []
+            ann_text = str(ann.get("text", "")).strip().rstrip(".")
+            if ann_text == seq or (seq in group):
+                text_regions.append(ann)
+        scale_regions = [ann for ann in scale_annotations if str(ann.get("seq_ref")) == seq]
+        if not scale_regions and mask.get("scale_level") == 2:
+            scale_regions = [ann for ann in scale_annotations if not ann.get("seq_ref")]
+        mask["aux_regions"] = {"text": text_regions, "scale": scale_regions}
+        mask["note_text_region"] = " ".join(a.get("text", "") for a in text_regions) or None
+    return masks
+
+
 def run(state: dict, svc: Services) -> dict:
     diag = state.get("diagnostic") or {}
     prompts = (diag.get("action_params") or {}).get("points", [])
     masks = svc.gateway.call(
         "sam", svc.sam.segment, figure_id=state["figure_id"], trace_id=state["trace_id"],
         image_ref=state["fileref"], prompts=prompts,
+        operation="segment", iteration=state.get("iteration", 0),
+        cost=svc.thresholds.model_costs.get("sam", 0.0),
     )
     for m in masks:  # 硬约束：必须为掩膜，禁 bbox 切割
         if not m.get("mask_rle"):
@@ -29,4 +50,10 @@ def run(state: dict, svc: Services) -> dict:
     shared = "shared" in scale_map.values()
     for m in masks:
         m["scale_level"] = 1 if str(m.get("seq")) in hard else 2 if shared else 3
+    masks = _merge_text_scale_masks(
+        masks, state.get("seq_annotations", []), state.get("scale_annotations", [])
+    )
+    if svc.flags.rotation_correct and state.get("orientation") == "v":
+        for m in masks:
+            m["rotation"] = "cw"
     return {"masks": masks, "status": "SEG_DIAGNOSED"}

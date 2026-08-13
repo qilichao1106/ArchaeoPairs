@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Callable
 
 from ..agents import Services, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10
-from ..errors import AlarmError, HardConstraintError
+from ..errors import AlarmError, ArchaeoPairsError, HardConstraintError
 from ..gateway import CostCapExceeded
 
 NodeFn = Callable[[dict], dict]
@@ -24,6 +24,8 @@ def _guard(fn: NodeFn) -> NodeFn:
             return {"alarms": ["E007"], "status": "PENDING_REVIEW"}
         except CostCapExceeded:
             return {"status": "PENDING_REVIEW", "exclude_reason": "cost_cap"}
+        except ArchaeoPairsError as exc:
+            return {"status": "PENDING_REVIEW", "exclude_reason": exc.code}
     return wrapped
 
 

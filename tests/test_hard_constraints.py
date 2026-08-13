@@ -52,3 +52,14 @@ def test_s6_scale_level3_raises_alarm(services, base_state):
     st["trace_id"] = "t-scale3"
     with pytest.raises(E004ScaleNoSeqAlarm):
         s6.run(st, services)
+
+
+def test_s6_merges_text_and_scale_regions(services, base_state):
+    st = dict(base_state)
+    st["seq_annotations"] = [{"text": "1", "bbox": (0, 0, 1, 1)}]
+    st["scale_annotations"] = [{"text": "0-8cm", "bbox": (0, 1, 1, 1), "seq_ref": "1"}]
+    st["trace_id"] = "t-merge"
+    out = s6.run(st, services)
+    first = out["masks"][0]
+    assert first["aux_regions"]["text"]
+    assert first["aux_regions"]["scale"]

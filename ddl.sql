@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS pair_records (
     book_id TEXT NOT NULL,
     artifact_id TEXT NOT NULL,
     image_path TEXT NOT NULL,
+    candidate_images JSONB NOT NULL DEFAULT '[]'::jsonb,
+    image_merge_mode TEXT NOT NULL DEFAULT 'line_only',
     description_text TEXT,
     provenance JSONB,
     quality_flags JSONB,

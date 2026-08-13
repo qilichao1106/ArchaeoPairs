@@ -30,6 +30,11 @@ class MockVLM:
         return {"defect_list": defects, "points": g.get("points", []),
                 "expected_result": g.get("expected_result"), "confidence": 0.9}
 
+    def confirm_text(self, *, artifact_id: str, text: str, context: dict, trace_id: str,
+                     figure_id: str = "", **kw: Any) -> dict:
+        # P0 默认接受，生产实现应返回人工/模型判定结果
+        return {"artifact_id": artifact_id, "accepted": True, "confidence": 0.9}
+
 
 class MockSAM:
     """SAM mock：按 ground 序号产出掩膜（掩膜三件套，§4.6）。"""

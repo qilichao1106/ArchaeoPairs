@@ -31,6 +31,8 @@ def run(state: dict, svc: Services) -> dict:
         "book_id": state["book_id"],
         "artifact_id": a,
         "image_path": f"{plate_no}_{naming.path_artifact(a)}.png",
+        "candidate_images": [],
+        "image_merge_mode": "plate_only",
         "provenance": {"type": "plate", "plate_no": plate_no},
     } for a in arts]
     return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}
