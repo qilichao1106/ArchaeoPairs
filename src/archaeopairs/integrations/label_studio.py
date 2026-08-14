@@ -21,8 +21,14 @@ class MockReviewBridge:
         self._seen_events: set[str] = set()
 
     def create_task(self, *, figure_id: str, event_id: str, payload: dict) -> str:
-        self.tasks[figure_id] = {"event_id": event_id, "payload": payload, "status": "OPEN"}
-        return f"ls-{figure_id}"
+        # event_id 幂等：同 event 的 OPEN 任务不重复创建
+        for fid, t in self.tasks.items():
+            if t.get("event_id") == event_id and t.get("status") == "OPEN":
+                return t.get("ls_task_id") or f"ls-{fid}"
+        ls_id = f"ls-{figure_id}"
+        self.tasks[figure_id] = {"event_id": event_id, "payload": payload,
+                                 "status": "OPEN", "ls_task_id": ls_id}
+        return ls_id
 
     def callback(self, *, event_id: str, result: dict) -> bool:
         if event_id in self._seen_events:

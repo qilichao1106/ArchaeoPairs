@@ -1,4 +1,4 @@
-"""错误与异常体系（对齐《技术方案 V0.1》§6.4 错误码字典 E100–E1100）。
+"""错误与异常体系（对齐《技术方案 V0.2》§6.4 错误码字典 E100–E1100）。
 
 统一继承链：ArchaeoPairsError -> 各 E-code 异常。硬约束违规抛
 HardConstraintError，不可被 Feature Flag 关闭。编排层统一捕获并映射为
@@ -105,8 +105,13 @@ class E900SuperviseFailError(ArchaeoPairsError):
 # ---- 网关 / 存储 ----
 class E1000ServiceUnavailableError(ArchaeoPairsError):
     """VLM/SAM/OCR 服务不可用（服务级降级）。"""
+
     code = "E1000"
     retryable = True
+
+    def __init__(self, message: str = "", *, service: str = "", retryable: bool | None = None) -> None:
+        super().__init__(message, retryable=retryable)
+        self.service = service
 
 
 class E1100StorageError(ArchaeoPairsError):

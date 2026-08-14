@@ -21,7 +21,8 @@ def run(state: dict, svc: Services) -> dict:
     fig_number = naming.extract_fig_number(state.get("caption"),
                                            fallback=Path(state["fileref"]).stem)
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
-    registry: dict[str, int] = {}
+    # book 级共享去重注册表：跨图同图号同器物防文件名冲突（§7.2 重名 _N）
+    registry: dict[str, int] = svc.name_registry
     records: list[dict] = []
     unmatched = [m.get("seq") for m in masks
                  if m.get("seq") is not None and str(m.get("seq")) not in seq_to_arts]

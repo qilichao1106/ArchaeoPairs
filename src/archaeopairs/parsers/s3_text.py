@@ -1,15 +1,22 @@
-"""S3 正文切分（对齐《技术方案 V0.1》§4.3.2 决策树）。
+"""S3 正文切分（对齐《技术方案 V0.2》§4.3.2 决策树）。
 
 按 artifact_id 锚点切分描述段。规则：单锚点整段归属；多锚点按"标本X:1，"
 边界切分；无锚点按件数语/标本号/图引用/最近上文归并；低置信段标记待 LLM
 确认（受 s3_llm_confirm 控制）。
+
+锚点在归一化文本上匹配、按 1:1 span 回映原文（冒号归一、圈号保留原文），
+保证正文侧 artifact_id 与图注侧键值一致。
 """
 from __future__ import annotations
 
 import re
 
 from ..state import TextArtifact
-from .s3_note import ARTIFACT_RE, normalize
+from .s3_note import ARTIFACT_RE, colon_norm, normalize
+
+
+def _anchor_of(raw: str, m: re.Match) -> str:
+    return colon_norm(raw[m.start():m.end()])
 
 
 def split_body(paragraphs: list[tuple[str, str]]) -> list[TextArtifact]:
@@ -18,22 +25,22 @@ def split_body(paragraphs: list[tuple[str, str]]) -> list[TextArtifact]:
     last_anchor: str | None = None
     for pid, raw in paragraphs:
         text = normalize(raw)
-        anchors = ARTIFACT_RE.findall(text)
+        anchors = list(ARTIFACT_RE.finditer(text))
         if anchors:
             if len(anchors) == 1:
-                out.append(TextArtifact(artifact_id=anchors[0], text=raw,
+                m = anchors[0]
+                out.append(TextArtifact(artifact_id=_anchor_of(raw, m), text=raw,
                                         source_para_ids=[pid], confidence=0.95))
-                last_anchor = anchors[0]
+                last_anchor = _anchor_of(raw, m)
             else:
-                matches = list(ARTIFACT_RE.finditer(text))
-                for idx, m in enumerate(matches):
+                for idx, m in enumerate(anchors):
                     start = m.start()
-                    end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
-                    seg = text[start:end].strip()
-                    out.append(TextArtifact(artifact_id=m.group(0), text=seg,
+                    end = anchors[idx + 1].start() if idx + 1 < len(anchors) else len(raw)
+                    seg = raw[start:end].strip()
+                    out.append(TextArtifact(artifact_id=_anchor_of(raw, m), text=seg,
                                             source_para_ids=[pid], markers=["multi_anchor"],
                                             confidence=0.8))
-                last_anchor = matches[-1].group(0)
+                last_anchor = _anchor_of(raw, anchors[-1])
         else:
             markers: list[str] = []
             conf = 0.6

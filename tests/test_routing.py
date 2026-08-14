@@ -12,6 +12,13 @@ def test_route_classify():
     assert routing.route_classify({"image_type": "discarded"}) == [END]
 
 
+def test_route_plate():
+    # 彩板经 S9 必选终检（V0.2 §4.7.3）
+    assert routing.route_plate({"status": "ASM_VALIDATED"}) == "supervise"
+    assert routing.route_plate({"status": "EXCLUDED"}) == END
+    assert routing.route_plate({"status": "PENDING_REVIEW"}) == "bridge_review"
+
+
 def test_route_fuse():
     assert routing.route_fuse({"case_type": "seq_missing"}) == "bridge_review"
     assert routing.route_fuse({"case_type": "rule_a"}) == "segment"

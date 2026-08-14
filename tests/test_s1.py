@@ -24,8 +24,11 @@ def test_contract_violation(tmp_path: Path):
     p = tmp_path / "data.xml"
     p.write_text(bad, encoding="utf-8")
     figures, _, violations = s1_xml.parse_report(p, "bad")
-    assert figures == []
+    # caption 无 role → 保留 figure（caption=None），违约清单带原因
+    assert len(figures) == 1
+    assert figures[0].caption is None
     assert len(violations) == 1  # E102 违约清单
+    assert "caption_missing" in violations[0]
 
 
 def test_plate_classification(tmp_path: Path):

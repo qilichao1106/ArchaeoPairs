@@ -26,6 +26,8 @@ class Services:
     compositor: Optional[Compositor] = None
     review_bridge: Optional[ReviewBridge] = None
     ground: dict = field(default_factory=dict)
+    # book 级文件名去重注册表（§7.2 重名 _N，跨图共享）
+    name_registry: dict = field(default_factory=dict)
 
 
 from . import s1, s2, s3, s4, s5, s6, s7, s8, s9, s10  # noqa: E402

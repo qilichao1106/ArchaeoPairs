@@ -22,7 +22,9 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
                             ["parse_text", "parse_image", "parse_plate", END])
     g.add_edge("parse_text", "fuse")
     g.add_edge("parse_image", "fuse")
-    g.add_edge("parse_plate", "bridge_review")
+    # 彩板路径经 S9 必选终检（V0.2 §4.7.3）：ASM_VALIDATED→supervise→bridge_review
+    g.add_conditional_edges("parse_plate", routing.route_plate,
+                            {"supervise": "supervise", "bridge_review": "bridge_review", END: END})
     g.add_conditional_edges("fuse", routing.route_fuse,
                             {"segment": "segment", "bridge_review": "bridge_review"})
     g.add_edge("segment", "supervise")

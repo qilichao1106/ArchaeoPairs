@@ -24,6 +24,15 @@ def route_classify(state: dict):
     return [END]  # discarded / plate_scene
 
 
+def route_plate(state: dict):
+    """彩板路径：EXCLUDED 直接结束；PENDING 走复核桥接；否则经 S9 必选终检。"""
+    if state.get("status") == "EXCLUDED":
+        return END
+    if state.get("status") == "PENDING_REVIEW":
+        return "bridge_review"
+    return "supervise"
+
+
 def route_fuse(state: dict):
     if state.get("alarms"):
         return "bridge_review"

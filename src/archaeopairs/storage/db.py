@@ -71,6 +71,8 @@ class ReviewTaskRow(Base):
     ls_task_id: Mapped[str | None] = mapped_column(Text)
     payload: Mapped[dict | None] = mapped_column(JSON)
     status: Mapped[str] = mapped_column(Text, default="OPEN")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class DiagnosticReportRow(Base):

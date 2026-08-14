@@ -1,14 +1,26 @@
 """各 Node 函数：输入 State 键 -> 调用智能体 -> 输出 State 键（§3.4.1 映射）。
 
-统一异常拦截（§3.1/§6.3）：AlarmError/HardConstraintError→PENDING_REVIEW+报警码，
-CostCapExceeded→PENDING_REVIEW，保证"报警即停、禁输出 PNG"。
+统一异常拦截（§3.1/§6.3/§3.7）：
+* AlarmError/HardConstraintError → PENDING_REVIEW + 报警码（报警即停、禁输出 PNG）；
+* E400 OCR 全失败 / E1000(OCR) 熔断 → 链③缺失降级，按降级矩阵继续；
+* E1000(VLM/SAM) 熔断 → PENDING_REVIEW（批次挂起由调度层处理）；
+* E102/E101 摄入违约 → EXCLUDED；
+* CostCapExceeded → PENDING_REVIEW。
 """
 from __future__ import annotations
 
 from typing import Callable
 
 from ..agents import Services, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10
-from ..errors import AlarmError, ArchaeoPairsError, HardConstraintError
+from ..errors import (
+    AlarmError,
+    ArchaeoPairsError,
+    E101MediaMissingError,
+    E102ContractViolationError,
+    E400OcrAllFailError,
+    E1000ServiceUnavailableError,
+    HardConstraintError,
+)
 from ..gateway import CostCapExceeded
 
 NodeFn = Callable[[dict], dict]
@@ -24,6 +36,18 @@ def _guard(fn: NodeFn) -> NodeFn:
             return {"alarms": ["E007"], "status": "PENDING_REVIEW"}
         except CostCapExceeded:
             return {"status": "PENDING_REVIEW", "exclude_reason": "cost_cap"}
+        except E400OcrAllFailError:
+            # OCR 全失败 → 链③缺失降级（§6.4 E400）
+            return {"seq_annotations": [], "scale_annotations": [], "orientation": "h",
+                    "degraded": True}
+        except E1000ServiceUnavailableError as exc:
+            if getattr(exc, "service", "") == "ocr":
+                # OCR 服务熔断 → 同链③缺失降级
+                return {"seq_annotations": [], "scale_annotations": [], "orientation": "h",
+                        "degraded": True}
+            return {"status": "PENDING_REVIEW", "exclude_reason": exc.code}
+        except (E101MediaMissingError, E102ContractViolationError) as exc:
+            return {"status": "EXCLUDED", "exclude_reason": exc.code}
         except ArchaeoPairsError as exc:
             return {"status": "PENDING_REVIEW", "exclude_reason": exc.code}
     return wrapped

@@ -11,14 +11,16 @@ from pathlib import Path
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 
+from . import naming
 from .agents import Services
+from .agents import s3 as s3_agent
 from .capability import MockOCR, MockSAM, MockVLM
 from .capability.compose import MockCompositor
 from .config import load_flags, load_thresholds
 from .gateway import Gateway
 from .integrations import MockReviewBridge
 from .orchestration import build_graph
-from .parsers import s1_xml
+from .parsers import s1_xml, s3_note
 from .storage import DiagnosticReportRow, FigureStateRow, LocalObjectStore, PairRecordRow, make_session_factory
 
 _VERSIONS = ("r1", "p1", "j1")
@@ -30,6 +32,18 @@ def _find_data_xml(examples_dir: Path, book: str) -> Path:
     raise FileNotFoundError(f"examples/{book}/data.xml not found")
 
 
+def _book_has_artifact(body_paras: list[dict], figures) -> bool:
+    """无器物号报告前置检测（§2.5）：正文或任一图注出现器物号信号。"""
+    for p in body_paras:
+        if s3_note.ARTIFACT_RE.search(p.get("text", "")) or s3_note.COMPONENT_RE.search(p.get("text", "")):
+            return True
+    for fig in figures:
+        if fig.figure_note and (s3_note.ARTIFACT_RE.search(fig.figure_note)
+                                or s3_note.COMPONENT_RE.search(fig.figure_note)):
+            return True
+    return False
+
+
 def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoints.sqlite3",
              limit: int | None = None, persist: bool = False) -> dict:
     examples = Path(examples_dir)
@@ -38,6 +52,12 @@ def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoi
     body_paras = s1_xml.parse_body(xml)
     if limit:
         figures = figures[:limit]
+
+    # 报告级无器物号检测（§2.5）：整书排除而非逐图处理
+    if not _book_has_artifact(body_paras, figures):
+        return {"figures": len(figures), "violations": violations, "pairs": 0,
+                "statuses": {}, "records": [],
+                "excluded_reason": "no_artifact_id"}
 
     thresholds = load_thresholds()
     flags = load_flags()
@@ -57,10 +77,16 @@ def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoi
         for fig in figures:
             rule_v, prompt_v, judge_v = _VERSIONS
             thread_id = f"{fig.book_id}:{fig.figure_id}:{rule_v}:{prompt_v}:{judge_v}"
+            # 正文预筛选：只把与该图相关的段落注入 State（修复 checkpoint 膨胀）
+            note_items = s3_note.parse_note(fig.figure_note or "")
+            note_arts = {a for it in note_items for a in it.artifact_ids}
+            fig_number = naming.extract_fig_number(fig.caption)
+            paras = s3_agent.select_paras(body_paras, note_arts, fig_number)
             init = {
                 "book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
                 "caption": fig.caption, "figure_note": fig.figure_note,
-                "body_paras": body_paras,
+                "book_has_artifact": True,
+                "body_paras": paras,
                 "iteration": 0, "defect_history": [], "assembled": False,
                 "trace_id": str(uuid.uuid4()), "flags": flags.model_dump(),
                 "status": "INIT",

@@ -1,4 +1,4 @@
-"""模型网关（对齐《技术方案 V0.1》§9.1 / §5.8 / §5.9.3 / §3.7）。
+"""模型网关（对齐《技术方案 V0.2》§9.1 / §5.8 / §5.9.3 / §3.7）。
 
 职责：调用录制/回放、限流、熔断（60s 恢复）、指数退避重试（4xx 不重试）、
 单图成本帽（超限→PENDING_REVIEW）。trace_id 贯穿。统计有界。
@@ -65,7 +65,7 @@ class Gateway:
                                "response": self._replay[key]})
             return self._replay[key]
         if self._circuit_open(service):
-            raise E1000ServiceUnavailableError(f"{service} circuit open")
+            raise E1000ServiceUnavailableError(f"{service} circuit open", service=service)
         if self.cost_by_figure.get(figure_id, 0.0) >= self.cap:
             raise CostCapExceeded(figure_id)
 

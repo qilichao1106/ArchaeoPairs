@@ -1,4 +1,4 @@
--- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.1》§6.5
+-- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.2》§6.5
 -- 与 src/archaeopairs/storage/db.py SQLAlchemy 模型一一对应
 
 CREATE TABLE IF NOT EXISTS figure_states (
