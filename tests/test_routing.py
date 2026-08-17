@@ -1,4 +1,4 @@
-"""条件边路由测试（§3.4.3 / 4.2，各分支可达）。"""
+"""条件边路由测试（条件边/路由表（§3.4.3）/ 图类判定器（§4.2），各分支可达）。"""
 from __future__ import annotations
 
 from langgraph.graph import END
@@ -7,16 +7,19 @@ from archaeopairs.orchestration import routing
 
 
 def test_route_classify():
-    assert routing.route_classify({"image_type": "line_drawing"}) == ["parse_text", "parse_image"]
-    assert routing.route_classify({"image_type": "plate_artifact"}) == ["parse_plate"]
+    assert routing.route_classify({"image_type": "multi_line"}) == ["parse_text", "parse_image"]
+    assert routing.route_classify({"image_type": "single_line"}) == ["parse_single"]
+    assert routing.route_classify({"image_type": "plate_artifact"}) == ["parse_single"]
+    assert routing.route_classify({"image_type": "multi_plate"}) == [END]
+    assert routing.route_classify({"image_type": "plate_scene"}) == [END]
     assert routing.route_classify({"image_type": "discarded"}) == [END]
 
 
-def test_route_plate():
-    # 彩板经 S9 必选终检（V0.2 §4.7.3）
-    assert routing.route_plate({"status": "ASM_VALIDATED"}) == "supervise"
-    assert routing.route_plate({"status": "EXCLUDED"}) == END
-    assert routing.route_plate({"status": "PENDING_REVIEW"}) == "bridge_review"
+def test_route_single():
+    # V0.3 single path: S7 -> S8 -> S9 -> review/output
+    assert routing.route_single({"status": "CLASSIFIED"}) == "assemble"
+    assert routing.route_single({"status": "EXCLUDED"}) == END
+    assert routing.route_single({"status": "PENDING_REVIEW"}) == "bridge_review"
 
 
 def test_route_fuse():

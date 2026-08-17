@@ -1,4 +1,4 @@
-"""硬约束回归测试（§12 追溯矩阵逐条断言，违规即失败）。"""
+"""硬约束回归测试（硬约束追溯矩阵（§12）逐条断言，违规即失败）。"""
 from __future__ import annotations
 
 import pytest

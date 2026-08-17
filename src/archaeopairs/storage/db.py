@@ -1,4 +1,4 @@
-"""存储层：SQLAlchemy 模型（对应 ddl.sql）+ 会话管理（§6.5 / 9.x）。"""
+"""存储层：SQLAlchemy 模型（对应 ddl.sql）+ 会话管理（数据库 Schema 与索引设计（§6.5）/ 部署与运行架构（§9））。"""
 from __future__ import annotations
 
 from datetime import datetime, timezone

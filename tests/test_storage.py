@@ -1,4 +1,5 @@
-"""存储层测试：建表对齐 DDL、落库、claim、对象存储安全（§6.5/§9.3/§4.4）。"""
+"""存储层测试：建表对齐 DDL、落库、claim、对象存储安全
+（数据库 Schema 与索引设计（§6.5）/ 批处理与并发（§9.3）/ 图像源解析器（§4.4））。"""
 from __future__ import annotations
 
 import pytest

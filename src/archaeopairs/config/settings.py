@@ -1,4 +1,4 @@
-"""配置加载（pydantic-settings + YAML，对齐《技术方案 V0.2》§5.5/§7.5）。
+"""配置加载（pydantic-settings + YAML，对齐《技术方案 V0.3》正文切分算法（§5.5）/ 功能开关与配置管理（§7.5））。
 
 thresholds.yaml（阈值常量）与 flags.yaml（Feature Flag）。真实配置不入库，
 提交 *.example.yaml。缺失时回退到内置默认值，保证 P0 可直接运行。

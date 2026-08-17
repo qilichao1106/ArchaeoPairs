@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from archaeopairs import naming
-from archaeopairs.agents import s3, s5, s7, s10
+from archaeopairs.agents import s3, s5, s7, s8, s10
 from archaeopairs.parsers import s1_xml, s3_note
 
 # ---------- 归一化与图注解析（F3/F4/公式残迹/无空格） ----------
@@ -237,6 +237,16 @@ def test_fig_number_body_ref_canonical():
     assert "图二六〇" in canon
 
 
+def test_single_path_name_uses_01_placeholder():
+    # V0.4 §7.2：单器物路径无图片内序号 → 序号段固定占位 01
+    assert naming.build_image_name("图2-1-5", None, "M4:6") == "图2-1-5_01_M4-6.png"
+    assert naming.build_image_name("图版七二", None, "M1:54") == "图版七二_01_M1-54.png"
+
+
+def test_multi_path_name_keeps_seq():
+    assert naming.build_image_name("图四", "4", "H1:5") == "图四_4_H1-5.png"
+
+
 # ---------- S7 彩板（F8/F10） ----------
 
 
@@ -245,8 +255,10 @@ def test_plate_o_number(services):
           "book_id": "b", "figure_id": "b:plate", "fileref": "m/p.jpg",
           "figure_note": "1. 罐（M4:1）", "text_artifacts": [], "trace_id": "t"}
     out = s7.run(st, services)
-    assert out["pair_records"][0]["image_path"].startswith("图版三〇_")
-    assert "description_text" in out["pair_records"][0]  # PairRecord schema 一致
+    assert out["single_artifacts"][0]["artifact_id"] == "M4:1"
+    final = s8.run({**st, **out}, services)
+    assert final["pair_records"][0]["image_path"].startswith("图版三〇_")
+    assert "description_text" in final["pair_records"][0]  # PairRecord schema 一致
 
 
 def test_plate_rubbing_no(services):

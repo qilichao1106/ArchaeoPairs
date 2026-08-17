@@ -1,4 +1,4 @@
-"""JSON Schema 契约（§6.1.1 / C1）：8 核心结构 model_json_schema() 导出。"""
+"""JSON Schema 契约（Pydantic 定义与 JSON Schema（§6.1.1）/ C1）：8 核心结构 model_json_schema() 导出。"""
 from __future__ import annotations
 
 import json

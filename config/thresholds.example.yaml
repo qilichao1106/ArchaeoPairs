@@ -24,4 +24,4 @@ confidence:
   chain2: 0.60
   chain3: 0.50
 review:
-  pending_pause_ratio: 0.20   # 分报告自适应（§9.3）
+  pending_pause_ratio: 0.20   # 分报告自适应（批处理与并发（§9.3））

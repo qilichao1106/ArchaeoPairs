@@ -59,3 +59,25 @@ def test_unmapped_mask_pending_not_silent(services):
     assert out["status"] == "PENDING_REVIEW"
     assert out["alarms"] == ["E002"]
     assert out["pair_records"] == []
+
+
+def test_cross_figure_merge_keeps_candidates():
+    records = [
+        {"book_id": "b", "artifact_id": "M4:1", "image_path": "图一_1_M4-1.png",
+         "image_merge_mode": "line_only", "description_text": "a",
+         "provenance": {"role": "line_drawing", "figure_id": "fig1"}},
+        {"book_id": "b", "artifact_id": "M4:1", "image_path": "图版一_M4-1.png",
+         "image_merge_mode": "plate_only", "description_text": None,
+         "provenance": {"role": "plate", "figure_id": "fig2"}},
+        {"book_id": "b", "artifact_id": "M4:2", "image_path": "图一_2_M4-2.png",
+         "image_merge_mode": "line_only", "description_text": "b",
+         "provenance": {"role": "line_drawing", "figure_id": "fig1"}},
+    ]
+    out = s8.merge_pair_records(records)
+    assert len(out) == 2
+    rec = next(r for r in out if r["artifact_id"] == "M4:1")
+    assert rec["image_path"] == "图一_1_M4-1.png"
+    assert rec["image_merge_mode"] == "line_plus_plate"
+    assert len(rec["candidate_images"]) == 1
+    assert rec["candidate_images"][0]["role"] == "plate"
+    assert rec["candidate_images"][0]["source_figure_id"] == "fig2"

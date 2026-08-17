@@ -1,4 +1,4 @@
-"""数据契约（对齐《技术方案 V0.2》§6.1 / §3.4.2）。
+"""数据契约（对齐《技术方案 V0.3》核心数据结构（§6.1）/ State Schema（§3.4.2））。
 
 八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
 全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
@@ -11,10 +11,14 @@ from typing import Literal, Optional, TypedDict
 
 from pydantic import BaseModel, Field
 
-# ---- 枚举（§4.2 / §4.5 / §6.2，落入 Literal） ----
-ImageType = Literal["line_drawing", "plate_artifact", "plate_scene", "discarded"]
+# ---- 枚举（图类判定器（§4.2）/ 融合仲裁器（§4.5）/ 状态机（§6.2），落入 Literal） ----
+ImageType = Literal[
+    "single_line", "multi_line", "line_drawing",
+    "plate_artifact", "plate_scene", "multi_plate", "discarded",
+]
 CaseType = Literal[
-    "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing", "plate", "discarded"
+    "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing",
+    "single_line", "single_plate", "discarded",
 ]
 FigureStatus = Literal[
     "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_PLATE", "ALIGNED",
@@ -29,7 +33,7 @@ AlarmCode = Literal["E001", "E002", "E003", "E004", "E005", "E006", "E007"]
 
 # ---- 子模型 ----
 class NoteItem(BaseModel):
-    """图注语法解析结果（§4.3.1）。"""
+    """图注语法解析结果（图注解析器（§4.3.1））。"""
     seq: str = Field(description="图内序号原文，如 '1'/'1-4'/'2,3'")
     seq_list: list[int] = Field(default_factory=list)
     name: Optional[str] = None
@@ -37,7 +41,7 @@ class NoteItem(BaseModel):
 
 
 class TextArtifact(BaseModel):
-    """正文切分输出（§4.3.2）。"""
+    """正文切分输出（正文切分决策树（§4.3.2））。"""
     artifact_id: str
     text: str
     source_para_ids: list[str] = Field(default_factory=list)
@@ -47,14 +51,14 @@ class TextArtifact(BaseModel):
 
 
 class SeqAnnotation(BaseModel):
-    """S4 图内序号标注（§4.4）。"""
+    """S4 图内序号标注（图像源解析器（§4.4））。"""
     text: str
     bbox: tuple[int, int, int, int]
     group: Optional[list[int]] = None
 
 
 class ScaleAnnotation(BaseModel):
-    """S4 比例尺标注（§4.4）。"""
+    """S4 比例尺标注（图像源解析器（§4.4））。"""
     text: str
     bbox: tuple[int, int, int, int]
     unit: str = "cm"
@@ -71,8 +75,11 @@ class ImageRef(BaseModel):
 
 
 class FusedMapping(BaseModel):
-    """S5 融合仲裁输出（§4.5）。seq→多 artifact 以支撑同号/区间拆 Pair。"""
+    """S5 融合仲裁输出（融合仲裁器（§4.5））。seq→多 artifact 以支撑同号/区间拆 Pair。"""
     seq_to_artifacts: dict[str, list[str]] = Field(default_factory=dict)
+    caption_artifacts: list[str] = Field(
+        default_factory=list,
+        description="图题兜底器物号（图题器物号兜底识别（§2.2.5））：图注解析不出器物号时自图题抽取")
     case_type: CaseType
     available_chains: tuple[bool, bool, bool] = (False, False, False)
     confidence: float = Field(0.0, ge=0, le=1)
@@ -80,7 +87,7 @@ class FusedMapping(BaseModel):
 
 
 class MaskRecord(BaseModel):
-    """S6 掩膜记录（§4.6，掩膜三件套）。"""
+    """S6 掩膜记录（视觉分割器（§4.6），掩膜三件套）。"""
     mask_rle: str
     bbox: tuple[int, int, int, int]
     area: int
@@ -100,7 +107,7 @@ class Defect(BaseModel):
 
 
 class DiagnosticReport(BaseModel):
-    """S9 诊断报告（§4.9 / §5.2）。"""
+    """S9 诊断报告（Supervisor VLM（§4.9）/ Supervisor-Worker Loop（§5.2））。"""
     trace_id: str
     report_id: str
     figure_id: str
@@ -114,7 +121,7 @@ class DiagnosticReport(BaseModel):
 
 
 class PairRecord(BaseModel):
-    """S8 Pair 产出（§4.8 / §7）。"""
+    """S8 Pair 产出（匹配组装器（§4.8）/ 输出契约（§7））。"""
     book_id: str
     artifact_id: str
     image_path: str
@@ -126,7 +133,7 @@ class PairRecord(BaseModel):
 
 
 class FigureState(BaseModel):
-    """单图生命周期状态（§6.1 / §6.2）。"""
+    """单图生命周期状态（核心数据结构（§6.1）/ 状态机（§6.2））。"""
     book_id: str
     figure_id: str
     fileref: str
@@ -141,7 +148,7 @@ class FigureState(BaseModel):
 
 
 class PipelineFlags(BaseModel):
-    """Feature Flag（§7.5）。硬约束不在此、不可关。"""
+    """Feature Flag（功能开关与配置管理（§7.5））。硬约束不在此、不可关。"""
     s3_llm_confirm: bool = True
     s9_loop: bool = True
     cross_fig_merge: bool = False
@@ -161,6 +168,8 @@ class GraphState(TypedDict, total=False):
     body_paras: list[dict]
     image_type: Optional[ImageType]
     note_items: list[dict]
+    caption_artifacts: list[str]
+    single_artifacts: list[dict]
     text_artifacts: list[dict]
     seq_annotations: list[dict]
     scale_annotations: list[dict]

@@ -1,4 +1,4 @@
-"""条件边路由（§3.4.3 / 4.2 诊断驱动路由）。路由函数返回目标 Node 名。"""
+"""条件边路由（条件边/路由表（§3.4.3）/ 图类判定器（§4.2）诊断驱动路由）。路由函数返回目标 Node 名。"""
 from __future__ import annotations
 
 from langgraph.graph import END
@@ -16,21 +16,26 @@ def route_s1(state: dict):
 
 
 def route_classify(state: dict):
+    if state.get("status") == "EXCLUDED":
+        return [END]
     it = state.get("image_type")
-    if it == "line_drawing":
+    if it in {"single_line", "plate_artifact"}:
+        return ["parse_single"]
+    if it in {"multi_line", "line_drawing"}:
         return ["parse_text", "parse_image"]
-    if it == "plate_artifact":
-        return ["parse_plate"]
-    return [END]  # discarded / plate_scene
+    return [END]  # multi_plate / plate_scene / discarded -> ??
 
 
-def route_plate(state: dict):
-    """彩板路径：EXCLUDED 直接结束；PENDING 走复核桥接；否则经 S9 必选终检。"""
+def route_single(state: dict):
+    """??????V0.3??EXCLUDED ?????PENDING ??????? S8 ???"""
     if state.get("status") == "EXCLUDED":
         return END
     if state.get("status") == "PENDING_REVIEW":
         return "bridge_review"
-    return "supervise"
+    return "assemble"
+
+
+route_plate = route_single
 
 
 def route_fuse(state: dict):

@@ -1,4 +1,4 @@
-"""S1 报告索引器（对齐《技术方案 V0.2》§4.1 / §2.1 上游输入契约）。
+"""S1 报告索引器（对齐《技术方案 V0.3》报告索引器（§4.1）/ XML 结构（§2.1）上游输入契约）。
 
 解析 DocBook data.xml：关联 figure 与 figure-title/figure-note，产出
 FigureRecord 列表与 ground（供 mock 能力接口），并做摄入期契约校验。
@@ -141,7 +141,7 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                     book_id=book_id, figure_id=fid, fileref=fileref,
                     caption=caption, figure_note=note_text or None, status="INIT",
                 ))
-                # ground：供 mock 能力接口
+                # ground：供 mock 能力接口（器物号与管线同口径：图注无号时图题兜底 §2.2.5）
                 items = s3_note.parse_note(note_text)
                 seqs: list[str] = []
                 for it in items:
@@ -149,10 +149,12 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                     if not it.seq_list and it.seq:
                         seqs.append(str(it.seq))
                 arts = [a for it in items for a in it.artifact_ids]
+                if not arts:
+                    arts = s3_note.extract_caption_artifacts(caption)
                 ground[fid] = {
                     "seqs": seqs,
                     "artifact_ids": arts,
-                    "image_type": classify_caption(caption, bool(items)),
+                    "image_type": classify_caption(caption, bool(items), note_text),
                 }
             # 跳过组内已消费的图注段落
             i = max(j, k)

@@ -14,6 +14,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from . import naming
 from .agents import Services
 from .agents import s3 as s3_agent
+from .agents import s8 as s8_agent
 from .capability import MockOCR, MockSAM, MockVLM
 from .capability.compose import MockCompositor
 from .config import load_flags, load_thresholds
@@ -33,13 +34,15 @@ def _find_data_xml(examples_dir: Path, book: str) -> Path:
 
 
 def _book_has_artifact(body_paras: list[dict], figures) -> bool:
-    """无器物号报告前置检测（§2.5）：正文或任一图注出现器物号信号。"""
+    """无器物号报告前置检测（§2.5）：正文、图注或图题出现器物号信号。"""
     for p in body_paras:
         if s3_note.ARTIFACT_RE.search(p.get("text", "")) or s3_note.COMPONENT_RE.search(p.get("text", "")):
             return True
     for fig in figures:
         if fig.figure_note and (s3_note.ARTIFACT_RE.search(fig.figure_note)
                                 or s3_note.COMPONENT_RE.search(fig.figure_note)):
+            return True
+        if s3_note.extract_caption_artifacts(fig.caption):  # 图题兜底信号（§2.2.5）
             return True
     return False
 
@@ -70,7 +73,7 @@ def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoi
 
     session_factory = make_session_factory(f"sqlite:///{db}.meta.sqlite3") if persist else None
     Path(db).parent.mkdir(parents=True, exist_ok=True)
-    pairs: list[dict] = []
+    pair_rows: list[dict] = []
     statuses: dict[str, str] = {}
     with SqliteSaver.from_conn_string(db) as ckpt:
         app = build_graph(svc, checkpointer=ckpt)
@@ -80,8 +83,10 @@ def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoi
             # 正文预筛选：只把与该图相关的段落注入 State（修复 checkpoint 膨胀）
             note_items = s3_note.parse_note(fig.figure_note or "")
             note_arts = {a for it in note_items for a in it.artifact_ids}
+            # 图题器物号兜底（§2.2.5）：与 S3 同口径参与正文筛选
+            caption_arts = [] if note_arts else s3_note.extract_caption_artifacts(fig.caption)
             fig_number = naming.extract_fig_number(fig.caption)
-            paras = s3_agent.select_paras(body_paras, note_arts, fig_number)
+            paras = s3_agent.select_paras(body_paras, note_arts | set(caption_arts), fig_number)
             init = {
                 "book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
                 "caption": fig.caption, "figure_note": fig.figure_note,
@@ -93,10 +98,11 @@ def run_book(book: str, examples_dir: str = "examples", db: str = "runs/checkpoi
             }
             result = app.invoke(init, config={"configurable": {"thread_id": thread_id}})
             statuses[fig.figure_id] = result.get("status", "?")
-            pairs.extend(result.get("pair_records", []))
+            pair_rows.extend(result.get("pair_records", []))
             svc.gateway.reset_figure(fig.figure_id)
             if session_factory is not None:
                 _persist(session_factory, fig, result)
+    pairs = s8_agent.merge_pair_records(pair_rows)
     return {"figures": len(figures), "violations": violations,
             "pairs": len(pairs), "statuses": statuses, "records": pairs}
 

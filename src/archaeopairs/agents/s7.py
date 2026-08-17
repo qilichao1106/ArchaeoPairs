@@ -1,16 +1,19 @@
-"""S7 彩板解析器（§4.7）。Node: 器物彩板→单张彩图 Pair；场景照归 discarded。
+"""S7 single-artifact parser (V0.3 .4.7).
 
-整改：图版号正则补 O/〇 归一与拓片样式；条目→artifact_id 优先 XML 图注（链①），
-缺失时以链② text_artifacts 兜底；产出统一经 PairRecord（含 description_text）。
+Single-artifact line drawings and single-artifact plates are whole-image
+Pairs: resolve artifact_id from figure-note/caption, attach body text, and
+hand the candidate to S8 for Pair assembly. Multi-artifact plates, scene
+plates and discarded figures are archived without Pair construction.
 """
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from .. import naming
-from ..parsers import s3_note
-from ..state import PairRecord
+from ..parsers import s3_note, s3_text
 from . import Services
+from . import s3 as s3_agent
 
 _PLATE_NO_RE = re.compile(r"(图版|圖版|拓片)\s*([0-9〇O一二三四五六七八九十百千]+)")
 
@@ -23,27 +26,56 @@ def plate_no_of(caption: str | None, fallback: str = "") -> str:
     return naming.extract_fig_number(caption, fallback=fallback)
 
 
-def run(state: dict, svc: Services) -> dict:
-    if state.get("image_type") == "plate_scene":
-        return {"pair_records": [], "assembled": True, "status": "EXCLUDED",
-                "exclude_reason": "plate_scene_discarded"}
-    caption = state.get("caption") or ""
-    plate_no = plate_no_of(caption, fallback=naming.extract_fig_number(caption))
+def _resolve_artifact(state: dict, caption: str) -> tuple[list[str], str]:
     items = s3_note.parse_note(state.get("figure_note") or "")
     arts = [a for it in items for a in it.artifact_ids]
+    source = "figure_note"
+    if not arts:
+        arts = s3_note.extract_caption_artifacts(caption)
+        source = "caption"
     if not arts:
         arts = [a for a in dict.fromkeys(t.get("artifact_id", "") for t in state.get("text_artifacts", [])) if a]
+        source = "text"
+    return list(dict.fromkeys(arts)), source
+
+
+def run(state: dict, svc: Services) -> dict:
+    itype = state.get("image_type")
+    if itype in {"discarded", "plate_scene", "multi_plate"}:
+        return {"pair_records": [], "assembled": True, "status": "EXCLUDED",
+                "exclude_reason": "discarded_archived"}
+    caption = state.get("caption") or ""
+    arts, source = _resolve_artifact(state, caption)
     if not arts:
         return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
-                "exclude_reason": "plate_artifact_id_missing"}
-    desc = {t.get("artifact_id"): t.get("text") for t in state.get("text_artifacts", [])}
-    records = [PairRecord(
-        book_id=state["book_id"],
-        artifact_id=a,
-        image_path=f"{plate_no}_{naming.path_artifact(a)}.png",
-        candidate_images=[],
-        image_merge_mode="plate_only",
-        description_text=desc.get(a),
-        provenance={"type": "plate", "plate_no": plate_no},
-    ).model_dump() for a in arts]
-    return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}
+                "exclude_reason": "single_artifact_id_missing"}
+    if len(arts) > 1:
+        return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
+                "alarms": ["E005"], "exclude_reason": "multi_artifact_on_single_path"}
+
+    art = arts[0]
+    is_line = itype in {"single_line", "line_drawing"}
+    role = "line_drawing" if is_line else "plate"
+    fig_fallback = Path(state["fileref"]).stem
+    fig_number = (plate_no_of(caption, fallback=fig_fallback) if not is_line
+                  else naming.extract_fig_number(caption, fallback=fig_fallback))
+    paras = s3_agent.select_paras(state.get("body_paras", []), {art}, fig_number)
+    text_artifacts = [
+        t.model_dump()
+        for t in s3_text.split_body([(p.get("id", ""), p.get("text", "")) for p in paras])
+    ]
+    return {
+        "single_artifacts": [{
+            "artifact_id": art,
+            "source": source,
+            "role": role,
+            "image_merge_mode": "line_only" if is_line else "plate_only",
+            "figure_id": state["figure_id"],
+            "fig_number": fig_number,
+        }],
+        "text_artifacts": text_artifacts,
+        "degraded": source == "caption",
+        "case_type": "single_line" if is_line else "single_plate",
+        "status": "CLASSIFIED" if is_line else "CLASSIFIED_PLATE",
+        "assembled": False,
+    }

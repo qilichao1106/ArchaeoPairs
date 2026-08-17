@@ -16,7 +16,7 @@ def test_parse_figures_and_note(synth_book):
     g = ground[fig.figure_id]
     assert g["seqs"] == ["1", "2"]
     assert g["artifact_ids"] == ["M4:1", "M4:2"]
-    assert g["image_type"] == "line_drawing"
+    assert g["image_type"] == "multi_line"
 
 
 def test_contract_violation(tmp_path: Path):

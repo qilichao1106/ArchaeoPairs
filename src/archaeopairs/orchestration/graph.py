@@ -1,4 +1,4 @@
-"""LangGraph StateGraph 组装层（§3.4 / 4.x）。编排层只做流程控制，不写业务。"""
+"""LangGraph StateGraph 组装层（LangGraph 编排落地（§3.4）/ 智能体职责定义（§4））。编排层只做流程控制，不写业务。"""
 from __future__ import annotations
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -19,12 +19,12 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
     g.add_conditional_edges("parse_report", routing.route_s1,
                             {"classify_figure": "classify_figure", END: END})
     g.add_conditional_edges("classify_figure", routing.route_classify,
-                            ["parse_text", "parse_image", "parse_plate", END])
+                            ["parse_text", "parse_image", "parse_single", END])
     g.add_edge("parse_text", "fuse")
     g.add_edge("parse_image", "fuse")
-    # 彩板路径经 S9 必选终检（V0.2 §4.7.3）：ASM_VALIDATED→supervise→bridge_review
-    g.add_conditional_edges("parse_plate", routing.route_plate,
-                            {"supervise": "supervise", "bridge_review": "bridge_review", END: END})
+    # V0.3 single path: S7 -> S8 -> S9 mandatory final check
+    g.add_conditional_edges("parse_single", routing.route_single,
+                            {"assemble": "assemble", "bridge_review": "bridge_review", END: END})
     g.add_conditional_edges("fuse", routing.route_fuse,
                             {"segment": "segment", "bridge_review": "bridge_review"})
     g.add_edge("segment", "supervise")

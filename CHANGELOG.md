@@ -2,6 +2,20 @@
 
 本项目遵循语义化版本（SemVer）。
 
+## [0.2.1] - 2026-08-17
+
+### Added（新增《技术方案》图题器物号兜底识别，§2.2.5）
+- 图题器物号兜底识别：figure-note 缺失或解析不出器物号时，从图题做器物号正则纯扫描（不做条目序号推断、重复出现去重）。21 书实测：无图注 figure 7,555 张（48.8%），其中图题含器物号 1,253 张（95.6% 为单号）。
+- S3 输出 caption_artifacts 并参与正文预筛选；S5 仲裁：单一器物号判 rule_b（整图归属该器），多器物号判 seq_missing + E005（禁猜测）；图题兜底视为弱链①，置信=同链组合封顶×0.8 并标记 degraded。
+- S10 降级判定将 caption_artifacts 视为可用映射证据，避免图题兜底图被误挂起。
+- S7 彩板条目→artifact_id 兜底顺序调整为 图注 → 图题 → 链②。
+- S1 ground、CLI 正文预筛选、§2.5 无器物号报告检测同步纳入图题信号。
+- PairRecord.provenance 新增 art_source（figure_note/caption）溯源。
+- 新增 tests/test_caption_fallback.py（19 例：纯扫描/S3/S5/S7/S10/合成 e2e + 洪洞南秦真实形态回归；洪洞南秦前 80 图实测产出 35 Pair）。
+
+### Fixed
+- COMPONENT_RE 部件号正则无法匹配 Zhb2/Zhb7 等多小写字母形态（§2.2.2/§2.2.4 反例清单要求），放宽为 `[A-Z][a-z]+\d+`。
+
 ## [0.2.0] - 2026-08-14
 
 ### Fixed（对应《代码评审_ArchaeoPairs_P0》缺陷清单）

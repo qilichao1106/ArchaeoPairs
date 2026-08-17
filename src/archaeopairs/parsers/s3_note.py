@@ -1,7 +1,7 @@
-"""S3 图注解析器（对齐《技术方案 V0.2》§4.3.1 / O6 NoteParser 策略接口）。
+"""S3 图注解析器（对齐《技术方案 V0.3》图注解析器（§4.3.1）/ O6 NoteParser 策略接口）。
 
 图注语法用例注册为独立 parser，新增用例通过注册扩展，不改动主流程。
-默认注册规则解析器，覆盖 §5.6 主要语法形态。
+默认注册规则解析器，覆盖 图注语法用例（§5.6）主要语法形态。
 
 归一化（§2.2.1）全部为 1:1 字符替换（保证归一化文本与原文的 span 可回映）：
 冒号统一、圈号→数字（仅用于匹配，artifact_id 回映原文保留圈号）、全角波浪线→半角、
@@ -33,9 +33,9 @@ def colon_norm(text: str) -> str:
     return text.replace("∶", ":").replace("：", ":")
 
 
-# 器物号：M4:6 / 2004CWWM11:5 / C5.1H146:1 / H83:35；部件号 Bb9/Zhb2
+# 器物号：M4:6 / 2004CWWM11:5 / C5.1H146:1 / H83:35；部件号 Bb9/Zhb2（§2.2.2）
 ARTIFACT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.\-]*:\d+(?:-\d+)?")
-COMPONENT_RE = re.compile(r"\b[A-Z][a-z]\d+\b")
+COMPONENT_RE = re.compile(r"\b[A-Z][a-z]+\d+\b")
 
 _HEAD_RE = re.compile(r"(?P<seq>\d+(?:\s*[～~]\s*\d+)?(?:\s*[、,]\s*\d+)*|[A-Z])\s*[.、]?")
 
@@ -107,6 +107,30 @@ def parse_note_rule(text: str) -> list[NoteItem]:
         items.append(NoteItem(seq=m.group("seq").strip(), seq_list=_expand_seq(m.group("seq")),
                               name=name or None, artifact_ids=arts))
     return items
+
+
+def extract_caption_artifacts(caption: str | None) -> list[str]:
+    """图题器物号兜底识别（对齐《技术方案 V0.3》图题器物号兜底识别（§2.2.5））。
+
+    图注缺失或解析不出器物号时，从图题中抽取器物号。图题为描述性文本、
+    不承载图内条目序号语义（"图2-1-5" 的编号是图号而非序号），故不复用条目
+    解析器 parse_note_rule，仅在归一化文本上做器物号正则纯扫描；同一器物号
+    在图题中多次出现时去重（如 "图版七二 …左侧、图版七三 …右侧" 同器双视图）。
+    artifact_id 回映原文（冒号归一、圈号保留原文），与图注侧键值口径一致。
+    """
+    if not caption:
+        return []
+    norm = normalize(caption)
+    spans = [_strip_leading_seq(norm, m.start(), m.end()) for m in ARTIFACT_RE.finditer(norm)]
+    spans += [(m.start(), m.end()) for m in COMPONENT_RE.finditer(norm)
+              if not any(s <= m.start() < e for s, e in spans)]
+    spans.sort()
+    out: list[str] = []
+    for ms, me in spans:
+        art = colon_norm(caption[ms:me])
+        if art not in out:
+            out.append(art)
+    return out
 
 
 # ---- 策略注册表（O6） ----

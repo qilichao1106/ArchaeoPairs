@@ -1,4 +1,4 @@
-"""LangGraph 拓扑 / 端到端 / checkpointer 测试（§3.4 / 7.2）。"""
+"""LangGraph 拓扑 / 端到端 / checkpointer 测试（LangGraph 编排落地（§3.4）/ 文件命名规范（§7.2））。"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -8,7 +8,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from archaeopairs.orchestration import build_graph
 
 NODES = {"parse_report", "classify_figure", "parse_text", "parse_image", "fuse",
-         "segment", "parse_plate", "assemble", "supervise", "bridge_review"}
+         "segment", "parse_single", "assemble", "supervise", "bridge_review"}
 
 
 def test_topology_has_10_nodes(services):

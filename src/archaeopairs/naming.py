@@ -1,4 +1,4 @@
-"""成图命名规范（对齐《技术方案 V0.2》§7.2）。
+"""成图命名规范（对齐《技术方案 V0.3》文件命名规范（§7.2））。
 
 原图名=图题中图号部分；冒号归一为连字符；重名追加 _N。
 图号归一化：空格剔除、"O/o/0" 后缀统一为 "〇"（"图二六O"→"图二六〇"）。
@@ -37,10 +37,9 @@ def path_artifact(artifact_id: str) -> str:
 
 
 def build_image_name(fig_number: str, seq: str | None, artifact_id: str) -> str:
-    """原图名_图片内序号_器物号.png。"""
+    """原图名_图片内序号_器物号.png；无图片内序号（单器物/整图归属）时序号段固定占位 01（§7.2）。"""
     parts = [fig_number]
-    if seq is not None:
-        parts.append(str(seq))
+    parts.append(str(seq) if seq is not None else "01")
     parts.append(path_artifact(artifact_id))
     return "_".join(parts) + ".png"
 

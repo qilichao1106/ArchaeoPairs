@@ -1,4 +1,4 @@
-"""硬约束报警 E001–E007 与比例尺三级归属测试（§6.3 / §5.3）。"""
+"""硬约束报警 E001–E007 与比例尺三级归属测试（异常报警字典（§6.3）/ 序号硬匹配与比例尺三级（§5.3））。"""
 from __future__ import annotations
 
 from archaeopairs.agents.alarms import assign_scales, detect_alarms

@@ -1,4 +1,4 @@
-"""复核闭环与报警路由测试（§4.10 / §6.3）：报警即 PENDING_REVIEW、禁输出。"""
+"""复核闭环与报警路由测试（调度复核桥接器（§4.10）/ 异常报警字典（§6.3））：报警即 PENDING_REVIEW、禁输出。"""
 from __future__ import annotations
 
 from langgraph.checkpoint.sqlite import SqliteSaver

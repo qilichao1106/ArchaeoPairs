@@ -1,4 +1,4 @@
-"""智能体层：S1–S10 各一个模块，输入/输出严格走 State 契约（§3.2 分层）。"""
+"""智能体层：S1–S10 各一个模块，输入/输出严格走 State 契约（各智能体功能概览（§3.2）分层）。"""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -26,7 +26,7 @@ class Services:
     compositor: Optional[Compositor] = None
     review_bridge: Optional[ReviewBridge] = None
     ground: dict = field(default_factory=dict)
-    # book 级文件名去重注册表（§7.2 重名 _N，跨图共享）
+    # book 级文件名去重注册表（文件命名规范（§7.2）重名 _N，跨图共享）
     name_registry: dict = field(default_factory=dict)
 
 

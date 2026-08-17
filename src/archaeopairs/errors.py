@@ -1,4 +1,4 @@
-"""错误与异常体系（对齐《技术方案 V0.2》§6.4 错误码字典 E100–E1100）。
+"""错误与异常体系（对齐《技术方案 V0.3》错误码字典（§6.4）E100–E1100）。
 
 统一继承链：ArchaeoPairsError -> 各 E-code 异常。硬约束违规抛
 HardConstraintError，不可被 Feature Flag 关闭。编排层统一捕获并映射为
@@ -157,7 +157,7 @@ class E006MaskIncompleteAlarm(AlarmError):
 
 
 class E007OtherHardConstraintAlarm(AlarmError):
-    """附录 A 第二篇定义的其他硬约束场景。"""
+    """附录A 第二篇（结构化提取与切割重组规范）定义的其他硬约束场景。"""
     code = "E007"
 
 

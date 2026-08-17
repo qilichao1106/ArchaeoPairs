@@ -1,32 +1,125 @@
 """S8 匹配组装器（§4.8）。Node: 按 fused 拆/并 mask→PairRecord（确定性）。
 
 整改：seq→多 artifact 全量拆 Pair（同号/区间不丢数据）；命名按图号提取+冒号
-归一+_N 去重（§7.2）；经合成器写对象存储；无映射 mask 不静默丢弃（转复核）。
+归一+_N 去重（文件命名规范（§7.2））；经合成器写对象存储；无映射 mask 不静默丢弃（转复核）。
+
+V0.3/V0.4 单器物路径：整图单一器物 → 单个 PairRecord（single_artifacts 驱动），
+seq 段以 01 占位（单器物命名占位判断）;跨图合并不在 V0.4 范围。
 """
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal, cast
 
 from .. import naming
 from ..state import PairRecord
 from . import Services
 
+_MergeMode = Literal["line_only", "plate_only", "line_plus_plate", "multi_candidate"]
 
-def run(state: dict, svc: Services) -> dict:
+
+def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -> dict:
+    """S8 single-artifact assembly (V0.3 .4.8): whole image -> one PairRecord."""
+    book_id = state["book_id"]
+    registry: dict[str, int] = svc.name_registry
+    desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
+    fallback_fig = naming.extract_fig_number(state.get("caption"),
+                                               fallback=Path(state["fileref"]).stem)
+    records: list[dict] = []
+    for item in single_artifacts:
+        art = item["artifact_id"]
+        role = item.get("role", "line_drawing")
+        merge_mode: _MergeMode = cast(
+            _MergeMode,
+            item.get("image_merge_mode")
+            or ("plate_only" if role == "plate" else "line_only"))
+        fig_number = item.get("fig_number") or fallback_fig
+        name = naming.dedup_name(naming.build_image_name(fig_number, None, art), registry)
+        if svc.compositor is not None and svc.object_store is not None:
+            svc.compositor.compose(image_path=name, masks=[], trace_id=state["trace_id"])
+        records.append(PairRecord(
+            book_id=book_id, artifact_id=art, image_path=name,
+            candidate_images=[],
+            image_merge_mode=merge_mode,
+            description_text=desc.get(art),
+            provenance={"case": state.get("case_type"), "art_source": item.get("source"),
+                        "single": True, "whole_image": True, "role": role,
+                        "figure_id": item.get("figure_id")},
+        ).model_dump())
+    return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}
+
+
+def _record_role(record: dict) -> str:
+    provenance = record.get("provenance") or {}
+    role = provenance.get("role")
+    if role:
+        return role
+    return "plate" if record.get("image_merge_mode") == "plate_only" else "line_drawing"
+
+
+def merge_pair_records(records: list[dict]) -> list[dict]:
+    """V0.3 .4.8.2 cross-figure merge: one artifact_id -> one PairRecord.
+
+    Line drawings stay primary; later plates/lines become candidate_images.
+    """
+    merged: dict[tuple[str, str], dict] = {}
+    order: list[tuple[str, str]] = []
+    for record in records:
+        key = (record["book_id"], record["artifact_id"])
+        if key not in merged:
+            merged[key] = dict(record)
+            order.append(key)
+            continue
+        prev = merged[key]
+        if prev["image_path"] == record["image_path"]:
+            continue
+        role = _record_role(record)
+        prev_role = _record_role(prev)
+        if role == "line_drawing" and prev_role != "line_drawing":
+            prev, record = record, prev
+            merged[key] = prev
+        record_role = _record_role(record)
+        prev_role = _record_role(prev)
+        provenance = record.get("provenance") or {}
+        candidate = {
+            "path": record["image_path"],
+            "role": record_role,
+            "source_figure_id": provenance.get("figure_id"),
+        }
+        candidates = prev.setdefault("candidate_images", [])
+        if any(c.get("path") == candidate["path"] for c in candidates):
+            continue
+        candidates.append(candidate)
+        roles = {prev_role, record_role}
+        prev["image_merge_mode"] = "line_plus_plate" if len(roles) == 2 else "multi_candidate"
+        if not prev.get("description_text") and record.get("description_text"):
+            prev["description_text"] = record["description_text"]
+    return [merged[key] for key in order]
+
+
+def run(
+    state: dict, svc: Services) -> dict:
+    single = state.get("single_artifacts") or []
+    if single:
+        return _assemble_single(state, svc, single)
+
     fused = state.get("fused") or {}
     seq_to_arts: dict[str, list[str]] = fused.get("seq_to_artifacts", {})
+    # 图题兜底器物号（§2.2.5）：图注无器物号时由 S5 仲裁采用，rule_b 整图归属
+    caption_arts: set[str] = set(fused.get("caption_artifacts", []))
+    note_arts: set[str] = {a for lst in seq_to_arts.values() for a in lst}
     case = state.get("case_type")
     masks = state.get("masks", [])
     book_id = state["book_id"]
     fig_number = naming.extract_fig_number(state.get("caption"),
                                            fallback=Path(state["fileref"]).stem)
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
-    # book 级共享去重注册表：跨图同图号同器物防文件名冲突（§7.2 重名 _N）
+    # book 级共享去重注册表：跨图同图号同器物防文件名冲突（文件命名规范（§7.2）重名 _N）
     registry: dict[str, int] = svc.name_registry
     records: list[dict] = []
     unmatched = [m.get("seq") for m in masks
                  if m.get("seq") is not None and str(m.get("seq")) not in seq_to_arts]
-    if unmatched:
+    if unmatched and case != "rule_b":
         return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
                 "alarms": ["E002"], "exclude_reason": "unmapped_mask"}
 
@@ -35,16 +128,18 @@ def run(state: dict, svc: Services) -> dict:
         name = naming.dedup_name(name, registry)
         if svc.compositor is not None and svc.object_store is not None:
             svc.compositor.compose(image_path=name, masks=ms, trace_id=state["trace_id"])
+        art_source = "caption" if (art in caption_arts and art not in note_arts) else "figure_note"
         records.append(PairRecord(
             book_id=book_id, artifact_id=art, image_path=name,
             candidate_images=[],
             image_merge_mode="line_only",
             description_text=desc.get(art),
-            provenance={"case": case, "seqs": [m.get("seq") for m in ms], "views": views},
+            provenance={"case": case, "seqs": [m.get("seq") for m in ms], "views": views,
+                        "art_source": art_source},
         ).model_dump())
 
     if case == "rule_b":
-        arts = {a for lst in seq_to_arts.values() for a in lst}
+        arts = note_arts | caption_arts
         if arts:
             art = next(iter(arts))
             _emit(art, None, masks, views=len(masks))

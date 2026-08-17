@@ -1,4 +1,4 @@
-"""S3 图注解析器单元测试（§4.3.1 / §5.6 语法用例）。"""
+"""S3 图注解析器单元测试（图注解析器（§4.3.1）/ 图注语法用例（§5.6））。"""
 from __future__ import annotations
 
 from archaeopairs.parsers import s3_note

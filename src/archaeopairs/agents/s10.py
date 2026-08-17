@@ -28,7 +28,9 @@ def _is_pending(state: dict, max_iteration: int) -> bool:
         return True
     if state.get("degraded"):
         fused = state.get("fused") or {}
-        if not fused.get("seq_to_artifacts"):
+        # 图题兜底器物号（§2.2.5）同样视为可用映射证据
+        if (not fused.get("seq_to_artifacts") and not fused.get("caption_artifacts")
+                and not state.get("single_artifacts")):
             return True
     hist = state.get("defect_history") or [0]
     return hist[-1] > 0 and state.get("iteration", 0) >= max_iteration

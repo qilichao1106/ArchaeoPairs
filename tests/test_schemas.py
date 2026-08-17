@@ -1,4 +1,4 @@
-"""JSON Schema 契约测试（§6.1.1 / C1）。"""
+"""JSON Schema 契约测试（Pydantic 定义与 JSON Schema（§6.1.1）/ C1）。"""
 from __future__ import annotations
 
 from archaeopairs.schemas import all_schemas, dump_schemas

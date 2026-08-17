@@ -12,13 +12,13 @@ from ..state import ScaleAnnotation, SeqAnnotation
 
 
 class MockVLM:
-    """VLM mock：图类判定与诊断（§4.2/§4.9）。"""
+    """VLM mock：图类判定与诊断（图类判定器（§4.2）/ Supervisor VLM（§4.9））。"""
 
     def __init__(self, ground: Mapping[str, dict]) -> None:
         self._ground = ground
 
-    def classify(self, *, image_ref: str, caption: str | None, trace_id: str,
-                 figure_id: str = "", **kw: Any) -> dict:
+    def classify(self, *, image_ref: str, caption: str | None, figure_note: str | None = None,
+                 trace_id: str, figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
         return {"image_type": g.get("image_type", "line_drawing"), "confidence": 0.9}
 
@@ -37,7 +37,7 @@ class MockVLM:
 
 
 class MockSAM:
-    """SAM mock：按 ground 序号产出掩膜（掩膜三件套，§4.6）。"""
+    """SAM mock：按 ground 序号产出掩膜（掩膜三件套，视觉分割器（§4.6））。"""
 
     def __init__(self, ground: Mapping[str, dict]) -> None:
         self._ground = ground
@@ -61,7 +61,7 @@ class MockSAM:
 
 
 class MockOCR:
-    """OCR mock：按 ground 产出序号/比例尺标注（§4.4）。"""
+    """OCR mock：按 ground 产出序号/比例尺标注（图像源解析器（§4.4））。"""
 
     def __init__(self, ground: Mapping[str, dict]) -> None:
         self._ground = ground
