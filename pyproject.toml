@@ -19,6 +19,8 @@ dependencies = [
     "pydantic-settings==2.15.0",
     "SQLAlchemy==2.0.51",
     "PyYAML==6.0.3",
+    "Pillow>=12.0",
+    "numpy>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -56,7 +58,7 @@ target-version = "py311"
 select = ["E", "F", "W", "I"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 ignore_missing_imports = true
 
 [tool.coverage.run]

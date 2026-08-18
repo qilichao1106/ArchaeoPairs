@@ -22,7 +22,7 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
                             ["parse_text", "parse_image", "parse_single", END])
     g.add_edge("parse_text", "fuse")
     g.add_edge("parse_image", "fuse")
-    # V0.3 single path: S7 -> S8 -> S9 mandatory final check
+    # V0.4 single path: S7 -> S8 -> S9 mandatory final check
     g.add_conditional_edges("parse_single", routing.route_single,
                             {"assemble": "assemble", "bridge_review": "bridge_review", END: END})
     g.add_conditional_edges("fuse", routing.route_fuse,

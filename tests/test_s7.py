@@ -1,4 +1,4 @@
-"""V0.3 S7 single-artifact parser tests (lines and plates)."""
+"""V0.4 S7 single-artifact parser tests (lines and plates)."""
 from __future__ import annotations
 
 from archaeopairs.agents import s7, s8

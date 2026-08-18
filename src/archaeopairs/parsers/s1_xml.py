@@ -18,7 +18,7 @@ from pathlib import Path
 
 from ..state import FigureState
 from . import s3_note
-from .keywords import decide_image_class
+from .image_classify import classify_image_type
 
 
 def _text(el) -> str:
@@ -141,7 +141,9 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                     book_id=book_id, figure_id=fid, fileref=fileref,
                     caption=caption, figure_note=note_text or None, status="INIT",
                 ))
-                # ground：供 mock 能力接口（器物号与管线同口径：图注无号时图题兜底 §2.2.5）
+                # ground：供 mock 能力接口。与 S2 运行时同口径——image_type 传入与运行时
+                # 相同的 image_path(xml.parent/fileref) 做像素家族判定（缺图自动回退关键词）。
+                image_path = Path(xml_path).parent / fileref if fileref else None
                 items = s3_note.parse_note(note_text)
                 seqs: list[str] = []
                 for it in items:
@@ -154,7 +156,7 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                 ground[fid] = {
                     "seqs": seqs,
                     "artifact_ids": arts,
-                    "image_type": decide_image_class(caption, note_text),
+                    "image_type": classify_image_type(caption, note_text, image_path),
                 }
             # 跳过组内已消费的图注段落
             i = max(j, k)

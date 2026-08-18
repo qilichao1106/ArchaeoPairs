@@ -19,7 +19,7 @@ _MergeMode = Literal["line_only", "plate_only", "line_plus_plate", "multi_candid
 
 
 def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -> dict:
-    """S8 single-artifact assembly (V0.3 .4.8): whole image -> one PairRecord."""
+    """S8 single-artifact assembly (V0.4 §4.8): whole image -> one PairRecord."""
     book_id = state["book_id"]
     registry: dict[str, int] = svc.name_registry
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}

@@ -15,7 +15,7 @@ def test_route_classify():
 
 
 def test_route_single():
-    # V0.3 single path: S7 -> S8 -> S9 -> review/output
+    # V0.4 single path: S7 -> S8 -> S9 -> review/output
     assert routing.route_single({"status": "CLASSIFIED"}) == "assemble"
     assert routing.route_single({"status": "EXCLUDED"}) == END
     assert routing.route_single({"status": "PENDING_REVIEW"}) == "bridge_review"

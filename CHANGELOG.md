@@ -20,7 +20,7 @@
 
 ### Fixed
 - 修复 routing.py route_single 与 parsers/keywords.py _artifact_signals 乱码 docstring。
-- 代码头部注释版本引用 V0.3 → V0.4。
+- 代码头部注释版本引用 V0.3 → V0.4（含 errors/alarms/compose/s3_text/s3_note/test_caption_fallback 补漏；CONTRIBUTING V0.5 → V0.4）。
 
 ## [0.2.1] - 2026-08-17
 

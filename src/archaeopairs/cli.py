@@ -93,6 +93,7 @@ def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sq
                 "book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
                 "caption": fig.caption, "figure_note": fig.figure_note,
                 "book_has_artifact": True,
+                "image_base": str(xml.parent),
                 "body_paras": paras,
                 "iteration": 0, "defect_history": [], "assembled": False,
                 "trace_id": str(uuid.uuid4()), "flags": flags.model_dump(),

@@ -1,4 +1,4 @@
-"""S7 single-artifact parser (V0.3 .4.7).
+"""S7 single-artifact parser (V0.4 §4.7).
 
 Single-artifact line drawings and single-artifact plates are whole-image
 Pairs: resolve artifact_id from figure-note/caption, attach body text, and
