@@ -143,7 +143,7 @@ def test_s5_note_wins_over_caption(services):
 
 
 def test_s7_plate_caption_fallback(services):
-    st = {"image_type": "plate_artifact", "book_id": "b", "figure_id": "b:plate-cap",
+    st = {"image_type": "single_plate_artifact", "book_id": "b", "figure_id": "b:plate-cap",
           "fileref": "m/p.jpg", "figure_note": None, "text_artifacts": [], "trace_id": "t",
           "caption": "图版七二 B型雷公俑（M1：54）左侧、图版七三 B型雷公俑（M1：54）右侧"}
     out = s7.run(st, services)
@@ -219,7 +219,7 @@ def test_graph_caption_fallback_end_to_end(tmp_path: Path):
         app = build_graph(svc, checkpointer=ckpt)
         result = app.invoke(init, config={"configurable": {"thread_id": "t:cap"}})
     assert result["status"] == "OUTPUT"
-    assert result["case_type"] == "single_line"
+    assert result["case_type"] == "single_line_artifact"
     assert result["degraded"] is True
     records = result["pair_records"]
     assert len(records) == 1

@@ -41,7 +41,7 @@ def _resolve_artifact(state: dict, caption: str) -> tuple[list[str], str]:
 
 def run(state: dict, svc: Services) -> dict:
     itype = state.get("image_type")
-    if itype in {"discarded", "plate_scene", "multi_plate"}:
+    if itype in {"discarded", "multi_plate_artifact"}:
         return {"pair_records": [], "assembled": True, "status": "EXCLUDED",
                 "exclude_reason": "discarded_archived"}
     caption = state.get("caption") or ""
@@ -54,7 +54,7 @@ def run(state: dict, svc: Services) -> dict:
                 "alarms": ["E005"], "exclude_reason": "multi_artifact_on_single_path"}
 
     art = arts[0]
-    is_line = itype in {"single_line", "line_drawing"}
+    is_line = itype == "single_line_artifact"
     role = "line_drawing" if is_line else "plate"
     fig_fallback = Path(state["fileref"]).stem
     fig_number = (plate_no_of(caption, fallback=fig_fallback) if not is_line
@@ -75,7 +75,7 @@ def run(state: dict, svc: Services) -> dict:
         }],
         "text_artifacts": text_artifacts,
         "degraded": source == "caption",
-        "case_type": "single_line" if is_line else "single_plate",
+        "case_type": "single_line_artifact" if is_line else "single_plate_artifact",
         "status": "CLASSIFIED" if is_line else "CLASSIFIED_PLATE",
         "assembled": False,
     }

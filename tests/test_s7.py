@@ -5,7 +5,7 @@ from archaeopairs.agents import s7, s8
 
 
 def test_plate_artifact_single_from_note(services):
-    st = {"image_type": "plate_artifact", "caption": "图版一 器物",
+    st = {"image_type": "single_plate_artifact", "caption": "图版一 器物",
           "book_id": "b", "figure_id": "b:plate", "fileref": "m/p.jpg",
           "figure_note": "1. 罐（M4:1）",
           "text_artifacts": [], "trace_id": "t"}
@@ -18,7 +18,7 @@ def test_plate_artifact_single_from_note(services):
 
 
 def test_single_line_from_caption(services):
-    st = {"image_type": "single_line", "caption": "图2-1-5 M4出土铜鼎（M4：6）纹饰",
+    st = {"image_type": "single_line_artifact", "caption": "图2-1-5 M4出土铜鼎（M4：6）纹饰",
           "book_id": "b", "figure_id": "b:line", "fileref": "m/i.jpg",
           "figure_note": None, "text_artifacts": [], "body_paras": [], "trace_id": "t"}
     out = s7.run(st, services)
@@ -31,7 +31,7 @@ def test_single_line_from_caption(services):
 
 
 def test_multi_plate_archived(services):
-    st = {"image_type": "multi_plate", "caption": "图版一 器物",
+    st = {"image_type": "multi_plate_artifact", "caption": "图版一 器物",
           "book_id": "b", "figure_id": "b:multi", "fileref": "m/p.jpg",
           "figure_note": "1. 罐（M4:1） 2. 壶（M4:2）",
           "text_artifacts": [], "trace_id": "t"}
@@ -41,8 +41,8 @@ def test_multi_plate_archived(services):
     assert out["pair_records"] == []
 
 
-def test_plate_scene_excluded(services):
-    st = {"image_type": "plate_scene", "caption": "图版一 墓葬场景",
+def test_discarded_archived(services):
+    st = {"image_type": "discarded", "caption": "图一 器物组合",
           "book_id": "b", "figure_id": "b:scene", "fileref": "m/s.jpg",
           "figure_note": None, "text_artifacts": [], "trace_id": "t"}
     out = s7.run(st, services)
@@ -51,7 +51,7 @@ def test_plate_scene_excluded(services):
 
 
 def test_plate_no_artifact_pending(services):
-    st = {"image_type": "plate_artifact", "caption": "图版一",
+    st = {"image_type": "single_plate_artifact", "caption": "图版一",
           "book_id": "b", "figure_id": "b:empty", "fileref": "m/p.jpg",
           "figure_note": None, "text_artifacts": [], "trace_id": "t"}
     out = s7.run(st, services)
@@ -60,7 +60,7 @@ def test_plate_no_artifact_pending(services):
 
 
 def test_s8_assembles_single_whole_image(services):
-    st = {"image_type": "plate_artifact", "caption": "图版一 器物",
+    st = {"image_type": "single_plate_artifact", "caption": "图版一 器物",
           "book_id": "b", "figure_id": "b:plate", "fileref": "m/p.jpg",
           "figure_note": "1. 罐（M4:1）",
           "text_artifacts": [], "trace_id": "t"}

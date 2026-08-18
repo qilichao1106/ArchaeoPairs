@@ -12,13 +12,15 @@ from typing import Literal, Optional, TypedDict
 from pydantic import BaseModel, Field
 
 # ---- 枚举（图类判定器（§4.2）/ 融合仲裁器（§4.5）/ 状态机（§6.2），落入 Literal） ----
+# V0.4.1 五分类重构：判定以 XML 器物号个数为主（0→discarded；1→单器件；N≥2→多器件），
+# 线/彩家族由关键词 图版/圖版 判定；枚举精简为 5 类（移除 line_drawing/plate_scene）。
 ImageType = Literal[
-    "single_line", "multi_line", "line_drawing",
-    "plate_artifact", "plate_scene", "multi_plate", "discarded",
+    "single_line_artifact", "multi_line_artifact",
+    "single_plate_artifact", "multi_plate_artifact", "discarded",
 ]
 CaseType = Literal[
     "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing",
-    "single_line", "single_plate", "discarded",
+    "single_line_artifact", "single_plate_artifact", "discarded",
 ]
 FigureStatus = Literal[
     "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_PLATE", "ALIGNED",

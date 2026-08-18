@@ -18,7 +18,7 @@ from pathlib import Path
 
 from ..state import FigureState
 from . import s3_note
-from .keywords import classify_caption
+from .keywords import decide_image_class
 
 
 def _text(el) -> str:
@@ -154,7 +154,7 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                 ground[fid] = {
                     "seqs": seqs,
                     "artifact_ids": arts,
-                    "image_type": classify_caption(caption, bool(items), note_text),
+                    "image_type": decide_image_class(caption, note_text),
                 }
             # 跳过组内已消费的图注段落
             i = max(j, k)

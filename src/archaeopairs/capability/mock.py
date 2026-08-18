@@ -20,7 +20,7 @@ class MockVLM:
     def classify(self, *, image_ref: str, caption: str | None, figure_note: str | None = None,
                  trace_id: str, figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
-        return {"image_type": g.get("image_type", "line_drawing"), "confidence": 0.9}
+        return {"image_type": g.get("image_type", "discarded"), "confidence": 0.9}
 
     def diagnose(self, *, image_ref: str, context: dict, trace_id: str,
                  figure_id: str = "", **kw: Any) -> dict:

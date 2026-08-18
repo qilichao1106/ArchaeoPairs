@@ -7,11 +7,10 @@ from archaeopairs.orchestration import routing
 
 
 def test_route_classify():
-    assert routing.route_classify({"image_type": "multi_line"}) == ["parse_text", "parse_image"]
-    assert routing.route_classify({"image_type": "single_line"}) == ["parse_single"]
-    assert routing.route_classify({"image_type": "plate_artifact"}) == ["parse_single"]
-    assert routing.route_classify({"image_type": "multi_plate"}) == [END]
-    assert routing.route_classify({"image_type": "plate_scene"}) == [END]
+    assert routing.route_classify({"image_type": "multi_line_artifact"}) == ["parse_text", "parse_image"]
+    assert routing.route_classify({"image_type": "single_line_artifact"}) == ["parse_single"]
+    assert routing.route_classify({"image_type": "single_plate_artifact"}) == ["parse_single"]
+    assert routing.route_classify({"image_type": "multi_plate_artifact"}) == [END]
     assert routing.route_classify({"image_type": "discarded"}) == [END]
 
 

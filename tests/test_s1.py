@@ -16,7 +16,7 @@ def test_parse_figures_and_note(synth_book):
     g = ground[fig.figure_id]
     assert g["seqs"] == ["1", "2"]
     assert g["artifact_ids"] == ["M4:1", "M4:2"]
-    assert g["image_type"] == "multi_line"
+    assert g["image_type"] == "multi_line_artifact"
 
 
 def test_contract_violation(tmp_path: Path):
@@ -36,4 +36,4 @@ def test_plate_classification(tmp_path: Path):
     p = tmp_path / "data.xml"
     p.write_text(xml, encoding="utf-8")
     _, ground, _ = s1_xml.parse_report(p, "plate")
-    assert list(ground.values())[0]["image_type"] == "plate_artifact"
+    assert list(ground.values())[0]["image_type"] == "discarded"  # 无器物号 → discarded

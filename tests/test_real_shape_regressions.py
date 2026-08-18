@@ -120,7 +120,7 @@ def test_adjacent_title_recovers_caption(tmp_path: Path):
     figures, ground, violations = s1_xml.parse_report(p, "b")
     assert violations == []
     assert figures[0].caption == "图版六三"
-    assert ground[figures[0].figure_id]["image_type"] == "plate_artifact"
+    assert ground[figures[0].figure_id]["image_type"] == "single_plate_artifact"
 
 
 def test_violation_records_fileref_and_reason(tmp_path: Path):
@@ -251,7 +251,7 @@ def test_multi_path_name_keeps_seq():
 
 
 def test_plate_o_number(services):
-    st = {"image_type": "plate_artifact", "caption": "图版三O",
+    st = {"image_type": "single_plate_artifact", "caption": "图版三O",
           "book_id": "b", "figure_id": "b:plate", "fileref": "m/p.jpg",
           "figure_note": "1. 罐（M4:1）", "text_artifacts": [], "trace_id": "t"}
     out = s7.run(st, services)

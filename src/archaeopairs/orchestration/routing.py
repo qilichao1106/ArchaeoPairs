@@ -19,11 +19,11 @@ def route_classify(state: dict):
     if state.get("status") == "EXCLUDED":
         return [END]
     it = state.get("image_type")
-    if it in {"single_line", "plate_artifact"}:
+    if it in {"single_line_artifact", "single_plate_artifact"}:
         return ["parse_single"]
-    if it in {"multi_line", "line_drawing"}:
+    if it in {"multi_line_artifact"}:
         return ["parse_text", "parse_image"]
-    return [END]  # multi_plate / plate_scene / discarded -> ??
+    return [END]  # multi_plate_artifact / discarded
 
 
 def route_single(state: dict):

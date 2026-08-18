@@ -63,8 +63,8 @@ def test_fileref_hits_real_media(report_parse):
 
 def test_ground_schema(report_parse):
     fig, ground, _, _ = report_parse
-    valid_types = {"single_line", "multi_line", "line_drawing",
-                       "plate_artifact", "plate_scene", "multi_plate", "discarded"}
+    valid_types = {"single_line_artifact", "multi_line_artifact",
+                   "single_plate_artifact", "multi_plate_artifact", "discarded"}
     for f in fig:
         g = ground[f.figure_id]
         assert set(g) == {"seqs", "artifact_ids", "image_type"}
