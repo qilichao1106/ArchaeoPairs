@@ -5,7 +5,6 @@
 * E400 OCR 全失败 / E1000(OCR) 熔断 → 链③缺失降级，按降级矩阵继续；
 * E1000(VLM/SAM) 熔断 → PENDING_REVIEW（批次挂起由调度层处理）；
 * E102/E101 摄入违约 → EXCLUDED；
-* CostCapExceeded → PENDING_REVIEW。
 """
 from __future__ import annotations
 
@@ -21,7 +20,6 @@ from ..errors import (
     E1000ServiceUnavailableError,
     HardConstraintError,
 )
-from ..gateway import CostCapExceeded
 
 NodeFn = Callable[[dict], dict]
 
@@ -34,8 +32,6 @@ def _guard(fn: NodeFn) -> NodeFn:
             return {"alarms": [exc.code], "status": "PENDING_REVIEW"}
         except HardConstraintError:
             return {"alarms": ["E007"], "status": "PENDING_REVIEW"}
-        except CostCapExceeded:
-            return {"status": "PENDING_REVIEW", "exclude_reason": "cost_cap"}
         except E400OcrAllFailError:
             # OCR 全失败 → 链③缺失降级（错误码字典（§6.4）E400）
             return {"seq_annotations": [], "scale_annotations": [], "orientation": "h",

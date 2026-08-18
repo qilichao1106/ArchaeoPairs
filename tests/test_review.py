@@ -19,7 +19,7 @@ def _services(ground, tmp_path, require_human=False):
     fl.require_human = require_human
     store = LocalObjectStore(tmp_path / "obj")
     return Services(vlm=MockVLM(ground), sam=MockSAM(ground), ocr=MockOCR(ground),
-                    gateway=Gateway(per_figure_cap_cny=th.per_figure_cap_cny),
+                    gateway=Gateway(),
                     thresholds=th, flags=fl, object_store=store,
                     compositor=MockCompositor(store), review_bridge=MockReviewBridge(),
                     ground=ground)

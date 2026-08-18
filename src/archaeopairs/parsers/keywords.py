@@ -13,7 +13,7 @@ DISCARD_RE = re.compile(r"平面|剖面|墓室|地层|遗迹|区位|位置示意
 
 
 def _artifact_signals(caption: str | None, figure_note: str | None) -> tuple[list[str], int]:
-    """???? XML ?????????????????????"""
+    """聚合 XML 器物号信号：返回 (去重器物号列表, 图注序号计数)。"""
     from .s3_note import extract_caption_artifacts, parse_note
 
     items = parse_note(figure_note or "")

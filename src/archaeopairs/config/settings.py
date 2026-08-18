@@ -1,4 +1,4 @@
-"""配置加载（pydantic-settings + YAML，对齐《技术方案 V0.3》正文切分算法（§5.5）/ 功能开关与配置管理（§7.5））。
+"""配置加载（pydantic-settings + YAML，对齐《技术方案 V0.4》正文切分算法（§5.5）/ 功能开关与配置管理（§7.5））。
 
 thresholds.yaml（阈值常量）与 flags.yaml（Feature Flag）。真实配置不入库，
 提交 *.example.yaml。缺失时回退到内置默认值，保证 P0 可直接运行。
@@ -23,7 +23,6 @@ class Thresholds(BaseModel):
     text_recall_target: float = 0.92
     max_iteration: int = 3
     no_improve_rounds: int = 2
-    per_figure_cap_cny: float = 2.0
     model_costs: dict[str, float] = Field(default_factory=lambda: {
         "vlm": 0.05, "sam": 0.01, "ocr": 0.005,
     })
@@ -52,7 +51,6 @@ def load_thresholds() -> Thresholds:
         flat["max_iteration"] = raw["loop"].get("max_iteration", 3)
         flat["no_improve_rounds"] = raw["loop"].get("no_improve_rounds", 2)
     if "cost" in raw:
-        flat["per_figure_cap_cny"] = raw["cost"].get("per_figure_cap_cny", 2.0)
         flat["model_costs"] = raw["cost"].get("model_costs", {})
     if "confidence" in raw:
         flat["confidence"] = raw["confidence"]
@@ -70,4 +68,4 @@ class Settings(BaseModel):
     """运行期设置（环境变量注入敏感项，不入库）。"""
     database_url: str = "sqlite:///archaeopairs.sqlite3"
     object_store_endpoint: Optional[str] = None
-    examples_dir: str = "examples"
+    books_dir: str = "books"

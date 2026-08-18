@@ -27,7 +27,7 @@ def route_classify(state: dict):
 
 
 def route_single(state: dict):
-    """??????V0.3??EXCLUDED ?????PENDING ??????? S8 ???"""
+    """单器物路径路由：EXCLUDED → 结束；PENDING_REVIEW → 复核；否则 → S8 组装。"""
     if state.get("status") == "EXCLUDED":
         return END
     if state.get("status") == "PENDING_REVIEW":

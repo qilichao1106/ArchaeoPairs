@@ -1,4 +1,4 @@
-"""针对 s1_xml 解析器在 examples 真实 XML + media 上的单元验证。
+"""针对 s1_xml 解析器在 books 真实 XML + media 上的单元验证。
 
 以「洪洞南秦墓地二〇一六年度发掘报告」的真实 data.xml 与 media/ 为样本：
   * parse_report：验证 figure 提取、ground 结构、fileref 命中真实 media 实体、
@@ -13,15 +13,15 @@ import pytest
 
 from archaeopairs.parsers import s1_xml
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
-REPORT = EXAMPLES / "洪洞南秦墓地二〇一六年度发掘报告"
+BOOKS = Path(__file__).resolve().parents[1] / "books"
+REPORT = BOOKS / "洪洞南秦墓地二〇一六年度发掘报告"
 XML = REPORT / "data.xml"
 MEDIA = REPORT / "media"
 
 
 def _require_sample() -> Path:
     if not XML.exists():
-        pytest.skip("examples 真实样本缺失")
+        pytest.skip("books 真实样本缺失")
     return XML
 
 

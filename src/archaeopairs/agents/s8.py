@@ -4,7 +4,7 @@
 归一+_N 去重（文件命名规范（§7.2））；经合成器写对象存储；无映射 mask 不静默丢弃（转复核）。
 
 V0.3/V0.4 单器物路径：整图单一器物 → 单个 PairRecord（single_artifacts 驱动），
-seq 段以 01 占位（单器物命名占位判断）;跨图合并不在 V0.4 范围。
+seq 段以 01 占位（单器物命名占位判断）；跨图合并不在 V0.4 范围（按单图独立输出）。
 """
 from __future__ import annotations
 
@@ -49,52 +49,6 @@ def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -
     return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}
 
 
-def _record_role(record: dict) -> str:
-    provenance = record.get("provenance") or {}
-    role = provenance.get("role")
-    if role:
-        return role
-    return "plate" if record.get("image_merge_mode") == "plate_only" else "line_drawing"
-
-
-def merge_pair_records(records: list[dict]) -> list[dict]:
-    """V0.3 .4.8.2 cross-figure merge: one artifact_id -> one PairRecord.
-
-    Line drawings stay primary; later plates/lines become candidate_images.
-    """
-    merged: dict[tuple[str, str], dict] = {}
-    order: list[tuple[str, str]] = []
-    for record in records:
-        key = (record["book_id"], record["artifact_id"])
-        if key not in merged:
-            merged[key] = dict(record)
-            order.append(key)
-            continue
-        prev = merged[key]
-        if prev["image_path"] == record["image_path"]:
-            continue
-        role = _record_role(record)
-        prev_role = _record_role(prev)
-        if role == "line_drawing" and prev_role != "line_drawing":
-            prev, record = record, prev
-            merged[key] = prev
-        record_role = _record_role(record)
-        prev_role = _record_role(prev)
-        provenance = record.get("provenance") or {}
-        candidate = {
-            "path": record["image_path"],
-            "role": record_role,
-            "source_figure_id": provenance.get("figure_id"),
-        }
-        candidates = prev.setdefault("candidate_images", [])
-        if any(c.get("path") == candidate["path"] for c in candidates):
-            continue
-        candidates.append(candidate)
-        roles = {prev_role, record_role}
-        prev["image_merge_mode"] = "line_plus_plate" if len(roles) == 2 else "multi_candidate"
-        if not prev.get("description_text") and record.get("description_text"):
-            prev["description_text"] = record["description_text"]
-    return [merged[key] for key in order]
 
 
 def run(

@@ -1,4 +1,4 @@
-"""数据契约（对齐《技术方案 V0.3》核心数据结构（§6.1）/ State Schema（§3.4.2））。
+"""数据契约（对齐《技术方案 V0.4》核心数据结构（§6.1）/ State Schema（§3.4.2））。
 
 八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
 全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
@@ -151,7 +151,6 @@ class PipelineFlags(BaseModel):
     """Feature Flag（功能开关与配置管理（§7.5））。硬约束不在此、不可关。"""
     s3_llm_confirm: bool = True
     s9_loop: bool = True
-    cross_fig_merge: bool = False
     rotation_correct: bool = True
     require_human: bool = False
 

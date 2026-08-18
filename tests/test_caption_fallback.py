@@ -20,7 +20,7 @@ from archaeopairs.gateway import Gateway
 from archaeopairs.orchestration import build_graph
 from archaeopairs.parsers import s1_xml, s3_note
 
-EXAMPLES = Path(__file__).resolve().parents[1] / "examples"
+EXAMPLES = Path(__file__).resolve().parents[1] / "books"
 
 
 # ---------- extract_caption_artifacts 纯扫描 ----------
@@ -195,7 +195,7 @@ def _services_from(ground: dict) -> Services:
     th = load_thresholds()
     fl = load_flags()
     return Services(vlm=MockVLM(ground), sam=MockSAM(ground), ocr=MockOCR(ground),
-                    gateway=Gateway(per_figure_cap_cny=th.per_figure_cap_cny),
+                    gateway=Gateway(),
                     thresholds=th, flags=fl)
 
 
@@ -232,7 +232,7 @@ def test_graph_caption_fallback_end_to_end(tmp_path: Path):
 
 
 @pytest.mark.skipif(not (EXAMPLES / "洪洞南秦墓地二〇一六年度发掘报告").exists(),
-                    reason="examples/洪洞南秦 不存在")
+                    reason="books/洪洞南秦 不存在")
 def test_graph_real_hongdong_caption_fallback(tmp_path: Path):
     xml = EXAMPLES / "洪洞南秦墓地二〇一六年度发掘报告" / "data.xml"
     figures, ground, _ = s1_xml.parse_report(xml, "hongdong")

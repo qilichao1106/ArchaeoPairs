@@ -2,6 +2,25 @@
 
 本项目遵循语义化版本（SemVer）。
 
+## [0.4.0] - 2026-08-18
+
+### Added（对齐《技术方案 V0.4》）
+- 三线路图片分类架构：S2 输出 单器物线图/多器物线图/单器物彩图/多器物彩图/其它；单器物（线/彩）→ S7 单器物解析器 → S8 单器物组装器；多器物线图 → S3~S6 切分链路；多器物彩图与其它 → 归档丢弃。
+- S7/S8 更名：彩板解析器 → 单器物解析器，匹配组装器 → 单器物组装器（弱化彩图表述）。
+- B2：S2 单/多器物判定以 XML 器物号为一级证据（rule_b 序号歧义前置消解，parsers/keywords.py）。
+- C1：S1 图注关联支持同图号分组 + 组内面积最大归属 + 图注前置回溯 + 相邻 figure-title 恢复（parsers/s1_xml.py）。
+- 单器物路径命名 01 占位（naming.build_image_name）。
+- 数据库迁移目录 migrations/V001__init.sql（Flyway/Liquibase 风格，§6.5.1）。
+- 输入目录 examples → books；CLI 新增两种输入方式：run-book（单本）与 run-books（目录批量，自动遍历 books/<子目录>/data.xml），默认数据目录 books/。
+
+### Removed（V0.4 范围收敛）
+- 移除成本帽/熔断：gateway.py 去 CostCapExceeded/熔断状态与成本累计；nodes.py 去 cost_cap 分支；Thresholds.per_figure_cap_cny 删除（保留 model_costs 单价）。
+- 移除跨图合并：s8.merge_pair_records 及其测试、cli.py 汇总合并调用、PipelineFlags.cross_fig_merge 与 flags.example.yaml 对应项（V0.4 按单图独立输出）。
+
+### Fixed
+- 修复 routing.py route_single 与 parsers/keywords.py _artifact_signals 乱码 docstring。
+- 代码头部注释版本引用 V0.3 → V0.4。
+
 ## [0.2.1] - 2026-08-17
 
 ### Added（新增《技术方案》图题器物号兜底识别，§2.2.5）

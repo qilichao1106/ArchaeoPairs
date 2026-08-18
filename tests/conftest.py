@@ -36,7 +36,7 @@ def services(synth_book) -> Services:
     th = load_thresholds()
     fl = load_flags()
     return Services(vlm=MockVLM(ground), sam=MockSAM(ground), ocr=MockOCR(ground),
-                    gateway=Gateway(per_figure_cap_cny=th.per_figure_cap_cny),
+                    gateway=Gateway(),
                     thresholds=th, flags=fl)
 
 

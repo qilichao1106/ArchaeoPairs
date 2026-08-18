@@ -1,6 +1,6 @@
 # ArchaeoPairs
 
-考古报告图文 Pair 数据构造多智能体管线。以《考古报告图文Pair数据构造_多智能体方案 V0.3》为唯一设计依据，采用 **LangGraph** 编排，实现"大图拆小图、图文配对、异常闭环"，产出（器物号, 图像, 描述文本）三元组语料。
+考古报告图文 Pair 数据构造多智能体管线。以《考古报告图文Pair数据构造_多智能体方案 V0.4》为唯一设计依据，采用 **LangGraph** 编排，实现"大图拆小图、图文配对、异常闭环"，产出（器物号, 图像, 描述文本）三元组语料。
 
 ## 架构
 
@@ -8,23 +8,24 @@ Supervisor-Worker 范式：S1–S10 十个智能体映射为 LangGraph StateGrap
 
 ```mermaid
 graph TD
-  S1[s1 报告索引] --> S2[s2 图类判定]
-  S2 -->|line_drawing| S3[s3 文本源]
-  S2 -->|line_drawing| S4[s4 图像源]
-  S3 --> S5[s5 融合仲裁]
-  S4 --> S5
-  S5 -->|seq_missing| S10[s10 复核桥接]
-  S5 -->|else| S6[s6 视觉分割]
-  S2 -->|plate| S7[s7 彩板]
-  S7 --> S9
-  S6 --> S9[s9 Supervisor]
-  S9 -->|case_mask_*| S6
-  S9 -->|case_ocr_miss| S4
-  S9 -->|case_text_split_err| S3
-  S9 -->|case_group_error| S8[s8 匹配组装]
-  S9 -->|converged & !assembled| S8
-  S8 --> S9
-  S9 -->|converged & assembled| S10
+  S1[S1 报告索引] --> S2[S2 器类判定器<br>5类决策路由]
+  S2 -->|单器物线图/彩图| S7[S7 单器物解析器<br>整图=单一器物]
+  S2 -->|多器物线图| MT[🔄 多器物线图处理管线 S3~S6]
+  S2 -->|多器物彩图/其它| AR([归档/丢弃])
+  subgraph MT ["多器物线图处理管线 (S3~S6)"]
+    direction LR
+    S3[S3 文本源解析器] --> S5[S5 融合仲裁器<br>双源三链对齐]
+    S4[S4 图像源解析器<br>OCR序号/比例尺] --> S5
+    S5 --> S6[S6 视觉分割器<br>SAM掩膜切分]
+  end
+  S7 --> S8[S8 单器物组装器<br>按artifact_id组装Pair]
+  S6 --> S8
+  S8 --> S9[S9 Supervisor VLM质检<br>诊断&回环≤3轮]
+  S9 -->|合格| O[输出图文Pair]
+  S9 -.->|缺陷:重分割| S6
+  S9 -.->|缺陷:重切正文| S3
+  S9 -.->|缺陷:重对齐| S4
+  S9 -->|存疑/不合格| S10[S10 人工复核桥接器<br>Label Studio复核]
   S10 --> OUT[OUTPUT / PENDING_REVIEW]
 ```
 
@@ -42,10 +43,16 @@ python -m venv .venv
 .venv/Scripts/python -m pytest                    # 运行测试
 ```
 
-跑批（P0，mock 能力接口）：
+跑批（P0，mock 能力接口），两种输入方式：
 
 ```bash
-.venv/Scripts/python -m archaeopairs.cli run-book --book 郑州商城 --examples examples/
+# 方式一：指定单本书（默认数据目录 books/，书名 = books/<书名>/data.xml）
+.venv/Scripts/python -m archaeopairs.cli run-book --book 郑州商城
+.venv/Scripts/python -m archaeopairs.cli run-book --book 郑州商城 --books-dir books/ --limit 30
+
+# 方式二：指定目录批量跑所有书（books/<子目录>/data.xml）
+.venv/Scripts/python -m archaeopairs.cli run-books
+.venv/Scripts/python -m archaeopairs.cli run-books --books-dir books/
 ```
 
 ## 目录结构
@@ -54,7 +61,7 @@ python -m venv .venv
 src/archaeopairs/
   state.py               # pydantic v2 State/数据契约（§6.1）
   errors.py              # E-code 异常体系（§6.4）
-  gateway.py             # 模型网关：录制/回放/限流/熔断/成本帽（§9.1）
+  gateway.py             # 模型网关：录制/回放/重试（§9.1）
   capability/            # VLM/SAM/OCR 抽象 + mock 实现
   parsers/               # S1 XML / S3 图注(策略注册) / S3 正文
   agents/                # S1–S10 智能体模块
@@ -64,6 +71,7 @@ src/archaeopairs/
   config/                # thresholds/flags 加载
 tests/                   # 三层测试
 ddl.sql                  # PostgreSQL DDL（§6.5）
+migrations/             # Flyway/Liquibase 迁移脚本（V001__init.sql 起，§6.5.1）
 config/*.example.yaml    # 配置样例（真实配置不入库）
 ```
 
@@ -78,9 +86,9 @@ cp config/flags.example.yaml config/flags.yaml
 
 ## 数据与模型
 
-- 示例数据 `examples/` 仅含脱敏 XML；media/原图与模型权重不入库，经对象存储/HuggingFace 获取。
+- 书籍数据 `books/`（每本一个子目录，内含 `data.xml`；`books/*` 不入库）；media/原图与模型权重同样不入库，经对象存储/HuggingFace 获取。
 - 能力接口（VLM/SAM/OCR）为抽象层，P0 用 `capability/mock.py`，生产可替换 transformers 实现。
 
 ## License
 
-见 [LICENSE](LICENSE)（MIT 占位，正式由项目方在 Apache-2.0/MIT 间确认）。
+见 [LICENSE](LICENSE)（Apache-2.0）。

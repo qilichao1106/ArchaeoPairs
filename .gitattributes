@@ -1,0 +1,7 @@
+# 二进制文件（GitHub 规范：声明 binary，禁用 textconv 尝试）
+*.docx binary
+*.doc binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.sqlite3 binary

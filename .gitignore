@@ -26,7 +26,7 @@ artifacts/
 *.onnx
 *.safetensors
 data/
-examples/*
+books/*
 
 # IDE
 .vscode/
@@ -37,3 +37,9 @@ examples/*
 
 # QwenWork 缓存
 .workbuddy/
+
+# 临时/备份文件
+.$*
+*.bkp
+~$*
+verify/
