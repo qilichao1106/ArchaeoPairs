@@ -18,7 +18,6 @@ def run(state: dict, svc: Services) -> dict:
             image_ref=state["fileref"], caption=state.get("caption"),
             figure_note=state.get("figure_note"),
             operation="classify", iteration=state.get("iteration", 0),
-            cost=svc.thresholds.model_costs.get("vlm", 0.0),
         )
         itype = refine_image_type(resp["image_type"], state.get("caption"), state.get("figure_note"))
         if itype in {"discarded", "plate_scene", "multi_plate"}:

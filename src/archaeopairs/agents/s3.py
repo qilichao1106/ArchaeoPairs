@@ -56,7 +56,6 @@ def run(state: dict, svc: Services) -> dict:
                     "vlm", svc.vlm.confirm_text,
                     figure_id=state["figure_id"], trace_id=state["trace_id"],
                     operation="confirm_text", iteration=state.get("iteration", 0),
-                    cost=svc.thresholds.model_costs.get("vlm", 0.0),
                     artifact_id=item.artifact_id, text=item.text,
                     context={"figure_number": fig_number, "markers": item.markers},
                 )

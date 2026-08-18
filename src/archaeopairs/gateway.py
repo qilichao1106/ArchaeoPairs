@@ -34,7 +34,7 @@ class Gateway:
         self._replay = replay or {}
 
     def call(self, service: str, fn: Callable[..., Any], *, figure_id: str,
-             trace_id: str, cost: float = 0.0, operation: str = "call",
+             trace_id: str, operation: str = "call",
              iteration: int = 0, **kwargs: Any) -> Any:
         key = f"{service}:{operation}:{figure_id}:{iteration}"
         if key in self._replay:

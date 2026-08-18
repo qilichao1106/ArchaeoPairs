@@ -10,11 +10,6 @@ text:
 loop:
   max_iteration: 3            # 迭代上限（硬约束，不可被 flag 关闭）
   no_improve_rounds: 2        # 连续无改善轮数
-cost:
-  model_costs:                # 网关成本核算单价（§9.2 资源估算），生产按实际价格调整
-    vlm: 0.05
-    sam: 0.01
-    ocr: 0.005
 confidence:
   chain123: 0.95
   chain12: 0.85

@@ -35,7 +35,6 @@ def run(state: dict, svc: Services) -> dict:
         "sam", svc.sam.segment, figure_id=state["figure_id"], trace_id=state["trace_id"],
         image_ref=state["fileref"], prompts=prompts,
         operation="segment", iteration=state.get("iteration", 0),
-        cost=svc.thresholds.model_costs.get("sam", 0.0),
     )
     for m in masks:  # 硬约束：必须为掩膜，禁 bbox 切割
         if not m.get("mask_rle"):
