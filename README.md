@@ -22,9 +22,9 @@ graph TD
   S6 --> S8
   S8 --> S9[S9 Supervisor VLM质检<br>诊断&回环≤3轮]
   S9 -->|合格| O[输出图文Pair]
-  S9 -.->|缺陷:重分割| S6
   S9 -.->|缺陷:重切正文| S3
   S9 -.->|缺陷:重对齐| S4
+  S9 -.->|缺陷:重分割| S6
   S9 -->|存疑/不合格| S10[S10 人工复核桥接器<br>Label Studio复核]
   S10 --> OUT[OUTPUT / PENDING_REVIEW]
 ```
