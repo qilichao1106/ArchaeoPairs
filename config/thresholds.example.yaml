@@ -19,3 +19,13 @@ confidence:
   chain3: 0.50
 review:
   pending_pause_ratio: 0.20   # 分报告自适应（批处理与并发（§9.3））
+
+capability:
+  timeouts:                   # 能力接口超时（§5.1.4/T25，可配）
+    vlm: 30.0                 # VLM 30s
+    sam: 20.0                 # SAM 20s
+    ocr: 10.0                 # OCR 10s
+  rate_limits:                # Worker 配额限流 QPS（§6.3/T25，防 GPU 打爆；0/缺省=不限）
+    vlm: 12                   # 对齐 §9.2 VLM 档位 B QPS 12
+    sam: 16                   # 对齐 §9.2 SAM QPS 16
+    ocr: 0                    # OCR 离线批处理不限流

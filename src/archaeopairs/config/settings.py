@@ -28,6 +28,11 @@ class Thresholds(BaseModel):
         "chain23": 0.70, "chain2": 0.60, "chain3": 0.50,
     })
     pending_pause_ratio: float = 0.20
+    # 能力接口契约（§5.1.4/T25）：超时可配；模型网关按 Worker 配额限流（§6.3）
+    timeouts: dict[str, float] = Field(default_factory=lambda: {
+        "vlm": 30.0, "sam": 20.0, "ocr": 10.0,
+    })
+    rate_limits: dict[str, float] = Field(default_factory=dict)  # {service: QPS}，空=不限
 
 
 def _load_yaml(name: str) -> dict:
@@ -51,6 +56,9 @@ def load_thresholds() -> Thresholds:
         flat["confidence"] = raw["confidence"]
     if "review" in raw:
         flat["pending_pause_ratio"] = raw["review"].get("pending_pause_ratio", 0.20)
+    if "capability" in raw:
+        flat["timeouts"] = raw["capability"].get("timeouts", flat.get("timeouts"))
+        flat["rate_limits"] = raw["capability"].get("rate_limits", flat.get("rate_limits"))
     return Thresholds(**{k: v for k, v in flat.items() if v is not None})
 
 

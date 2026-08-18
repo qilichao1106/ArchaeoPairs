@@ -12,6 +12,7 @@
 - 单器物路径命名 01 占位（naming.build_image_name）。
 - 数据库迁移目录 migrations/V001__init.sql（Flyway/Liquibase 风格，§6.5.1）。
 - 输入目录 examples → books；CLI 新增两种输入方式：run-book（单本）与 run-books（目录批量，自动遍历 books/<子目录>/data.xml），默认数据目录 books/。
+- 预算对齐（§9.2/§5.1.4/T25）：移除 cost 单价配置（V0.4 无成本单价字段）；模型网关新增 Worker 配额限流（QPS 可配，vlm 12 / sam 16）与可配超时（VLM 30s / SAM 20s / OCR 10s），thresholds.example.yaml 新增 capability 段。
 
 ### Removed（V0.4 范围收敛）
 - 移除成本帽/熔断：gateway.py 去 CostCapExceeded/熔断状态与成本累计；nodes.py 去 cost_cap 分支；Thresholds.per_figure_cap_cny 删除（保留 model_costs 单价）。

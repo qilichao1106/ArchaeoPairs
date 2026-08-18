@@ -68,7 +68,7 @@ def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sq
     flags = load_flags()
     store = LocalObjectStore("runs/objects")
     svc = Services(vlm=MockVLM(ground), sam=MockSAM(ground), ocr=MockOCR(ground),
-                   gateway=Gateway(),
+                   gateway=Gateway(timeouts=thresholds.timeouts, rate_limits=thresholds.rate_limits),
                    thresholds=thresholds, flags=flags,
                    object_store=store, compositor=MockCompositor(store),
                    review_bridge=MockReviewBridge(), ground=ground)
