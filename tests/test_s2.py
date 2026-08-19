@@ -18,6 +18,43 @@ def test_single_plate_from_note_artifact():
     assert classify_image_type("图版一 器物", "1. 罐（M4:1）") == "single_plate_artifact"
 
 
+def test_multi_line_skipped_by_s2():
+    # 临时试点：multi_line_artifact 在 S2 置 MULTI_LINE_SKIPPED（归档留痕、可恢复），不进入 S3~S6
+    from archaeopairs.agents import s2
+
+    st = {"image_type": None, "status": "PARSED",
+          "caption": "图1 出土器物", "figure_note": "1.鼎（M3：1） 2.鬲（M3：2）",
+          "fileref": None, "image_base": None}
+    out = s2.run(st, object())
+    assert out["image_type"] == "multi_line_artifact"
+    assert out["status"] == "MULTI_LINE_SKIPPED"
+    assert out["exclude_reason"] == "multi_line_skipped"
+
+
+def test_single_artifact_stays_classified():
+    # 单器物线图 → CLASSIFIED_SINGLE_LINE（§6.2 状态机，V0.5.2 对齐）
+    from archaeopairs.agents import s2
+
+    st = {"image_type": None, "status": "PARSED",
+          "caption": "图2-1-5 M4出土铜鼎（M4：6）纹饰", "figure_note": None,
+          "fileref": None, "image_base": None}
+    out = s2.run(st, object())
+    assert out["image_type"] == "single_line_artifact"
+    assert out["status"] == "CLASSIFIED_SINGLE_LINE"
+
+
+def test_single_plate_classified_plate():
+    # 单器物彩图 → CLASSIFIED_PLATE
+    from archaeopairs.agents import s2
+
+    st = {"image_type": None, "status": "PARSED",
+          "caption": "图版一 器物", "figure_note": "1. 罐（M4:1）",
+          "fileref": None, "image_base": None}
+    out = s2.run(st, object())
+    assert out["image_type"] == "single_plate_artifact"
+    assert out["status"] == "CLASSIFIED_PLATE"
+
+
 def test_multi_line_from_note_artifacts():
     note = "1. 陶豆（M4:1） 2. 陶壶（M4:2）"
     assert classify_image_type("图一 出土器物", note) == "multi_line_artifact"
@@ -90,6 +127,21 @@ def test_lineart_hint_pure():
     assert has_lineart_hint("图 三 器物线描图", "1. 纹饰")
     assert has_lineart_hint("图 四 文字摹写", None)
     assert not has_lineart_hint("图 五 器物照片", "1. 罐（M4:1）")
+
+
+def test_gray_photo_without_hint_is_plate(tmp_path):
+    # 灰度照片（连续影调、无拓图词）→ 彩版族（V0.5.2 评审 P1：S2 判定口径入库）
+    from PIL import Image
+
+    img = Image.new("RGB", (100, 80), (255, 255, 255))
+    for x in range(100):
+        v = int(255 * x / 100)
+        for y in range(80):
+            img.putpixel((x, y), (v, v, v))
+    p = tmp_path / "g.png"
+    img.save(p)
+    assert classify_image_type("图八 器物照片", "1. 罐（M4:1）", p) == "single_plate_artifact"
+    assert classify_image_type("图八 器物照片", "1. 罐（M4:1） 2. 壶（M4:2）", p) == "multi_plate_artifact"
 
 
 def test_color_not_overridden_by_tuopian(tmp_path):

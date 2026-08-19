@@ -1,4 +1,4 @@
-"""V0.4 S7 single-artifact parser tests (lines and plates)."""
+"""V0.5.1 S7 single-artifact parser tests (lines and plates)."""
 from __future__ import annotations
 
 from archaeopairs.agents import s7, s8
@@ -22,7 +22,7 @@ def test_single_line_from_caption(services):
           "book_id": "b", "figure_id": "b:line", "fileref": "m/i.jpg",
           "figure_note": None, "text_artifacts": [], "body_paras": [], "trace_id": "t"}
     out = s7.run(st, services)
-    assert out["status"] == "CLASSIFIED"
+    assert out["status"] == "CLASSIFIED_SINGLE_LINE"
     item = out["single_artifacts"][0]
     assert item["artifact_id"] == "M4:6"
     assert item["role"] == "line_drawing"

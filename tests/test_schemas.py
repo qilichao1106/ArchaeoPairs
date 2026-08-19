@@ -26,6 +26,7 @@ def test_dump_schemas(tmp_path):
 def test_pair_record_candidate_images():
     pr = PairRecord(
         book_id="b",
+        figure_id="b:f1",
         artifact_id="M4:1",
         image_path="primary.png",
         candidate_images=[ImageRef(path="plate.png", role="plate")],
@@ -33,3 +34,10 @@ def test_pair_record_candidate_images():
     )
     assert pr.candidate_images[0].role == "plate"
     assert pr.image_merge_mode == "line_plus_plate"
+
+
+def test_pair_record_idempotent_key_includes_figure():
+    # 评审 V0.5.1 P1：幂等键 = book_id+figure_id+artifact_id（同 artifact 跨图独立成 Pair）
+    a = PairRecord(book_id="b", figure_id="b:f1", artifact_id="M4:1", image_path="a.png")
+    b = PairRecord(book_id="b", figure_id="b:f2", artifact_id="M4:1", image_path="b.png")
+    assert (a.book_id, a.figure_id, a.artifact_id) != (b.book_id, b.figure_id, b.artifact_id)

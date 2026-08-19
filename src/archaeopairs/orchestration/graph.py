@@ -22,13 +22,16 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
                             ["parse_text", "parse_image", "parse_single", END])
     g.add_edge("parse_text", "fuse")
     g.add_edge("parse_image", "fuse")
-    # V0.4 single path: S7 -> S8 -> S9 mandatory final check
+    # V0.5.1 single path: S7 -> S8 -> S10（整图即 Pair，不经 S9）
     g.add_conditional_edges("parse_single", routing.route_single,
                             {"assemble": "assemble", "bridge_review": "bridge_review", END: END})
     g.add_conditional_edges("fuse", routing.route_fuse,
                             {"segment": "segment", "bridge_review": "bridge_review"})
-    g.add_edge("segment", "supervise")
-    g.add_edge("assemble", "supervise")
+    # V0.5.1 拓扑（§3.4.5）：单器物 S1-S2-S7-S8-S10（整图即 Pair，不经 S9）；
+    # 多器物线图 S1-S2-S3/S4-S5-S6-S8-S9-S10（S6→S8 先组装，S8→S9 监督终检，S10 两级）。
+    g.add_edge("segment", "assemble")  # S6 -> S8
+    g.add_conditional_edges("assemble", routing.route_assemble,
+                            {"supervise": "supervise", "bridge_review": "bridge_review"})
 
     def _route_sup(st: dict):
         return routing.route_supervise(st, svc.thresholds.max_iteration, svc.flags.s9_loop)

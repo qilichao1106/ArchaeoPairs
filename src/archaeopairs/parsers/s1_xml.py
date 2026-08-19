@@ -1,4 +1,4 @@
-"""S1 报告索引器（对齐《技术方案 V0.4》报告索引器（§4.1）/ XML 结构（§2.1）上游输入契约）。
+"""S1 报告索引器（对齐《技术方案 V0.5.1》报告索引器（§4.1）/ XML 结构（§2.1）上游输入契约）。
 
 解析 DocBook data.xml：关联 figure 与 figure-title/figure-note，产出
 FigureRecord 列表与 ground（供 mock 能力接口），并做摄入期契约校验。

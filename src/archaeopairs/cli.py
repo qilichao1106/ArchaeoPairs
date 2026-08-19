@@ -104,7 +104,7 @@ def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sq
             pair_rows.extend(result.get("pair_records", []))
             if session_factory is not None:
                 _persist(session_factory, fig, result)
-    pairs = pair_rows  # V0.4 范围：按单图独立输出，不做跨图聚合
+    pairs = pair_rows  # 当前版本（V0.5.1）范围：按单图独立输出，不做跨图聚合
     return {"figures": len(figures), "violations": violations,
             "pairs": len(pairs), "statuses": statuses, "records": pairs}
 

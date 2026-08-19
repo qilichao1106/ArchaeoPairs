@@ -1,4 +1,4 @@
-"""数据契约（对齐《技术方案 V0.4》核心数据结构（§6.1）/ State Schema（§3.4.2））。
+"""数据契约（对齐《技术方案 V0.5.1》核心数据结构（§6.1）/ State Schema（§3.4.2））。
 
 八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
 全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
@@ -19,14 +19,18 @@ ImageType = Literal[
     "single_line_artifact", "multi_line_artifact",
     "single_plate_artifact", "multi_plate_artifact", "discarded",
 ]
+# case_type 口径（V0.5.2 评审 P1）：S5 域 5 值 + S7 单器物路径标记 2 值；
+# multi_plate_artifact / discarded 在 S2 即归档，不产生 case_type，不在枚举内。
 CaseType = Literal[
     "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing",
-    "single_line_artifact", "single_plate_artifact", "discarded",
+    "single_line_artifact", "single_plate_artifact",
 ]
+# FigureStatus 口径（V0.5.2 评审 P1，对齐 §6.2）：删 SEG_DIAGNOSED（S6 完成→SEGMENTED）；
+# 增 CLASSIFIED_SINGLE_LINE（单器物线图支路）与 MULTI_LINE_SKIPPED（P0 试点临时态，可恢复）。
 FigureStatus = Literal[
-    "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_PLATE", "ALIGNED",
-    "SEG_DIAGNOSED", "SEGMENTED", "ASM_VALIDATED", "OUTPUT",
-    "PENDING_REVIEW", "EXCLUDED", "FAILED", "DEGRADED",
+    "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_SINGLE_LINE", "CLASSIFIED_PLATE",
+    "ALIGNED", "SEGMENTED", "ASM_VALIDATED", "OUTPUT",
+    "EXCLUDED", "PENDING_REVIEW", "FAILED", "DEGRADED", "MULTI_LINE_SKIPPED",
 ]
 DefectType = Literal[
     "under_seg", "over_seg", "mask_incomplete", "scale_mismatch", "seq_mismatch",
@@ -124,8 +128,13 @@ class DiagnosticReport(BaseModel):
 
 
 class PairRecord(BaseModel):
-    """S8 Pair 产出（匹配组装器（§4.8）/ 输出契约（§7））。"""
+    """S8 Pair 产出（匹配组装器（§4.8）/ 输出契约（§7））。
+
+    figure_id 入逻辑键：当前版本单图独立输出、不跨图聚合，同一 artifact_id
+    跨图出现时各图独立成 Pair（幂等键 = book_id+figure_id+artifact_id）。
+    """
     book_id: str
+    figure_id: str
     artifact_id: str
     image_path: str
     candidate_images: list[ImageRef] = Field(default_factory=list)

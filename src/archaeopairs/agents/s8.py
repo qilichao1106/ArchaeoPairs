@@ -4,7 +4,7 @@
 归一+_N 去重（文件命名规范（§7.2））；经合成器写对象存储；无映射 mask 不静默丢弃（转复核）。
 
 V0.3/V0.4 单器物路径：整图单一器物 → 单个 PairRecord（single_artifacts 驱动），
-seq 段以 01 占位（单器物命名占位判断）；跨图合并不在 V0.4 范围（按单图独立输出）。
+seq 段以 01 占位（单器物命名占位判断）；跨图合并不在当前版本（V0.5.1）范围（按单图独立输出）。
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ _MergeMode = Literal["line_only", "plate_only", "line_plus_plate", "multi_candid
 
 
 def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -> dict:
-    """S8 single-artifact assembly (V0.4 §4.8): whole image -> one PairRecord."""
+    """S8 single-artifact assembly (V0.5.1 §4.8): whole image -> one PairRecord."""
     book_id = state["book_id"]
     registry: dict[str, int] = svc.name_registry
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
@@ -38,7 +38,7 @@ def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -
         if svc.compositor is not None and svc.object_store is not None:
             svc.compositor.compose(image_path=name, masks=[], trace_id=state["trace_id"])
         records.append(PairRecord(
-            book_id=book_id, artifact_id=art, image_path=name,
+            book_id=book_id, figure_id=state["figure_id"], artifact_id=art, image_path=name,
             candidate_images=[],
             image_merge_mode=merge_mode,
             description_text=desc.get(art),
@@ -84,7 +84,7 @@ def run(
             svc.compositor.compose(image_path=name, masks=ms, trace_id=state["trace_id"])
         art_source = "caption" if (art in caption_arts and art not in note_arts) else "figure_note"
         records.append(PairRecord(
-            book_id=book_id, artifact_id=art, image_path=name,
+            book_id=book_id, figure_id=state["figure_id"], artifact_id=art, image_path=name,
             candidate_images=[],
             image_merge_mode="line_only",
             description_text=desc.get(art),

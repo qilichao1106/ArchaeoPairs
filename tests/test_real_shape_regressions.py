@@ -238,7 +238,7 @@ def test_fig_number_body_ref_canonical():
 
 
 def test_single_path_name_uses_01_placeholder():
-    # V0.4 §7.2：单器物路径无图片内序号 → 序号段固定占位 01
+    # V0.5.1 §7.2：单器物路径无图片内序号 → 序号段固定占位 01
     assert naming.build_image_name("图2-1-5", None, "M4:6") == "图2-1-5_01_M4-6.png"
     assert naming.build_image_name("图版七二", None, "M1:54") == "图版七二_01_M1-54.png"
 

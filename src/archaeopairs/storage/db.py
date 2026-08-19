@@ -52,6 +52,7 @@ class PairRecordRow(Base):
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     book_id: Mapped[str] = mapped_column(Text)
+    figure_id: Mapped[str] = mapped_column(Text)
     artifact_id: Mapped[str] = mapped_column(Text)
     image_path: Mapped[str] = mapped_column(Text)
     candidate_images: Mapped[list | None] = mapped_column(JSON)
@@ -59,7 +60,8 @@ class PairRecordRow(Base):
     description_text: Mapped[str | None] = mapped_column(Text)
     provenance: Mapped[dict | None] = mapped_column(JSON)
     quality_flags: Mapped[dict | None] = mapped_column(JSON)
-    __table_args__ = (UniqueConstraint("book_id", "artifact_id", name="uq_pair_key"),)
+    # 评审 V0.5.1 P1：figure_id 入幂等键（单图独立输出，同 artifact 跨图不冲突）
+    __table_args__ = (UniqueConstraint("book_id", "figure_id", "artifact_id", name="uq_pair"),)
 
 
 class ReviewTaskRow(Base):

@@ -7,16 +7,30 @@ from archaeopairs.orchestration import routing
 
 
 def test_route_classify():
-    assert routing.route_classify({"image_type": "multi_line_artifact"}) == ["parse_text", "parse_image"]
-    assert routing.route_classify({"image_type": "single_line_artifact"}) == ["parse_single"]
-    assert routing.route_classify({"image_type": "single_plate_artifact"}) == ["parse_single"]
+    # 临时试点：multi_line 暂不处理（s2 置 MULTI_LINE_SKIPPED 归档留痕），路由返回 [END]
+    assert routing.route_classify({"image_type": "multi_line_artifact"}) == [END]
+    assert routing.route_classify(
+        {"image_type": "multi_line_artifact", "status": "MULTI_LINE_SKIPPED"}) == [END]
+    assert routing.route_classify(
+        {"image_type": "single_line_artifact", "status": "CLASSIFIED_SINGLE_LINE"}) == ["parse_single"]
+    assert routing.route_classify(
+        {"image_type": "single_plate_artifact", "status": "CLASSIFIED_PLATE"}) == ["parse_single"]
     assert routing.route_classify({"image_type": "multi_plate_artifact"}) == [END]
     assert routing.route_classify({"image_type": "discarded"}) == [END]
 
 
+def test_route_assemble():
+    # S8 分流：单器物整图即 Pair → S10；多器物线图 → S9 监督终检；异常 → 复核
+    assert routing.route_assemble({"image_type": "single_line_artifact", "status": "ASM_VALIDATED"}) == "bridge_review"
+    assert routing.route_assemble({"image_type": "single_plate_artifact", "status": "ASM_VALIDATED"}) == "bridge_review"
+    assert routing.route_assemble({"image_type": "multi_line_artifact", "status": "ASM_VALIDATED"}) == "supervise"
+    assert routing.route_assemble({"image_type": "multi_line_artifact", "status": "PENDING_REVIEW"}) == "bridge_review"
+
+
 def test_route_single():
-    # V0.4 single path: S7 -> S8 -> S9 -> review/output
-    assert routing.route_single({"status": "CLASSIFIED"}) == "assemble"
+    # V0.5.1 single path: S7 -> S8 -> S10（不经 S9）
+    assert routing.route_single({"status": "CLASSIFIED_SINGLE_LINE"}) == "assemble"
+    assert routing.route_single({"status": "CLASSIFIED_PLATE"}) == "assemble"
     assert routing.route_single({"status": "EXCLUDED"}) == END
     assert routing.route_single({"status": "PENDING_REVIEW"}) == "bridge_review"
 
@@ -43,6 +57,14 @@ def test_route_supervise_targets():
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "ocr_miss"}]}}) == "parse_image"
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "text_split_err"}]}}) == "parse_text"  # noqa: E501
     assert routing.route_supervise({**base, "diagnostic": {"defect_list": [{"type": "group_error"}]}}) == "assemble"
+
+
+def test_route_supervise_orientation_err_routes_to_segment():
+    # 评审 V0.5.1 P1：orientation_err 随 mask 缺陷组回 s6（整图旋转校正后重分割），
+    # 不再落入兜底 bridge_review（文档 §3.4.3 路由表与代码行为一致）。
+    st = {"diagnostic": {"defect_list": [{"type": "orientation_err"}]},
+          "assembled": False, "iteration": 0}
+    assert routing.route_supervise(st, max_iteration=3, loop_enabled=True) == "segment"
 
 
 def test_route_supervise_no_improve_escalates():

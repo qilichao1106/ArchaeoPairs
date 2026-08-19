@@ -45,6 +45,8 @@ def run(state: dict, svc: Services) -> dict:
         "action_params": action_params, "expected_result": resp.get("expected_result"),
         "iteration": iteration, "escalation_level": escalation,
     }
-    status = "PENDING_REVIEW" if (no_improve and not converged) else "SEG_DIAGNOSED"
+    # S9 收敛（无缺陷）→ 状态保持 ASM_VALIDATED，由 S10 输出支路转 OUTPUT；
+    # 连续两轮无改善且未收敛 → PENDING_REVIEW（§6.2 状态机，SEG_DIAGNOSED 已删除）。
+    status = "PENDING_REVIEW" if (no_improve and not converged) else "ASM_VALIDATED"
     return {"diagnostic": diagnostic, "iteration": iteration,
             "defect_history": history, "no_improve": bool(no_improve), "status": status}

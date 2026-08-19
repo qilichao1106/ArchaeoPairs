@@ -1,4 +1,4 @@
-"""硬约束报警检测与比例尺三级归属（对齐《技术方案 V0.4》异常报警字典（§6.3）/
+"""硬约束报警检测与比例尺三级归属（对齐《技术方案 V0.5.1》异常报警字典（§6.3）/
 序号硬匹配与比例尺三级（§5.3）/ 附录A 第二篇第4条（序号硬匹配））。
 
 detect_alarms 返回触发的 E001–E007 编码；assign_scales 实现比例尺三级归属。
@@ -11,7 +11,8 @@ from typing import Iterable
 
 def defect_target(defect_type: str) -> str:
     """缺陷类型→修正目标智能体（S3/S4/S6/S8），与路由表一致。"""
-    if defect_type in {"under_seg", "over_seg", "mask_incomplete", "scale_mismatch"}:
+    if defect_type in {"under_seg", "over_seg", "mask_incomplete", "scale_mismatch",
+                       "orientation_err"}:
         return "S6"
     if defect_type in {"seq_mismatch", "ocr_miss"}:
         return "S4"

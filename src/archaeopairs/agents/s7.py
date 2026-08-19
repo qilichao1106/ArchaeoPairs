@@ -1,4 +1,4 @@
-"""S7 single-artifact parser (V0.4 §4.7).
+"""S7 single-artifact parser (V0.5.1 §4.7).
 
 Single-artifact line drawings and single-artifact plates are whole-image
 Pairs: resolve artifact_id from figure-note/caption, attach body text, and
@@ -76,6 +76,6 @@ def run(state: dict, svc: Services) -> dict:
         "text_artifacts": text_artifacts,
         "degraded": source == "caption",
         "case_type": "single_line_artifact" if is_line else "single_plate_artifact",
-        "status": "CLASSIFIED" if is_line else "CLASSIFIED_PLATE",
+        "status": "CLASSIFIED_SINGLE_LINE" if is_line else "CLASSIFIED_PLATE",
         "assembled": False,
     }

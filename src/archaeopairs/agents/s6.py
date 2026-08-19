@@ -55,4 +55,4 @@ def run(state: dict, svc: Services) -> dict:
     if svc.flags.rotation_correct and state.get("orientation") == "v":
         for m in masks:
             m["rotation"] = "cw"
-    return {"masks": masks, "status": "SEG_DIAGNOSED"}
+    return {"masks": masks, "status": "SEGMENTED"}

@@ -1,32 +1,33 @@
 # ArchaeoPairs
 
-考古报告图文 Pair 数据构造多智能体管线。以《考古报告图文Pair数据构造_多智能体方案 V0.4》为唯一设计依据，采用 **LangGraph** 编排，实现"大图拆小图、图文配对、异常闭环"，产出（器物号, 图像, 描述文本）三元组语料。
+考古报告图文 Pair 数据构造多智能体管线。以《考古报告图文Pair数据构造_多智能体方案 V0.5.1》为唯一设计依据，采用 **LangGraph** 编排，实现"大图拆小图、图文配对、异常闭环"，产出（器物号, 图像, 描述文本）三元组语料。
 
 ## 架构
 
-Supervisor-Worker 范式：S1–S10 十个智能体映射为 LangGraph StateGraph 节点，诊断驱动条件边回环（S6→S9→S6），checkpointer 断点续跑，interrupt 人工复核。
+Supervisor-Worker 范式：S1–S10 十个智能体映射为 LangGraph StateGraph 节点。单器物（线图/彩图）：S1→S2→S7→S8→S10；多器物线图：S1→S2→S3/S4→S5→S6→S8→S9→S10。S10 输出/复核桥接两级：合格→输出 Pair，不合格/存疑→Label Studio 复核。checkpointer 断点续跑、interrupt 人工复核。
 
 ```mermaid
 graph TD
-  S1[S1 报告索引] --> S2[S2 器类判定器<br>5类决策路由]
+  S1[S1 报告索引] --> S2[S2 器类判定器<br>XML器物号+像素·五分类]
   S2 -->|单器物线图/彩图| S7[S7 单器物解析器<br>整图=单一器物]
   S2 -->|多器物线图| MT[🔄 多器物线图处理管线 S3~S6]
-  S2 -->|多器物彩图/其它| AR([归档/丢弃])
+  S2 -->|multi_plate/discarded| AR[(归档丢弃)]
   subgraph MT ["多器物线图处理管线 (S3~S6)"]
     direction LR
     S3[S3 文本源解析器] --> S5[S5 融合仲裁器<br>双源三链对齐]
     S4[S4 图像源解析器<br>OCR序号/比例尺] --> S5
     S5 --> S6[S6 视觉分割器<br>SAM掩膜切分]
   end
-  S7 --> S8[S8 单器物组装器<br>按artifact_id组装Pair]
   S6 --> S8
-  S8 --> S9[S9 Supervisor VLM质检<br>诊断&回环≤3轮]
-  S9 -->|合格| O[输出图文Pair]
+  S7 --> S8[S8 组装器<br>单器物整图即Pair / 多器物拆分]
+  S8 -->|单器物| S10[S10 输出/复核桥接器]
+  S8 -->|多器物线图| S9[S9 Supervisor VLM<br>诊断&回环≤3轮]
+  S9 -->|合格| S10
   S9 -.->|缺陷:重切正文| S3
   S9 -.->|缺陷:重对齐| S4
   S9 -.->|缺陷:重分割| S6
-  S9 -->|存疑/不合格| S10[S10 人工复核桥接器<br>Label Studio复核]
-  S10 --> OUT[OUTPUT / PENDING_REVIEW]
+  S10 -->|合格/无缺陷| O[输出图文Pair]
+  S10 -->|不合格/存疑/E005等| LS[Label Studio 复核]
 ```
 
 ## 环境要求

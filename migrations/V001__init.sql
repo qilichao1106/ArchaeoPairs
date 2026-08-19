@@ -1,4 +1,4 @@
--- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.4》数据库 Schema 与索引设计（§6.5）
+-- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.5.2》数据库 Schema 与索引设计（§6.5）
 -- 与 src/archaeopairs/storage/db.py SQLAlchemy 模型一一对应
 
 CREATE TABLE IF NOT EXISTS figure_states (
@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_dr_gin ON diagnostic_reports USING GIN (report js
 CREATE TABLE IF NOT EXISTS pair_records (
     id BIGSERIAL PRIMARY KEY,
     book_id TEXT NOT NULL,
+    figure_id TEXT NOT NULL,
     artifact_id TEXT NOT NULL,
     image_path TEXT NOT NULL,
     candidate_images JSONB NOT NULL DEFAULT '[]'::jsonb,
@@ -46,8 +47,10 @@ CREATE TABLE IF NOT EXISTS pair_records (
     provenance JSONB,
     quality_flags JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT uq_pair_key UNIQUE (book_id, artifact_id)
+    -- 评审 V0.5.1 P1：figure_id 入幂等键（单图独立输出，同 artifact 跨图不冲突）
+    CONSTRAINT uq_pair UNIQUE (book_id, figure_id, artifact_id)
 );
+CREATE INDEX IF NOT EXISTS idx_pair_artifact ON pair_records (book_id, artifact_id);
 
 CREATE TABLE IF NOT EXISTS review_tasks (
     id BIGSERIAL PRIMARY KEY,
