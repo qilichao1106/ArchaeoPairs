@@ -3,7 +3,7 @@ from __future__ import annotations
 from archaeopairs.agents import s3
 
 
-def test_s3_filters_by_figure_and_confirms_low_confidence(services):
+def test_s3_filters_by_figure_and_drops_low_confidence(services):
     state = {
         "book_id": "b",
         "figure_id": "b:f1",
@@ -18,5 +18,6 @@ def test_s3_filters_by_figure_and_confirms_low_confidence(services):
         "trace_id": "t-s3",
     }
     out = s3.run(state, services)
-    assert [t["artifact_id"] for t in out["text_artifacts"]] == ["M4:1", "M4:1"]
-    assert "llm_confirmed" in out["text_artifacts"][1]["markers"]
+    # 锚点段（confidence 0.95）保留；无锚点件数语段（confidence 0.6 < 0.7）被抛弃
+    assert [t["artifact_id"] for t in out["text_artifacts"]] == ["M4:1"]
+    assert all(t["confidence"] >= 0.7 for t in out["text_artifacts"])

@@ -49,19 +49,8 @@ def run(state: dict, svc: Services) -> dict:
     paras = select_paras(body_paras, note_arts | set(caption_arts), fig_number)
     text_artifacts = s3_text.split_body([(p.get("id", ""), p.get("text", "")) for p in paras])
 
-    if svc.flags.s3_llm_confirm:
-        for item in text_artifacts:
-            if item.markers and item.confidence < 0.7:
-                resp = svc.gateway.call(
-                    "vlm", svc.vlm.confirm_text,
-                    figure_id=state["figure_id"], trace_id=state["trace_id"],
-                    operation="confirm_text", iteration=state.get("iteration", 0),
-                    artifact_id=item.artifact_id, text=item.text,
-                    context={"figure_number": fig_number, "markers": item.markers},
-                )
-                if resp.get("accepted"):
-                    item.confidence = max(item.confidence, float(resp.get("confidence", 0.9)))
-                    item.markers.append("llm_confirmed")
+    # 低置信度产物（confidence < 0.7）直接抛弃，不再交由 VLM 确认
+    text_artifacts = [t for t in text_artifacts if t.confidence >= 0.7]
 
     return {
         "note_items": [n.model_dump() for n in note_items],
