@@ -87,8 +87,8 @@ def test_run_single_offline_writes_media_copy(tmp_path: Path):
     assert out_png.read_bytes() == src_bytes
 
 
-def test_run_single_offline_archives_non_single(tmp_path: Path):
-    """非单器物（多器物 → multi_line/skipped、无器物号 → 排除）均不产出 Pair 且不触碰模型。"""
+def test_run_single_offline_skips_multi(tmp_path: Path):
+    """离线单器物入口预筛：多器物线图/彩版/丢弃 → SKIPPED_OFFLINE（需模型，不触碰 No-op）。"""
     xml = """<book>
 <section>
 <figure><mediaobject><imageobject><imagedata fileref="media/image1.jpg"/></imageobject></mediaobject>
@@ -101,6 +101,6 @@ def test_run_single_offline_archives_non_single(tmp_path: Path):
     (book_dir / "data.xml").write_text(xml, encoding="utf-8")
 
     out = run_single_offline("multi", books_dir=str(tmp_path / "books"))
-    # 2 器物 → 多器物线图 → 试点 MULTI_LINE_SKIPPED 归档，不产出 Pair
+    # 2 器物 → multi_line_artifact，需 S3~S6 → 离线零模型预筛跳过，不产出 Pair、不触碰模型
     assert out["pairs"] == 0
-    assert list(out["by_image_type"].values())  # 有判定
+    assert list(out["statuses"].values()) == ["SKIPPED_OFFLINE"]

@@ -1,7 +1,6 @@
 """复核闭环与报警路由测试（调度复核桥接器（§4.10）/ 异常报警字典（§6.3））：报警即 PENDING_REVIEW、禁输出。"""
 from __future__ import annotations
 
-import pytest
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from archaeopairs.agents import Services
@@ -26,7 +25,6 @@ def _services(ground, tmp_path, require_human=False):
                     ground=ground)
 
 
-@pytest.mark.skip(reason="TEMP(skip multi_line)：整图多器物线图路径暂不处理，E006 复核场景待恢复 multi_line 后重开")
 def test_e006_alarm_routes_to_review_no_output(base_state, synth_book, tmp_path):
     _, ground, _ = synth_book
     ground[base_state["figure_id"]]["inject_incomplete"] = True

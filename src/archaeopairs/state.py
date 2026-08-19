@@ -25,12 +25,13 @@ CaseType = Literal[
     "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing",
     "single_line_artifact", "single_plate_artifact",
 ]
-# FigureStatus 口径（V0.5.2 评审 P1，对齐 §6.2）：删 SEG_DIAGNOSED（S6 完成→SEGMENTED）；
-# 增 CLASSIFIED_SINGLE_LINE（单器物线图支路）与 MULTI_LINE_SKIPPED（P0 试点临时态，可恢复）。
+# FigureStatus 口径（V0.5.3 对齐 §6.2）：删 SEG_DIAGNOSED（S6 完成→SEGMENTED）；
+# 增 CLASSIFIED_SINGLE_LINE / CLASSIFIED_PLATE（单器物线图/彩图支路）；
+# multi_line 已恢复主通路，MULTI_LINE_SKIPPED（V0.5.2 试点临时态）移除。
 FigureStatus = Literal[
     "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_SINGLE_LINE", "CLASSIFIED_PLATE",
     "ALIGNED", "SEGMENTED", "ASM_VALIDATED", "OUTPUT",
-    "EXCLUDED", "PENDING_REVIEW", "FAILED", "DEGRADED", "MULTI_LINE_SKIPPED",
+    "EXCLUDED", "PENDING_REVIEW", "FAILED", "DEGRADED",
 ]
 DefectType = Literal[
     "under_seg", "over_seg", "mask_incomplete", "scale_mismatch", "seq_mismatch",

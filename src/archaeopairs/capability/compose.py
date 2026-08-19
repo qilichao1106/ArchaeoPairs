@@ -7,9 +7,8 @@ from __future__ import annotations
 
 import base64
 import zlib
-from typing import Protocol
-
 from pathlib import Path
+from typing import Protocol
 
 # 1x1 纯白 PNG（占位）
 _WHITE_PNG = base64.b64decode(

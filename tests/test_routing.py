@@ -7,10 +7,8 @@ from archaeopairs.orchestration import routing
 
 
 def test_route_classify():
-    # 临时试点：multi_line 暂不处理（s2 置 MULTI_LINE_SKIPPED 归档留痕），路由返回 [END]
-    assert routing.route_classify({"image_type": "multi_line_artifact"}) == [END]
-    assert routing.route_classify(
-        {"image_type": "multi_line_artifact", "status": "MULTI_LINE_SKIPPED"}) == [END]
+    # V0.5.3 恢复：multi_line → parse_text + parse_image（S3/S4 平行）主通路
+    assert routing.route_classify({"image_type": "multi_line_artifact"}) == ["parse_text", "parse_image"]
     assert routing.route_classify(
         {"image_type": "single_line_artifact", "status": "CLASSIFIED_SINGLE_LINE"}) == ["parse_single"]
     assert routing.route_classify(

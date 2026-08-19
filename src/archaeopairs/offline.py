@@ -1,13 +1,13 @@
-"""最小离线运行入口：仅非 multi_line（单器物线/彩图 + multi_plate/discarded 归档）。
+"""最小离线运行入口：仅单器物（single_line/single_plate），零模型推理。
 
 零模型推理：VLM/SAM/OCR 用严格 No-op stub——**一旦被任一节点调用即抛
-NotImplementedError**，从机制上保证本入口不触碰任何模型（不经 S3/S4/S6/S9）。
-只走两路：单器物 ``S1→S2→S7→S8→S10``（整图即 Pair）；multi_plate/discarded
-与 multi_line(试点跳过) ``S1→S2→结尾``（归档）。multi_line 复用临时
-MULTI_LINE_SKIPPED 归档、不计于 pairs。
+NotImplementedError**。S3~S6（multi_line 主通路, V0.5.3 已恢复）需模型，故离线入口
+预筛时把 multi_line / multi_plate / discarded 直接标记 SKIPPED_OFFLINE，不进入图；
+只有单器物走 ``S1→S2→S7→S8→S10``（整图即 Pair）。
 
 写图可选：缺省只出「记录级 Pair」（image_path 为文件名、不落盘）；
-``write_images=True`` 时注入 object_store+compositor，把整图 Pair PNG 写盘。
+``write_images=True`` 时注入 object_store+compositor，把整图 Pair PNG（拷贝 media 原图）
+写盘。
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from .config import load_flags, load_thresholds
 from .gateway import Gateway
 from .orchestration import build_graph
 from .parsers import s1_xml, s3_note
+from .parsers.image_classify import classify_image_type
 from .storage import LocalObjectStore
 
 
@@ -122,6 +123,16 @@ def run_single_offline(book: str, books_dir: str = "books", limit: int | None = 
     by_itype: dict[str, dict[str, int]] = {}
     records: list[dict] = []
     for fig in figures:
+        # 离线单器物入口：预筛只跑单器物路径；multi_line 走 S3~S6 需模型 → 直接标记跳过
+        # （不触碰 No-op 模型），multi_plate/discarded 归档。
+        img = Path(str(xml.parent)) / str(fig.fileref) if fig.fileref else None
+        itype = classify_image_type(fig.caption, fig.figure_note, str(img) if img and img.is_file() else None)
+        by_itype.setdefault(itype, {}).setdefault("SKIPPED_OFFLINE", 0)
+        if itype not in {"single_line_artifact", "single_plate_artifact"}:
+            # 多器物线图/彩图/丢弃：离线(零模型)入口不处理 → 归类跳过
+            by_itype[itype]["SKIPPED_OFFLINE"] += 1
+            statuses[fig.figure_id] = "SKIPPED_OFFLINE"
+            continue
         note_items = s3_note.parse_note(fig.figure_note or "")
         note_arts = {a for it in note_items for a in it.artifact_ids}
         caption_arts = [] if note_arts else s3_note.extract_caption_artifacts(fig.caption)
@@ -136,7 +147,6 @@ def run_single_offline(book: str, books_dir: str = "books", limit: int | None = 
         }
         result = app.invoke(init)
         status = result.get("status", "?")
-        itype = result.get("image_type") or "?"
         statuses[fig.figure_id] = status
         by_itype.setdefault(itype, {}).setdefault(status, 0)
         by_itype[itype][status] += 1

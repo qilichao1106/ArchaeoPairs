@@ -18,8 +18,8 @@ def test_single_plate_from_note_artifact():
     assert classify_image_type("图版一 器物", "1. 罐（M4:1）") == "single_plate_artifact"
 
 
-def test_multi_line_skipped_by_s2():
-    # 临时试点：multi_line_artifact 在 S2 置 MULTI_LINE_SKIPPED（归档留痕、可恢复），不进入 S3~S6
+def test_multi_line_classified_to_multi_path():
+    # V0.5.3 恢复：multi_line_artifact 不再 skip，置 CLASSIFIED 进入 S3~S6 主通路
     from archaeopairs.agents import s2
 
     st = {"image_type": None, "status": "PARSED",
@@ -27,8 +27,7 @@ def test_multi_line_skipped_by_s2():
           "fileref": None, "image_base": None}
     out = s2.run(st, object())
     assert out["image_type"] == "multi_line_artifact"
-    assert out["status"] == "MULTI_LINE_SKIPPED"
-    assert out["exclude_reason"] == "multi_line_skipped"
+    assert out["status"] == "CLASSIFIED"
 
 
 def test_single_artifact_stays_classified():
