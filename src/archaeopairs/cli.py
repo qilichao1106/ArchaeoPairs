@@ -1,8 +1,15 @@
 """CLI：跑批入口（P0 用 mock 能力接口）。
 
-支持两种输入方式：
+支持三种输入方式：
   1) 指定单本书：python -m archaeopairs.cli run-book --book 郑州商城 [--books-dir books]
   2) 指定目录批量：python -m archaeopairs.cli run-books [--books-dir books]
+  3) 最小离线-仅非 multi_line（零模型）：
+       python -m archaeopairs.cli run-single --book 洪洞 [--books-dir books] [--write-images]
+     run-single 走单器物路径 S1→S2→S7→S8→S10（整图即 Pair），multi_plate/discarded
+     与 multi_line(试点跳过) 归档；VLM/SAM/OCR 用 No-op stub——一经调用即失败，
+     从机制上保证零模型推理、无需 GPU。
+     --write-images：把整图 Pair PNG 写到 runs/objects（缺省只出「记录级 Pair」，
+     image_path 为文件名、不落盘）。见 `archaeopairs/offline.py`。
 数据目录默认 books/（每本书一个子目录，内含 data.xml）。
 """
 from __future__ import annotations
@@ -22,6 +29,7 @@ from .capability.compose import MockCompositor
 from .config import load_flags, load_thresholds
 from .gateway import Gateway
 from .integrations import MockReviewBridge
+from .offline import run_single_offline
 from .orchestration import build_graph
 from .parsers import s1_xml, s3_note
 from .storage import DiagnosticReportRow, FigureStateRow, LocalObjectStore, PairRecordRow, make_session_factory
@@ -169,6 +177,12 @@ def main() -> None:
     rbs.add_argument("--db", default="runs/checkpoints.sqlite3")
     rbs.add_argument("--limit", type=int, default=None, help="每本仅处理前 N 图（调试）")
     rbs.add_argument("--persist", action="store_true", help="落库 FigureState/PairRecord")
+    rs = sub.add_parser("run-single", help="最小离线: 仅非 multi_line(单器物/归档), 零模型调用")
+    rs.add_argument("--book", required=True, help="书名（books/<书名>/data.xml）")
+    rs.add_argument("--books-dir", default="books", help="书籍根目录（默认 books）")
+    rs.add_argument("--limit", type=int, default=None, help="仅处理前 N 图（调试）")
+    rs.add_argument("--write-images", action="store_true",
+                    help="写整图 Pair PNG 到 runs/objects（缺省仅记录级 Pair）")
     args = ap.parse_args()
     if args.cmd == "run-book":
         out = run_book(args.book, args.books_dir, args.db, args.limit, args.persist)
@@ -177,6 +191,19 @@ def main() -> None:
     elif args.cmd == "run-books":
         out = run_books(args.books_dir, args.db, args.limit, args.persist)
         print(json.dumps(out, ensure_ascii=False, indent=2))
+    elif args.cmd == "run-single":
+        out = run_single_offline(args.book, args.books_dir, args.limit, args.write_images)
+        # 概览
+        print(json.dumps({k: v for k, v in out.items() if k != "records"},
+                         ensure_ascii=False, indent=2))
+        # 逐条：图片链接 + 描述文本
+        records = out.get("records", [])
+        print(f"\n输出 Pair 数 = {len(records)}")
+        for r in records:
+            link = Path("runs/objects") / r["image_path"]
+            print(f"\n[图] {r.get('figure_id')} | [器物] {r['artifact_id']}")
+            print(f"  图片: {link}   (存在={link.exists()})")
+            print(f"  描述: {r.get('description_text')}")
 
 
 if __name__ == "__main__":

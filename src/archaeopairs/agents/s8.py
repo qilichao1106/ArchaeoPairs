@@ -25,6 +25,12 @@ def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -
     desc = {t["artifact_id"]: t["text"] for t in state.get("text_artifacts", [])}
     fallback_fig = naming.extract_fig_number(state.get("caption"),
                                                fallback=Path(state["fileref"]).stem)
+    # 源图（整图即 Pair → 拷贝原 media 图，而非白底占位）
+    source: str | None = None
+    if state.get("image_base") and state.get("fileref"):
+        _s = Path(state["image_base"]) / state["fileref"]
+        if _s.is_file():
+            source = str(_s)
     records: list[dict] = []
     for item in single_artifacts:
         art = item["artifact_id"]
@@ -36,7 +42,8 @@ def _assemble_single(state: dict, svc: Services, single_artifacts: list[dict]) -
         fig_number = item.get("fig_number") or fallback_fig
         name = naming.dedup_name(naming.build_image_name(fig_number, None, art), registry)
         if svc.compositor is not None and svc.object_store is not None:
-            svc.compositor.compose(image_path=name, masks=[], trace_id=state["trace_id"])
+            svc.compositor.compose(image_path=name, masks=[], trace_id=state["trace_id"],
+                                   source=source)
         records.append(PairRecord(
             book_id=book_id, figure_id=state["figure_id"], artifact_id=art, image_path=name,
             candidate_images=[],

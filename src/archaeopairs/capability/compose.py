@@ -9,6 +9,8 @@ import base64
 import zlib
 from typing import Protocol
 
+from pathlib import Path
+
 # 1x1 纯白 PNG（占位）
 _WHITE_PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/"
@@ -31,15 +33,25 @@ def make_white_png(width: int = 8, height: int = 8) -> bytes:
 
 
 class Compositor(Protocol):
-    def compose(self, *, image_path: str, masks: list[dict], trace_id: str) -> str: ...
+    def compose(self, *, image_path: str, masks: list[dict], trace_id: str,
+                source: str | None = None) -> str: ...
 
 
 class MockCompositor:
-    """P0 占位成图：写白底 PNG 到对象存储，验证命名/去重/存储链路。"""
+    """P0 成图：单器物(masks=[])且给 source → 拷贝原 media 图；否则白底占位。
+
+    `source`: 源图绝对路径（S8 传 image_base/fileref）；masks 为空（整图=单器物
+    Pair）→ `put(key, src)` 直接复制原图；masks 非空（多器物掩膜拆分）仍白底待实现。
+    """
 
     def __init__(self, store) -> None:
         self._store = store
 
-    def compose(self, *, image_path: str, masks: list[dict], trace_id: str) -> str:
+    def compose(self, *, image_path: str, masks: list[dict], trace_id: str,
+                source: str | None = None) -> str:
+        if not masks and source:
+            src = Path(source)
+            if src.is_file():
+                return self._store.put(image_path, src)
         data = make_white_png()
         return self._store.put_bytes(image_path, data)
