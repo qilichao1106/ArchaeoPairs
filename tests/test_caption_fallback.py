@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from archaeopairs.agents import Services, s3, s5, s7, s8, s10
+from archaeopairs.agents import Services, s3, s6, s7, s8, s10
 from archaeopairs.capability import MockOCR, MockSAM, MockVLM
 from archaeopairs.cli import _book_has_artifact
 from archaeopairs.config import load_flags, load_thresholds
@@ -77,7 +77,7 @@ def test_s3_caption_fallback_selects_body(services):
             {"id": "p1", "text": "M4：6，铜鼎。口径20厘米。"},
             {"id": "p2", "text": "M7：1，陶罐。口径12厘米。"},  # 无关器物不取
         ],
-        "iteration": 0, "trace_id": "t-cap",
+        "trace_id": "t-cap",
     }
     out = s3.run(state, services)
     assert out["caption_artifacts"] == ["M4:6"]
@@ -90,7 +90,7 @@ def test_s3_note_wins_over_caption(services):
         "book_id": "b", "figure_id": "b:f-note", "fileref": "media/image2.jpg",
         "caption": "图一 出土器物（M9：9）",
         "figure_note": "1. 陶豆（M4：1）",
-        "body_paras": [], "iteration": 0, "trace_id": "t-note",
+        "body_paras": [], "trace_id": "t-note",
     }
     out = s3.run(state, services)
     assert out["caption_artifacts"] == []
@@ -102,7 +102,7 @@ def test_s3_note_wins_over_caption(services):
 def test_s5_caption_single_art_rule_b(services):
     st = {"note_items": [], "caption_artifacts": ["M4:6"], "figure_note": None,
           "seq_annotations": [], "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "rule_b"
     assert out["degraded"] is True
     assert out["alarms"] == []
@@ -115,7 +115,7 @@ def test_s5_caption_single_art_with_chains_conf(services):
     st = {"note_items": [], "caption_artifacts": ["M4:6"], "figure_note": None,
           "seq_annotations": [{"text": "1", "bbox": (0, 0, 1, 1)}],
           "text_artifacts": [{"artifact_id": "M4:6"}]}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "rule_b"
     assert out["confidence"] == pytest.approx(0.95 * 0.8)
 
@@ -123,7 +123,7 @@ def test_s5_caption_single_art_with_chains_conf(services):
 def test_s5_caption_multi_arts_pending(services):
     st = {"note_items": [], "caption_artifacts": ["M16:2", "M16:1"], "figure_note": None,
           "seq_annotations": [], "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "seq_missing"
     assert "E005" in out["alarms"]
     assert any(c.startswith("caption_multi_artifacts") for c in out["fused"]["conflicts"])
@@ -133,7 +133,7 @@ def test_s5_note_wins_over_caption(services):
     st = {"note_items": [{"seq": "1", "seq_list": [1], "name": None, "artifact_ids": ["M4:1"]}],
           "caption_artifacts": ["M9:9"], "figure_note": "1. 陶豆（M4：1）",
           "seq_annotations": [{"text": "1", "bbox": (0, 0, 1, 1)}], "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "rule_a"
     assert out["fused"]["caption_artifacts"] == []
     assert out["confidence"] == pytest.approx(0.85)  # 链①+链③，不受图题折扣
@@ -157,16 +157,14 @@ def test_s7_plate_caption_fallback(services):
 
 def test_s10_degraded_caption_not_pending(services):
     st = {"figure_id": "b:f-cap", "case_type": "rule_b", "degraded": True, "alarms": [],
-          "defect_history": [0], "iteration": 0,
-          "fused": {"seq_to_artifacts": {}, "caption_artifacts": ["M4:6"]}}
+                    "fused": {"seq_to_artifacts": {}, "caption_artifacts": ["M4:6"]}}
     out = s10.run(st, services)
     assert out["status"] == "OUTPUT"
 
 
 def test_s10_degraded_no_mapping_pending(services):
     st = {"figure_id": "b:f-none", "case_type": "seq_missing", "degraded": True, "alarms": [],
-          "defect_history": [0], "iteration": 0,
-          "fused": {"seq_to_artifacts": {}, "caption_artifacts": []}}
+                    "fused": {"seq_to_artifacts": {}, "caption_artifacts": []}}
     out = s10.run(st, services)
     assert out["status"] == "PENDING_REVIEW"
 
@@ -212,7 +210,7 @@ def test_graph_caption_fallback_end_to_end(tmp_path: Path):
     init = {"book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
             "caption": fig.caption, "figure_note": fig.figure_note,
             "book_has_artifact": True, "body_paras": [],
-            "iteration": 0, "defect_history": [], "assembled": False,
+            "assembled": False,
             "trace_id": "t-cap-e2e", "flags": load_flags().model_dump(), "status": "INIT"}
     db = tmp_path / "ckpt.sqlite3"
     with SqliteSaver.from_conn_string(str(db)) as ckpt:
@@ -245,7 +243,7 @@ def test_graph_real_hongdong_caption_fallback(tmp_path: Path):
     init = {"book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
             "caption": fig.caption, "figure_note": fig.figure_note,
             "book_has_artifact": True, "body_paras": [],
-            "iteration": 0, "defect_history": [], "assembled": False,
+            "assembled": False,
             "trace_id": "t-hd", "flags": load_flags().model_dump(), "status": "INIT"}
     db = tmp_path / "ckpt.sqlite3"
     with SqliteSaver.from_conn_string(str(db)) as ckpt:

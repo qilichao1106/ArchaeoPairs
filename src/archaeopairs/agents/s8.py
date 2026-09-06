@@ -70,7 +70,7 @@ def run(
     caption_arts: set[str] = set(fused.get("caption_artifacts", []))
     note_arts: set[str] = {a for lst in seq_to_arts.values() for a in lst}
     case = state.get("case_type")
-    masks = state.get("masks", [])
+    masks = state.get("atom_masks", [])
     book_id = state["book_id"]
     fig_number = naming.extract_fig_number(state.get("caption"),
                                            fallback=Path(state["fileref"]).stem)
@@ -78,8 +78,8 @@ def run(
     # book 级共享去重注册表：跨图同图号同器物防文件名冲突（文件命名规范（§7.2）重名 _N）
     registry: dict[str, int] = svc.name_registry
     records: list[dict] = []
-    unmatched = [m.get("seq") for m in masks
-                 if m.get("seq") is not None and str(m.get("seq")) not in seq_to_arts]
+    unmatched = [m.get("seq_id") for m in masks
+                 if m.get("seq_id") is not None and str(m.get("seq_id")) not in seq_to_arts]
     if unmatched and case != "rule_b":
         return {"pair_records": [], "assembled": True, "status": "PENDING_REVIEW",
                 "alarms": ["E002"], "exclude_reason": "unmapped_mask"}
@@ -95,7 +95,7 @@ def run(
             candidate_images=[],
             image_merge_mode="line_only",
             description_text=desc.get(art),
-            provenance={"case": case, "seqs": [m.get("seq") for m in ms], "views": views,
+            provenance={"case": case, "seqs": [m.get("seq_id") for m in ms], "views": views,
                         "art_source": art_source},
         ).model_dump())
 
@@ -106,8 +106,8 @@ def run(
             _emit(art, None, masks, views=len(masks))
     else:
         for m in masks:
-            art_list = seq_to_arts.get(str(m.get("seq")), [])
+            art_list = seq_to_arts.get(str(m.get("seq_id")), [])
             for art in art_list:
-                _emit(art, str(m.get("seq")), [m], views=1)
+                _emit(art, str(m.get("seq_id")), [m], views=1)
 
     return {"pair_records": records, "assembled": True, "status": "ASM_VALIDATED"}

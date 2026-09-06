@@ -103,7 +103,7 @@ def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sq
                 "book_has_artifact": True,
                 "image_base": str(xml.parent),
                 "body_paras": paras,
-                "iteration": 0, "defect_history": [], "assembled": False,
+                "assembled": False,
                 "trace_id": str(uuid.uuid4()), "flags": flags.model_dump(),
                 "status": "INIT",
             }
@@ -144,14 +144,13 @@ def _persist(session_factory, fig, result: dict) -> None:
         fs = FigureStateRow(book_id=fig.book_id, figure_id=fig.figure_id, fileref=fig.fileref,
                             caption=fig.caption, figure_note=fig.figure_note,
                             image_type=result.get("image_type"), status=result.get("status"),
-                            iteration=result.get("iteration", 0), case_type=result.get("case_type"),
+                            case_type=result.get("case_type"),
                             trace_id=result.get("trace_id"))
         s.add(fs)
         s.flush()
-        if result.get("diagnostic"):
+        if result.get("qc_report"):
             s.add(DiagnosticReportRow(figure_state_id=fs.id,
-                                      iteration=result.get("iteration", 0),
-                                      report=result["diagnostic"]))
+                                      report=result["qc_report"]))
         for pr in result.get("pair_records", []):
             s.add(PairRecordRow(book_id=pr["book_id"], artifact_id=pr["artifact_id"],
                                 image_path=pr["image_path"],

@@ -25,5 +25,5 @@ def run(state: dict, svc: Services) -> dict:
         return {"image_type": itype, "status": "CLASSIFIED_SINGLE_LINE"}
     if itype == "single_plate_artifact":
         return {"image_type": itype, "status": "CLASSIFIED_PLATE"}
-    # 多器物线图：进入 S3~S6 主通路（V0.5.3 恢复，经 route_classify → parse_text/parse_image）
+    # 多器物线图：进入 S3~S6 主通路（V0.5.4 串行，经 route_classify → s3_text → s4_segment → s5_recognize → s6_compose）
     return {"image_type": itype, "status": "CLASSIFIED"}

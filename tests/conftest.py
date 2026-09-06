@@ -47,6 +47,6 @@ def base_state(synth_book) -> dict:
     return {
         "book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
         "caption": fig.caption, "figure_note": fig.figure_note,
-        "iteration": 0, "defect_history": [], "assembled": False,
+        "assembled": False,
         "trace_id": "t-test", "flags": load_flags().model_dump(), "status": "INIT",
     }

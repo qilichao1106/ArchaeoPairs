@@ -7,9 +7,7 @@ artifact_id:
   naming_accuracy_target: 0.98
 text:
   recall_target: 0.92
-loop:
-  max_iteration: 3            # 迭代上限（硬约束，不可被 flag 关闭）
-  no_improve_rounds: 2        # 连续无改善轮数
+# V0.5.4：loop 节（max_iteration/no_improve_rounds）移除 —— S9 纯质检无迭代回环
 confidence:
   chain123: 0.95
   chain12: 0.85

@@ -1,9 +1,13 @@
 """各 Node 函数：输入 State 键 -> 调用智能体 -> 输出 State 键（节点映射表（§3.4.1）映射）。
 
+Node id（V0.5.4 对齐 §3.4.1）：s1_index / s2_classify / s3_text / s4_segment /
+s5_recognize / s6_compose / s7_single / s8_assemble / s9_supervise / s10_review。
+
 统一异常拦截（多智能体协作架构（§3.1）/ 异常报警字典（§6.3）/ 服务级降级与熔断（§3.7））：
 * AlarmError/HardConstraintError → PENDING_REVIEW + 报警码（报警即停、禁输出 PNG）；
 * E400 OCR 全失败 / E1000(OCR) 熔断 → 链③缺失降级，按降级矩阵继续；
-* E1000(VLM/SAM) 熔断 → PENDING_REVIEW（批次挂起由调度层处理）；
+* E1000(VLM/SAM) 熔断 → PENDING_REVIEW（批次挂起由调度层处理；S9 质检不可用
+  同样全部转复核，宁复核不误放 §4.9.2）；
 * E102/E101 摄入违约 → EXCLUDED；
 """
 from __future__ import annotations
@@ -33,7 +37,7 @@ def _guard(fn: NodeFn) -> NodeFn:
         except HardConstraintError:
             return {"alarms": ["E007"], "status": "PENDING_REVIEW"}
         except E400OcrAllFailError:
-            # OCR 全失败 → 链③缺失降级（错误码字典（§6.4）E400）
+            # OCR 全失败（S5 识别器）→ 链③缺失降级（错误码字典（§6.4）E400）
             return {"seq_annotations": [], "scale_annotations": [], "orientation": "h",
                     "degraded": True}
         except E1000ServiceUnavailableError as exc:
@@ -50,17 +54,17 @@ def _guard(fn: NodeFn) -> NodeFn:
 
 
 def build_nodes(svc: Services) -> dict[str, NodeFn]:
-    """Node 名对齐《编码开发要求》4.1 映射表。"""
+    """Node id 对齐《技术方案 V0.5.4》§3.4.1 节点映射表。"""
     raw = {
-        "parse_report": lambda st: s1.run(st, svc),
-        "classify_figure": lambda st: s2.run(st, svc),
-        "parse_text": lambda st: s3.run(st, svc),
-        "parse_image": lambda st: s4.run(st, svc),
-        "fuse": lambda st: s5.run(st, svc),
-        "segment": lambda st: s6.run(st, svc),
-        "parse_single": lambda st: s7.run(st, svc),
-        "assemble": lambda st: s8.run(st, svc),
-        "supervise": lambda st: s9.run(st, svc),
-        "bridge_review": lambda st: s10.run(st, svc),
+        "s1_index": lambda st: s1.run(st, svc),
+        "s2_classify": lambda st: s2.run(st, svc),
+        "s3_text": lambda st: s3.run(st, svc),
+        "s4_segment": lambda st: s4.run(st, svc),
+        "s5_recognize": lambda st: s5.run(st, svc),
+        "s6_compose": lambda st: s6.run(st, svc),
+        "s7_single": lambda st: s7.run(st, svc),
+        "s8_assemble": lambda st: s8.run(st, svc),
+        "s9_supervise": lambda st: s9.run(st, svc),
+        "s10_review": lambda st: s10.run(st, svc),
     }
     return {name: _guard(fn) for name, fn in raw.items()}

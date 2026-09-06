@@ -15,31 +15,26 @@ def build_graph(svc: Services, checkpointer: BaseCheckpointSaver | None = None):
     for name, fn in fns.items():
         g.add_node(name, fn)  # type: ignore[call-overload]
 
-    g.add_edge(START, "parse_report")
-    g.add_conditional_edges("parse_report", routing.route_s1,
-                            {"classify_figure": "classify_figure", END: END})
-    g.add_conditional_edges("classify_figure", routing.route_classify,
-                            ["parse_text", "parse_image", "parse_single", END])
-    g.add_edge("parse_text", "fuse")
-    g.add_edge("parse_image", "fuse")
+    g.add_edge(START, "s1_index")
+    g.add_conditional_edges("s1_index", routing.route_s1,
+                            {"s2_classify": "s2_classify", END: END})
+    g.add_conditional_edges("s2_classify", routing.route_classify,
+                            ["s3_text", "s7_single", END])
+    # V0.5.4 串行拓扑（§3.4.5）：多器物线图 S3 文本解析先行供链①②，
+    # S4 分割 → S5 识别 → S6 组装串行（与 extract 原型 seg→rec→bind 一致）。
+    g.add_edge("s3_text", "s4_segment")
+    g.add_edge("s4_segment", "s5_recognize")
+    g.add_edge("s5_recognize", "s6_compose")
+    g.add_conditional_edges("s6_compose", routing.route_compose,
+                            {"s8_assemble": "s8_assemble", "s10_review": "s10_review"})
     # V0.5.1 single path: S7 -> S8 -> S10（整图即 Pair，不经 S9）
-    g.add_conditional_edges("parse_single", routing.route_single,
-                            {"assemble": "assemble", "bridge_review": "bridge_review", END: END})
-    g.add_conditional_edges("fuse", routing.route_fuse,
-                            {"segment": "segment", "bridge_review": "bridge_review"})
-    # V0.5.1 拓扑（§3.4.5）：单器物 S1-S2-S7-S8-S10（整图即 Pair，不经 S9）；
-    # 多器物线图 S1-S2-S3/S4-S5-S6-S8-S9-S10（S6→S8 先组装，S8→S9 监督终检，S10 两级）。
-    g.add_edge("segment", "assemble")  # S6 -> S8
-    g.add_conditional_edges("assemble", routing.route_assemble,
-                            {"supervise": "supervise", "bridge_review": "bridge_review"})
-
-    def _route_sup(st: dict):
-        return routing.route_supervise(st, svc.thresholds.max_iteration, svc.flags.s9_loop)
-
-    g.add_conditional_edges("supervise", _route_sup,
-                            {"segment": "segment", "parse_image": "parse_image",
-                             "parse_text": "parse_text", "assemble": "assemble",
-                             "bridge_review": "bridge_review"})
-    g.add_edge("bridge_review", END)
+    g.add_conditional_edges("s7_single", routing.route_single,
+                            {"s8_assemble": "s8_assemble", "s10_review": "s10_review", END: END})
+    g.add_conditional_edges("s8_assemble", routing.route_assemble,
+                            {"s9_supervise": "s9_supervise", "s10_review": "s10_review"})
+    # S9 纯质检门（V0.5.4）：pass/reject 均进 S10 两级分流（输出入库 / 转复核），
+    # 无自动修正回环（route_supervise 回环边删除）。
+    g.add_conditional_edges("s9_supervise", routing.route_qc, {"s10_review": "s10_review"})
+    g.add_edge("s10_review", END)
 
     return g.compile(checkpointer=checkpointer)

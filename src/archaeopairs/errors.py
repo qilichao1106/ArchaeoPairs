@@ -58,7 +58,7 @@ class E301LowConfidenceSplitError(ArchaeoPairsError):
     code = "E301"
 
 
-# ---- S4 ----
+# ---- S5 识别器（V0.5.4：OCR 识别职责自 S4 移至 S5）----
 class E400OcrAllFailError(ArchaeoPairsError):
     """OCR 全失败（链③缺失→降级）。"""
     code = "E400"
@@ -70,13 +70,13 @@ class E401OcrMissKeySeqError(ArchaeoPairsError):
     code = "E401"
 
 
-# ---- S5 ----
+# ---- S6 组装器（V0.5.4：三链仲裁自 S5 并入 S6）----
 class E500ChainConflictError(ArchaeoPairsError):
     """三链冲突。"""
     code = "E500"
 
 
-# ---- S6 ----
+# ---- S4 视觉分割器（V0.5.4：SAM 分割职责自 S6 移至 S4）----
 class E600SamFailError(ArchaeoPairsError):
     """SAM 失败。"""
     code = "E600"
@@ -89,7 +89,7 @@ class E700PlateLayoutError(ArchaeoPairsError):
     code = "E700"
 
 
-# ---- S8 ----
+# ---- S6 组装器（V0.5.4：多视图归组属 E3 归组职责，自 S8 移至 S6）----
 class E800GroupFailError(ArchaeoPairsError):
     """归组失败。"""
     code = "E800"
@@ -97,7 +97,7 @@ class E800GroupFailError(ArchaeoPairsError):
 
 # ---- S9 ----
 class E900SuperviseFailError(ArchaeoPairsError):
-    """Supervisor 诊断失败。"""
+    """Supervisor 质检失败（V0.5.4 纯质检：质检不可用→全部转复核）。"""
     code = "E900"
     retryable = True
 

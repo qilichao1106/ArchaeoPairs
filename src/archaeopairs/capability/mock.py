@@ -12,7 +12,7 @@ from ..state import ScaleAnnotation, SeqAnnotation
 
 
 class MockVLM:
-    """VLM mock：图类判定与诊断（图类判定器（§4.2）/ Supervisor VLM（§4.9））。"""
+    """VLM mock：图类判定与质检（图类判定器（§4.2）/ Supervisor VLM（§4.9））。"""
 
     def __init__(self, ground: Mapping[str, dict]) -> None:
         self._ground = ground
@@ -25,10 +25,8 @@ class MockVLM:
     def diagnose(self, *, image_ref: str, context: dict, trace_id: str,
                  figure_id: str = "", **kw: Any) -> dict:
         g = self._ground.get(figure_id, {})
-        defects = g.get("inject_defects", [])
-        # 若已带指导信号(prompts)且缺陷为可修正类，模拟修正后收敛
-        return {"defect_list": defects, "points": g.get("points", []),
-                "expected_result": g.get("expected_result"), "confidence": 0.9}
+        # V0.5.4 纯质检：注入缺陷驱动 reject/复核测试；无注入 → pass
+        return {"defect_list": g.get("inject_defects", []), "confidence": 0.9}
 
     def confirm_text(self, *, artifact_id: str, text: str, context: dict, trace_id: str,
                      figure_id: str = "", **kw: Any) -> dict:
@@ -37,7 +35,10 @@ class MockVLM:
 
 
 class MockSAM:
-    """SAM mock：按 ground 序号产出掩膜（掩膜三件套，视觉分割器（§4.6））。"""
+    """SAM mock：按 ground 序号产出原子掩膜（视觉分割器（§4.4），掩膜三件套）。
+
+    seq_id 为 P0 便捷绑定提示（真实分割输出留空待 S6 绑定，§4.4.1）。
+    """
 
     def __init__(self, ground: Mapping[str, dict]) -> None:
         self._ground = ground
@@ -52,7 +53,7 @@ class MockSAM:
                 "mask_rle": f"rle-{figure_id}-{seq}",
                 "bbox": (10 * i, 10, 100, 100),
                 "area": 10000,
-                "seq": str(seq),
+                "seq_id": str(seq),
                 "note_text_region": None,
                 "scale_level": 2,
                 "incomplete": incomplete,

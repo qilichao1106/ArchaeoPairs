@@ -1,4 +1,5 @@
--- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.5.2》数据库 Schema 与索引设计（§6.5）
+-- ArchaeoPairs DDL (PostgreSQL) — 对齐《技术方案 V0.5.4》数据库 Schema 与索引设计（§6.5）
+-- V0.5.4：S9 纯质检无迭代回环，figure_states/diagnostic_reports 的 iteration 列移除
 -- 与 src/archaeopairs/storage/db.py SQLAlchemy 模型一一对应
 
 CREATE TABLE IF NOT EXISTS figure_states (
@@ -12,7 +13,6 @@ CREATE TABLE IF NOT EXISTS figure_states (
     image_type TEXT,
     case_type TEXT,
     status TEXT NOT NULL DEFAULT 'INIT',
-    iteration INT NOT NULL DEFAULT 0,
     rule_version TEXT NOT NULL DEFAULT 'r1',
     prompt_version TEXT NOT NULL DEFAULT 'p1',
     judge_prompt_version TEXT NOT NULL DEFAULT 'j1',
@@ -28,11 +28,10 @@ CREATE INDEX IF NOT EXISTS idx_fs_book ON figure_states (book_id);
 CREATE TABLE IF NOT EXISTS diagnostic_reports (
     id BIGSERIAL PRIMARY KEY,
     figure_state_id BIGINT NOT NULL REFERENCES figure_states(id) ON DELETE CASCADE,
-    iteration INT NOT NULL,
     report JSONB NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_dr_fig ON diagnostic_reports (figure_state_id, iteration);
+CREATE INDEX IF NOT EXISTS idx_dr_fig ON diagnostic_reports (figure_state_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_dr_gin ON diagnostic_reports USING GIN (report jsonb_path_ops);
 
 CREATE TABLE IF NOT EXISTS pair_records (

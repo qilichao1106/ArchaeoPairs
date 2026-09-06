@@ -1,112 +1,59 @@
-"""S5 融合仲裁器（§4.5）。Node: 三链对齐→fused+case_type+报警（纯仲裁，不反推）。
+"""S5 识别器（§4.5）。Node: 链③标注识别（序号/比例尺/说明文字/连接符）。
 
-整改：seq→多 artifact（同号/区间不截断）；链①⇄链③序号硬匹配与冲突检测；
-按降级矩阵判定（图注整图缺失且链②/③可用→降级而非硬报警）。
-配对一律按位置对应（zip）：多 seq 多 artifact 不展开笛卡尔积，
-数量不一致时记入 conflicts（交由 S9 仲裁/人工复核），禁猜测。
+对 S4 原子掩膜与像素区域执行识别（P0：OCR 能力接口），输出链③标注：
+图片内数字序号、比例尺组（尺体+起点0+值文本）、说明文字；serial_set
+集合校验（连续性/重复检测）供 S6 绑定校验。纯识别节点：不做三链仲裁
+（仲裁职责自 V0.5.4 并入 S6，§4.6.3）。
 
-图题器物号兜底（图题器物号兜底识别（§2.2.5））：图注缺失或解析不出器物号时，
-采用 S3 自图题抽取的 caption_artifacts——单一器物号判 rule_b（整图归属该器）；
-多器物号无序号可绑判 seq_missing 并触发 E005（禁猜测配对）。图题兜底视为
-弱链①：置信按同链组合降级矩阵封顶 × 0.8，标记 degraded。
+VL 读号兜底（§4.5）：OCR 低置信/漏读时调用 VL 读号（read_serial_crops /
+read_scale_prefix），三态判定（True/False/None）；P0 mock 链路 OCR 覆盖
+ground 序号，生产实现接入 VLM 读号后启用兜底分支。
+
+V0.5.4：OCR 识别职责自原 S4 移至 S5（E400/E401 归属 S5）。
 """
 from __future__ import annotations
 
-from typing import cast
-
-from ..state import CaseType, FusedMapping
 from . import Services
-from .alarms import _note_seqs, _ocr_seqs, detect_alarms
-
-# 图题兜底置信折扣：图题为描述性来源，弱于链①显式声明（§2.2.5）
-CAPTION_CONF_FACTOR = 0.8
 
 
-def _case(note_items: list[dict]) -> str:
-    if not note_items:
-        return "seq_missing"
-    arts = {a for it in note_items for a in it["artifact_ids"]}
-    multi = any(len(it["artifact_ids"]) > 1 for it in note_items)
-    has_range = any("~" in it["seq"] for it in note_items)  # seq 已经 normalize
-    total_seqs = sum(len(it["seq_list"] or [it["seq"]]) for it in note_items)
-    if multi and has_range:
-        return "range_split"
-    if multi:
-        return "split_same_seq"
-    if len(arts) == 1 and total_seqs > 1:
-        return "rule_b"
-    return "rule_a"
-
-
-def _zip_seqs_arts(seqs: list, arts: list[str], conflicts: list[str]) -> list[tuple]:
-    """位置对应配对（禁笛卡尔积）：
-    * 等长 → zip；
-    * 单 seq 多 artifact → 同号多器，逐 artifact 拆 Pair（共享掩膜）；
-    * 多 seq 单 artifact → 同器多视图（rule_b 语义）；
-    * 其余数量不一致 → 冲突登记，不猜测。
-    """
-    if len(seqs) == len(arts):
-        return list(zip(seqs, arts))
-    if len(seqs) == 1:
-        return [(seqs[0], a) for a in arts]
-    if len(arts) == 1:
-        return [(s, arts[0]) for s in seqs]
-    conflicts.append(f"seq_art_mismatch:seqs={seqs},arts={arts}")
-    return []
+def _serial_set_check(seq_annotations: list[dict]) -> list[str]:
+    """serial_set 集合校验（§4.5.1）：连续性/重复检测，异常项供 S6 绑定校验。"""
+    anomalies: list[str] = []
+    serials: list[str] = []
+    for ann in seq_annotations:
+        text = str(ann.get("text", "")).strip()
+        if text.isdigit():
+            serials.append(text)
+    seen: set[str] = set()
+    for s in serials:
+        if s in seen and f"duplicate_serial:{s}" not in anomalies:
+            anomalies.append(f"duplicate_serial:{s}")
+        seen.add(s)
+    nums = sorted(int(s) for s in seen if s.isdigit())
+    if len(nums) >= 2 and nums == list(range(nums[0], nums[0] + len(nums))):
+        pass  # 连续序号：正常
+    elif len(nums) >= 2:
+        anomalies.append(f"non_contiguous_serials:{nums[0]}..{nums[-1]}")
+    return anomalies
 
 
 def run(state: dict, svc: Services) -> dict:
-    note_items = state.get("note_items", [])
-    seq_ann = state.get("seq_annotations", [])
-    text_art = state.get("text_artifacts", [])
-    caption_arts = state.get("caption_artifacts") or []
-    chains = (bool(note_items), bool(text_art), bool(seq_ann))
-
-    alarms = detect_alarms(state)
-    conflicts: list[str] = []
-
-    # seq -> [artifacts]（多值，不截断；位置对应）
-    seq_to_arts: dict[str, list[str]] = {}
-    for it in note_items:
-        seqs = it["seq_list"] or [it["seq"]]
-        for s, a in _zip_seqs_arts(list(seqs), list(it["artifact_ids"]), conflicts):
-            seq_to_arts.setdefault(str(s), []).append(a)
-
-    # 链① vs 链③ 冲突
-    if note_items and seq_ann:
-        nseq, oseq = _note_seqs(note_items), _ocr_seqs(seq_ann)
-        conflicts.extend(sorted(nseq ^ oseq))
-
-    # 图题器物号兜底（§2.2.5）：图注解析不出器物号时才采用图题来源
-    use_caption = bool(caption_arts) and not any(it.get("artifact_ids") for it in note_items)
-    caption_unique: list[str] = []
-    if use_caption:
-        caption_unique = list(dict.fromkeys(caption_arts))
-        note_seqs = _note_seqs(note_items)
-        if len(caption_unique) == 1 and len(note_seqs) <= 1:
-            case = cast(CaseType, "rule_b")  # 整图归属该器（含单视图退化形）
-        else:
-            # 多器物号无序号可绑，或图注序号声明冲突 → 禁猜测，人工复核
-            case = cast(CaseType, "seq_missing")
-            conflicts.append(f"caption_multi_artifacts:{','.join(caption_unique)}")
-            if "E005" not in alarms:
-                alarms.append("E005")
-    else:
-        caption_unique = []
-        case = cast(CaseType, _case(note_items))
-
-    # 置信：图题兜底按弱链①计入链组合，封顶 × CAPTION_CONF_FACTOR
-    eff = (chains[0] or use_caption, chains[1], chains[2])
-    key = "".join("1" if c else "0" for c in eff)
-    conf_map = {"111": 0.95, "110": 0.85, "101": 0.85, "100": 0.85,
-                "011": 0.70, "010": 0.60, "001": 0.50}
-    conf = conf_map.get(key, 0.5)
-    if use_caption:
-        conf = round(conf * CAPTION_CONF_FACTOR, 2)
-    # 图注整图缺失但有链②/③或图题兜底 → 降级（不硬报警），置信封顶
-    degraded = (not note_items) and (bool(text_art) or bool(seq_ann) or use_caption)
-    fused = FusedMapping(seq_to_artifacts=seq_to_arts, caption_artifacts=caption_unique,
-                         case_type=case, available_chains=chains, confidence=conf,
-                         conflicts=conflicts)
-    return {"fused": fused.model_dump(), "case_type": case, "confidence": conf,
-            "alarms": alarms, "degraded": degraded, "status": "ALIGNED"}
+    resp = svc.gateway.call(
+        "ocr", svc.ocr.read, figure_id=state["figure_id"], trace_id=state["trace_id"],
+        image_ref=state["fileref"], regions=[],
+        operation="read",
+    )
+    seq_annotations = resp["seqs"]
+    scale_annotations = resp["scales"]
+    # 方向判定回填：S4 默认 'h'，S5 识别文字方向后可修正（§4.4.2 多向 → 旋转统一）
+    out: dict = {
+        "seq_annotations": seq_annotations,
+        "scale_annotations": scale_annotations,
+        "serial_anomalies": _serial_set_check(seq_annotations),
+        "status": "RECOGNIZED",
+    }
+    if resp.get("orientation"):
+        out["orientation"] = resp["orientation"]
+    # VL 读号兜底（§4.5）：OCR 低置信/漏读时三态判定；P0 mock 不触发，
+    # 生产实现接 read_serial_crops / read_scale_prefix，None（证据不足）交 S6 保守处置。
+    return out

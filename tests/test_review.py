@@ -49,11 +49,35 @@ def test_s10_creates_review_task_idempotent(base_state, synth_book, tmp_path):
     assert svc.review_bridge.callback(event_id=ev, result={}) is False  # 幂等去重
 
 
-def test_s10_no_improve_pending(base_state, synth_book, tmp_path):
+def test_s9_qc_reject_goes_pending(base_state, synth_book, tmp_path):
+    # S9 纯质检（V0.5.4）：注入缺陷 → qc_verdict=reject → S10 转 PENDING_REVIEW
+    from archaeopairs.agents import s9, s10
+    _, ground, _ = synth_book
+    ground[base_state["figure_id"]]["inject_defects"] = [
+        {"type": "under_seg", "location": "mask#1", "severity": "high"}]
+    svc = _services(ground, tmp_path)
+    st = dict(base_state)
+    st["assembled"] = True
+    out = s9.run(st, svc)
+    assert out["qc_report"]["qc_verdict"] == "reject"
+    assert out["qc_report"]["evidence"]["defects"]
+    st2 = dict(st)
+    st2["qc_report"] = out["qc_report"]
+    out2 = s10.run(st2, svc)
+    assert out2["status"] == "PENDING_REVIEW"
+
+
+def test_s9_qc_pass_goes_output(base_state, synth_book, tmp_path):
+    # 质检合格（defect_list 为空）→ 经 S10 输出入库
+    from archaeopairs.agents import s9, s10
     _, ground, _ = synth_book
     svc = _services(ground, tmp_path)
     st = dict(base_state)
-    st["no_improve"] = True
-    st["defect_history"] = [3, 3]
-    out = __import__("archaeopairs.agents.s10", fromlist=["s10"]).run(st, svc)
-    assert out["status"] == "PENDING_REVIEW"
+    st["assembled"] = True
+    out = s9.run(st, svc)
+    assert out["qc_report"]["qc_verdict"] == "pass"
+    st2 = dict(st)
+    st2["qc_report"] = out["qc_report"]
+    st2["case_type"] = "rule_a"
+    out2 = s10.run(st2, svc)
+    assert out2["status"] == "OUTPUT"

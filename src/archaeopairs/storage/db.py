@@ -33,7 +33,6 @@ class FigureStateRow(Base):
     image_type: Mapped[str | None] = mapped_column(Text)
     case_type: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(Text, default="INIT")
-    iteration: Mapped[int] = mapped_column(Integer, default=0)
     rule_version: Mapped[str] = mapped_column(Text, default="r1")
     prompt_version: Mapped[str] = mapped_column(Text, default="p1")
     judge_prompt_version: Mapped[str] = mapped_column(Text, default="j1")
@@ -78,11 +77,11 @@ class ReviewTaskRow(Base):
 
 
 class DiagnosticReportRow(Base):
+    """S9 质检报告落库（V0.5.4：QCReport，无 iteration）。"""
     __tablename__ = "diagnostic_reports"
     id: Mapped[int] = mapped_column(
         BigInteger().with_variant(Integer(), "sqlite"), primary_key=True)
     figure_state_id: Mapped[int] = mapped_column(BigInteger)
-    iteration: Mapped[int] = mapped_column(Integer, default=0)
     report: Mapped[dict | None] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 

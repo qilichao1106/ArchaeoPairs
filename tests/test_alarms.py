@@ -22,12 +22,12 @@ def test_e004_multi_scale_unseqed():
 
 def test_e005_multi_no_seq_list():
     st = {"figure_note": "陶豆 陶壶", "note_items": [], "seq_annotations": _sa(1, 2),
-          "masks": [{"mask_rle": "a"}, {"mask_rle": "b"}]}
+          "atom_masks": [{"mask_rle": "a"}, {"mask_rle": "b"}]}
     assert "E005" in detect_alarms(st)
 
 
 def test_e006_incomplete_mask():
-    st = {"masks": [{"mask_rle": "a", "incomplete": True}]}
+    st = {"atom_masks": [{"mask_rle": "a", "incomplete": True}]}
     assert "E006" in detect_alarms(st)
 
 

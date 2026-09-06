@@ -8,7 +8,7 @@ from archaeopairs.state import ImageRef, PairRecord
 def test_eight_schemas():
     s = all_schemas()
     assert set(s) == {"FigureState", "TextArtifact", "SeqAnnotation", "ScaleAnnotation",
-                      "FusedMapping", "MaskRecord", "DiagnosticReport", "PairRecord"}
+                      "FusedMapping", "MaskRecord", "QCReport", "PairRecord"}
     for name, schema in s.items():
         assert "properties" in schema, name
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from archaeopairs import naming
-from archaeopairs.agents import s3, s5, s7, s8, s10
+from archaeopairs.agents import s3, s6, s7, s8, s10
 from archaeopairs.parsers import s1_xml, s3_note
 
 # ---------- 归一化与图注解析（F3/F4/公式残迹/无空格） ----------
@@ -162,7 +162,7 @@ def test_split_same_seq_positional_zip(services):
     # "4、6. 陶魁（:5、:10）" → 4→:5、6→:10，2 条而非 4 条
     st = {"note_items": [_ni("4、6", [4, 6], ["H1:5", "H1:10"])],
           "seq_annotations": _sa(4, 6), "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "split_same_seq"
     assert out["fused"]["seq_to_artifacts"] == {"4": ["H1:5"], "6": ["H1:10"]}
     assert out["fused"]["conflicts"] == []
@@ -172,14 +172,14 @@ def test_split_same_seq_single_seq_multi_art(services):
     # 单 seq 多 artifact：同号多器，共享掩膜拆 Pair
     st = {"note_items": [_ni("2", [2], ["H1:6", "H1:3"])],
           "seq_annotations": _sa(2), "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["fused"]["seq_to_artifacts"] == {"2": ["H1:6", "H1:3"]}
 
 
 def test_fullwidth_range_case_type(services):
     st = {"note_items": [_ni("1~4", [1, 2, 3, 4], ["M3:4", "M3:2", "M3:3", "M3:1"])],
           "seq_annotations": _sa(1, 2, 3, 4), "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "range_split"
     assert out["fused"]["seq_to_artifacts"]["3"] == ["M3:3"]
     assert out["fused"]["seq_to_artifacts"]["1"] == ["M3:4"]
@@ -190,7 +190,7 @@ def test_rule_a_group_positional_zip(services):
     st = {"note_items": [_ni("1、2", [1, 2], ["M4:2", "M4:1"]),
                          _ni("3", [3], ["M4:3"])],
           "seq_annotations": _sa(1, 2, 3), "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert out["case_type"] == "split_same_seq"
     assert out["fused"]["seq_to_artifacts"] == {"1": ["M4:2"], "2": ["M4:1"], "3": ["M4:3"]}
 
@@ -199,7 +199,7 @@ def test_mismatched_counts_record_conflict(services):
     # 数量不一致且无法唯一对应 → 冲突登记，不猜测
     st = {"note_items": [_ni("2、9", [2, 9], ["H1:6", "H1:3", "H1:8"])],
           "seq_annotations": _sa(2, 9), "text_artifacts": []}
-    out = s5.run(st, services)
+    out = s6.run(st, services)
     assert any("seq_art_mismatch" in c for c in out["fused"]["conflicts"])
 
 
@@ -215,7 +215,7 @@ def test_body_filter_fullwidth_colon(services):
             {"id": "p1", "text": "鼎 1件。2004CWWM11：5，子母口，上腹壁稍直，圜底。口径12.6厘米。"},
             {"id": "p2", "text": "与本报告无关的段落。"},
         ],
-        "iteration": 0, "trace_id": "t-s3",
+        "trace_id": "t-s3",
     }
     out = s3.run(state, services)
     arts = [t["artifact_id"] for t in out["text_artifacts"]]

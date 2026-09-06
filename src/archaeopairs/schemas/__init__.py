@@ -7,11 +7,11 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from ..state import (
-    DiagnosticReport,
     FigureState,
     FusedMapping,
     MaskRecord,
     PairRecord,
+    QCReport,
     ScaleAnnotation,
     SeqAnnotation,
     TextArtifact,
@@ -24,7 +24,7 @@ CORE_MODELS: dict[str, type[BaseModel]] = {
     "ScaleAnnotation": ScaleAnnotation,
     "FusedMapping": FusedMapping,
     "MaskRecord": MaskRecord,
-    "DiagnosticReport": DiagnosticReport,
+    "QCReport": QCReport,
     "PairRecord": PairRecord,
 }
 

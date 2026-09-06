@@ -14,7 +14,6 @@ def test_s3_filters_by_figure_and_drops_low_confidence(services):
             {"id": "p1", "text": "图一 M4:1 陶豆。"},
             {"id": "p2", "text": "图一 1件。口径10厘米。"},
         ],
-        "iteration": 0,
         "trace_id": "t-s3",
     }
     out = s3.run(state, services)

@@ -21,7 +21,7 @@ def test_tables_created(tmp_path):
         s.add(FigureStateRow(book_id="b", figure_id="f", fileref="m/i.jpg"))
         s.flush()
         fs = s.query(FigureStateRow).first()
-        s.add(DiagnosticReportRow(figure_state_id=fs.id, iteration=0, report={"x": 1}))
+        s.add(DiagnosticReportRow(figure_state_id=fs.id, report={"x": 1}))
         s.add(PairRecordRow(book_id="b", figure_id="f", artifact_id="M4:1", image_path="p.png",
                             candidate_images=[{"path": "plate.png", "role": "plate"}],
                             image_merge_mode="line_plus_plate"))

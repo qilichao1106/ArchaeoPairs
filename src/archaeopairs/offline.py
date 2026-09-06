@@ -142,7 +142,7 @@ def run_single_offline(book: str, books_dir: str = "books", limit: int | None = 
             "book_id": fig.book_id, "figure_id": fig.figure_id, "fileref": fig.fileref,
             "caption": fig.caption, "figure_note": fig.figure_note,
             "book_has_artifact": True, "image_base": str(xml.parent), "body_paras": paras,
-            "iteration": 0, "defect_history": [], "assembled": False,
+            "assembled": False,
             "trace_id": str(uuid.uuid4()), "flags": flags.model_dump(), "status": "INIT",
         }
         result = app.invoke(init)

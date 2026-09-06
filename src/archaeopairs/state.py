@@ -1,9 +1,11 @@
-"""数据契约（对齐《技术方案 V0.5.1》核心数据结构（§6.1）/ State Schema（§3.4.2））。
+"""数据契约（对齐《技术方案 V0.5.4》核心数据结构（§6.1）/ State Schema（§3.4.2））。
 
 八个核心数据结构 + 子模型用 pydantic v2 定义；GraphState 为 LangGraph
 全局 State（TypedDict），承载跨节点共享字段。节点局部变量不进 State。
-整改：FusedMapping 支持 seq→多 artifact（同号/区间拆 Pair）；新增
-alarms/degraded/body_paras 支撑硬约束报警与链②正文切分。
+V0.5.4：S4 视觉分割器输出原子掩膜（atom_masks），S5 识别器产出链③，
+S6 组装器承接融合仲裁与组装成图；S9 纯质检（QCReport：defect_list +
+qc_verdict + evidence），移除 iteration/defect_history/target_agent 等
+回环字段（诊断修正回环删除，不合格转人工复核）。
 """
 from __future__ import annotations
 
@@ -19,18 +21,17 @@ ImageType = Literal[
     "single_line_artifact", "multi_line_artifact",
     "single_plate_artifact", "multi_plate_artifact", "discarded",
 ]
-# case_type 口径（V0.5.2 评审 P1）：S5 域 5 值 + S7 单器物路径标记 2 值；
+# case_type 口径（V0.5.2 评审 P1）：S6 域 5 值 + S7 单器物路径标记 2 值；
 # multi_plate_artifact / discarded 在 S2 即归档，不产生 case_type，不在枚举内。
 CaseType = Literal[
     "rule_a", "rule_b", "split_same_seq", "range_split", "seq_missing",
     "single_line_artifact", "single_plate_artifact",
 ]
-# FigureStatus 口径（V0.5.3 对齐 §6.2）：删 SEG_DIAGNOSED（S6 完成→SEGMENTED）；
-# 增 CLASSIFIED_SINGLE_LINE / CLASSIFIED_PLATE（单器物线图/彩图支路）；
-# multi_line 已恢复主通路，MULTI_LINE_SKIPPED（V0.5.2 试点临时态）移除。
+# FigureStatus 口径（V0.5.4 对齐 §6.2）：S4 分割→SEGMENTED、S5 识别→RECOGNIZED、
+# S6 组装→COMPOSED；移除 ALIGNED（融合仲裁并入 S6，不再有独立对齐态）。
 FigureStatus = Literal[
     "INIT", "PARSED", "CLASSIFIED", "CLASSIFIED_SINGLE_LINE", "CLASSIFIED_PLATE",
-    "ALIGNED", "SEGMENTED", "ASM_VALIDATED", "OUTPUT",
+    "SEGMENTED", "RECOGNIZED", "COMPOSED", "ASM_VALIDATED", "OUTPUT",
     "EXCLUDED", "PENDING_REVIEW", "FAILED", "DEGRADED",
 ]
 DefectType = Literal[
@@ -59,14 +60,14 @@ class TextArtifact(BaseModel):
 
 
 class SeqAnnotation(BaseModel):
-    """S4 图内序号标注（图像源解析器（§4.4））。"""
+    """S5 序号标注（识别器（§4.5），链③）。"""
     text: str
     bbox: tuple[int, int, int, int]
     group: Optional[list[int]] = None
 
 
 class ScaleAnnotation(BaseModel):
-    """S4 比例尺标注（图像源解析器（§4.4））。"""
+    """S5 比例尺标注（识别器（§4.5），链③）。"""
     text: str
     bbox: tuple[int, int, int, int]
     unit: str = "cm"
@@ -83,7 +84,7 @@ class ImageRef(BaseModel):
 
 
 class FusedMapping(BaseModel):
-    """S5 融合仲裁输出（融合仲裁器（§4.5））。seq→多 artifact 以支撑同号/区间拆 Pair。"""
+    """S6 融合仲裁输出（组装器（§4.6.3））。seq→多 artifact 以支撑同号/区间拆 Pair。"""
     seq_to_artifacts: dict[str, list[str]] = Field(default_factory=dict)
     caption_artifacts: list[str] = Field(
         default_factory=list,
@@ -95,11 +96,15 @@ class FusedMapping(BaseModel):
 
 
 class MaskRecord(BaseModel):
-    """S6 掩膜记录（视觉分割器（§4.6），掩膜三件套）。"""
+    """S4/S6 掩膜记录（视觉分割器（§4.4）/ 组装器（§4.6.1），掩膜三件套）。
+
+    S4 输出原子掩膜：mask_rle/bbox/area，seq_id/artifact_id 留空待 S6 绑定；
+    S6 经序号绑定/视图归组后定稿。
+    """
     mask_rle: str
     bbox: tuple[int, int, int, int]
     area: int
-    seq: Optional[str] = None
+    seq_id: Optional[str] = None
     artifact_id: Optional[str] = None
     note_text_region: Optional[str] = None
     scale_level: Literal[1, 2, 3] = 2
@@ -114,18 +119,19 @@ class Defect(BaseModel):
     severity: Literal["low", "mid", "high"] = "mid"
 
 
-class DiagnosticReport(BaseModel):
-    """S9 诊断报告（Supervisor VLM（§4.9）/ Supervisor-Worker Loop（§5.2））。"""
+class QCReport(BaseModel):
+    """S9 质检报告（Supervisor VLM（§4.9）/ 质检报告契约（§5.2））。
+
+    V0.5.4 纯质检门：defect_list 为空 → pass 经 S10 输出入库；非空 → reject
+    随复核任务下发（§8.2）转人工复核，不驱动修正回环（无 target_agent/
+    correction_action/iteration 等回环字段）。
+    """
     trace_id: str
     report_id: str
     figure_id: str
     defect_list: list[Defect] = Field(default_factory=list)
-    target_agent: Optional[Literal["S3", "S4", "S6", "S8"]] = None
-    correction_action: Optional[str] = None
-    action_params: dict = Field(default_factory=dict)
-    expected_result: Optional[str] = None
-    iteration: int = Field(0, ge=0, le=3)
-    escalation_level: int = Field(1, ge=1, le=3, description="逐级升级档位")
+    qc_verdict: Literal["pass", "reject"] = "pass"
+    evidence: dict = Field(default_factory=dict, description="缺陷证据（随复核任务下发）")
 
 
 class PairRecord(BaseModel):
@@ -155,15 +161,16 @@ class FigureState(BaseModel):
     parent_section_id: Optional[str] = None
     image_type: Optional[ImageType] = None
     status: FigureStatus = "INIT"
-    iteration: int = 0
     exclude_reason: Optional[str] = None
     trace_id: str = ""
 
 
 class PipelineFlags(BaseModel):
-    """Feature Flag（功能开关与配置管理（§7.5））。硬约束不在此、不可关。"""
+    """Feature Flag（功能开关与配置管理（§7.5））。硬约束不在此、不可关。
+
+    V0.5.4：s9_loop 移除（S9 纯质检无自动回环）。
+    """
     s3_llm_confirm: bool = True
-    s9_loop: bool = True
     rotation_correct: bool = True
     require_human: bool = False
 
@@ -184,21 +191,18 @@ class GraphState(TypedDict, total=False):
     caption_artifacts: list[str]
     single_artifacts: list[dict]
     text_artifacts: list[dict]
-    seq_annotations: list[dict]
-    scale_annotations: list[dict]
+    atom_masks: list[dict]  # S4 原子掩膜；S6 绑定/归组后定稿（掩膜三件套）
+    seq_annotations: list[dict]  # S5 链③序号
+    scale_annotations: list[dict]  # S5 链③比例尺
     orientation: Optional[str]
     fused: Optional[dict]
     case_type: Optional[CaseType]
     confidence: float
     degraded: bool
     alarms: list[AlarmCode]
-    masks: list[dict]
+    qc_report: Optional[dict]  # S9 QCReport
     assembled: bool
     pair_records: list[dict]
-    diagnostic: Optional[dict]
-    iteration: int
-    defect_history: list[int]
-    no_improve: bool
     status: FigureStatus
     exclude_reason: Optional[str]
     trace_id: str

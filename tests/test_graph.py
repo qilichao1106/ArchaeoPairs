@@ -7,8 +7,8 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 
 from archaeopairs.orchestration import build_graph
 
-NODES = {"parse_report", "classify_figure", "parse_text", "parse_image", "fuse",
-         "segment", "parse_single", "assemble", "supervise", "bridge_review"}
+NODES = {"s1_index", "s2_classify", "s3_text", "s4_segment", "s5_recognize",
+         "s6_compose", "s7_single", "s8_assemble", "s9_supervise", "s10_review"}
 
 
 def test_topology_has_10_nodes(services):

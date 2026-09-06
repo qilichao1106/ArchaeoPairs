@@ -6,11 +6,11 @@ from archaeopairs.agents import s8
 CAP = "图一 出土器物"
 
 def _mask(seq, art=None):
-    return {"mask_rle": f"r{seq}", "bbox": (0, 0, 1, 1), "area": 1, "seq": seq, "artifact_id": art}
+    return {"mask_rle": f"r{seq}", "bbox": (0, 0, 1, 1), "area": 1, "seq_id": seq, "artifact_id": art}
 
 def _base(case, fused, masks):
     return {"book_id": "b", "figure_id": "fig_1", "fileref": "media/image1.jpg", "caption": CAP,
-            "case_type": case, "fused": fused, "masks": masks, "text_artifacts": [],
+            "case_type": case, "fused": fused, "atom_masks": masks, "text_artifacts": [],
             "trace_id": "t"}
 
 def test_rule_a_two_pairs(services):
