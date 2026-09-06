@@ -8,6 +8,9 @@ figure ↔ figure-note 关联（修复 P0-1）：
   * 图注前置回溯（跳过 figure-title 段落）；
   * 同图号连续 figure 分组，图注归属组内最大面积的 figure；
   * 无 caption 的 figure 可从紧邻前置 para role="figure-title" 恢复图题；
+  * 内嵌变体兼容（部分报告 figure 自带子元素而非兄弟段落）：
+      - 图题内嵌为 figure 子元素 <figure-title>（可能双层同名嵌套）；
+      - 图注内嵌为 figure 子元素 <figure-note>，按 figure 逐一归属；
   * 契约违约（caption 缺失/无 imagedata）记入 violations（含 fileref 与原因），
     不再静默丢弃——figure 保留进输出，由 S1 节点按 E102 排除并可见。
 """
@@ -34,7 +37,16 @@ def _strip_ns(root: ET.Element) -> None:
 
 def _caption_of(fig: ET.Element) -> str | None:
     cap = fig.find(".//caption[@role='figure-title']")
-    return _text(cap) if cap is not None else None
+    if cap is not None:
+        return _text(cap)
+    # 内嵌变体：figure 自带 <figure-title> 子元素（可能双层同名嵌套）
+    title = fig.find(".//figure-title")
+    return _text(title) if title is not None else None
+
+
+def _inner_notes_of(fig: ET.Element) -> list[str]:
+    """figure 内嵌 <figure-note> 子元素的文本（按出现顺序）。"""
+    return [_text(n) for n in fig.findall("figure-note")]
 
 
 def _area_of(fig: ET.Element) -> int:
@@ -136,7 +148,9 @@ def parse_report(xml_path: str | Path, book_id: str) -> tuple[list[FigureState],
                     caption = pre_title[pos]
                 if caption is None:
                     violations.append(f"{fid}|{fileref}|caption_missing")
-                note_text = "\n".join(pre_notes[pos] + (forward_notes if pos == primary else []))
+                inner_notes = _inner_notes_of(fig_el)
+                note_text = "\n".join(pre_notes[pos] + inner_notes
+                                      + (forward_notes if pos == primary else []))
                 figures.append(FigureState(
                     book_id=book_id, figure_id=fid, fileref=fileref,
                     caption=caption, figure_note=note_text or None, status="INIT",
