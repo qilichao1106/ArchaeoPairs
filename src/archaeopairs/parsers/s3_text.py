@@ -14,6 +14,22 @@ import re
 from ..state import TextArtifact
 from .s3_note import ARTIFACT_RE, colon_norm, normalize
 
+_FIGURE_LOCATION_RE = re.compile(
+    r"[（(][^）)]*(?:图|圖|图版|圖版|拓片|Fig(?:ure)?[.]?|Plate)[^）)]*[）)]",
+    re.IGNORECASE,
+)
+_UNCLOSED_FIGURE_LOCATION_RE = re.compile(
+    r"[（(][^）)]*(?:图|圖|图版|圖版|拓片|Fig(?:ure)?[.]?|Plate)[^）)]*$",
+    re.IGNORECASE,
+)
+
+
+def strip_figure_locations(text: str) -> str:
+    """Remove parenthesized figure/plate references from body descriptions."""
+    cleaned = _FIGURE_LOCATION_RE.sub("", text)
+    cleaned = _UNCLOSED_FIGURE_LOCATION_RE.sub("", cleaned)
+    return re.sub(r" +([。．.；;，,])", lambda m: m.group(1), cleaned).strip()
+
 
 def _anchor_of(raw: str, m: re.Match) -> str:
     return colon_norm(raw[m.start():m.end()])
@@ -25,18 +41,19 @@ def split_body(paragraphs: list[tuple[str, str]]) -> list[TextArtifact]:
     last_anchor: str | None = None
     for pid, raw in paragraphs:
         text = normalize(raw)
+        display_text = strip_figure_locations(raw)
         anchors = list(ARTIFACT_RE.finditer(text))
         if anchors:
             if len(anchors) == 1:
                 m = anchors[0]
-                out.append(TextArtifact(artifact_id=_anchor_of(raw, m), text=raw,
+                out.append(TextArtifact(artifact_id=_anchor_of(raw, m), text=display_text,
                                         source_para_ids=[pid], confidence=0.95))
                 last_anchor = _anchor_of(raw, m)
             else:
                 for idx, m in enumerate(anchors):
                     start = m.start()
                     end = anchors[idx + 1].start() if idx + 1 < len(anchors) else len(raw)
-                    seg = raw[start:end].strip()
+                    seg = strip_figure_locations(raw[start:end])
                     out.append(TextArtifact(artifact_id=_anchor_of(raw, m), text=seg,
                                             source_para_ids=[pid], markers=["multi_anchor"],
                                             confidence=0.8))
@@ -53,6 +70,6 @@ def split_body(paragraphs: list[tuple[str, str]]) -> list[TextArtifact]:
             target = last_anchor
             if target is None:
                 continue
-            out.append(TextArtifact(artifact_id=target, text=raw, source_para_ids=[pid],
+            out.append(TextArtifact(artifact_id=target, text=display_text, source_para_ids=[pid],
                                     markers=markers, confidence=conf))
     return out

@@ -11,8 +11,8 @@ figure ↔ figure-note 关联（修复 P0-1）：
   * 内嵌变体兼容（部分报告 figure 自带子元素而非兄弟段落）：
       - 图题内嵌为 figure 子元素 <figure-title>（可能双层同名嵌套）；
       - 图注内嵌为 figure 子元素 <figure-note>，按 figure 逐一归属；
-  * 契约违约（caption 缺失/无 imagedata）记入 violations（含 fileref 与原因），
-    不再静默丢弃——figure 保留进输出，由 S1 节点按 E102 排除并可见。
+  * caption 缺失记入 violations（含 fileref 与原因）但非阻断，附录版图继续进入
+    S2；无 imagedata 属摄入违约，figure 不进入输出但原因可见。
 """
 from __future__ import annotations
 

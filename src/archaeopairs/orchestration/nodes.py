@@ -8,7 +8,7 @@ s5_recognize / s6_compose / s7_single / s8_assemble / s9_supervise / s10_review�
 * E400 OCR 全失败 / E1000(OCR) 熔断 → 链③缺失降级，按降级矩阵继续；
 * E1000(VLM/SAM) 熔断 → PENDING_REVIEW（批次挂起由调度层处理；S9 质检不可用
   同样全部转复核，宁复核不误放 §4.9.2）；
-* E102/E101 摄入违约 → EXCLUDED；
+* E102/E101 摄入违约 → EXCLUDED；caption 缺失为 S1 非阻断告警；
 """
 from __future__ import annotations
 

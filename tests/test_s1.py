@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from archaeopairs.agents import Services, s1
 from archaeopairs.parsers import s1_xml
 
 
@@ -29,6 +30,17 @@ def test_contract_violation(tmp_path: Path):
     assert figures[0].caption is None
     assert len(violations) == 1  # E102 违约清单
     assert "caption_missing" in violations[0]
+
+
+def test_missing_caption_is_not_excluded():
+    svc = Services(None, None, None, None, None, None)
+    assert s1.run({"caption": None, "book_has_artifact": True}, svc) == {
+        "status": "PARSED"
+    }
+    assert s1.run({"caption": "图一", "book_has_artifact": False}, svc) == {
+        "status": "EXCLUDED",
+        "exclude_reason": "no_artifact_id",
+    }
 
 
 def test_plate_classification(tmp_path: Path):

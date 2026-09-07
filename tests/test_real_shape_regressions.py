@@ -131,7 +131,7 @@ def test_violation_records_fileref_and_reason(tmp_path: Path):
     p = tmp_path / "data.xml"
     p.write_text(xml, encoding="utf-8")
     figures, _, violations = s1_xml.parse_report(p, "b")
-    assert len(figures) == 1 and figures[0].caption is None  # 保留记录，由 S1 节点排除
+    assert len(figures) == 1 and figures[0].caption is None  # 保留记录，caption 缺失非阻断
     assert len(violations) == 1
     assert "untitled.jpg" in violations[0] and "caption_missing" in violations[0]
 
