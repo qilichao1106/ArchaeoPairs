@@ -9,14 +9,22 @@ V0.5.4：SAM 分割职责自原 S6 移至 S4（E600 归属 S4）；原 S4 OCR �
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from ..errors import E006MaskIncompleteAlarm, HardConstraintError
 from . import Services
 
 
 def run(state: dict, svc: Services) -> dict:
+    # 真实 provider（CvSegmenter）需绝对路径读像素；mock 对 image_ref 取值无感
+    image_ref = state["fileref"]
+    if state.get("image_base"):
+        _p = Path(state["image_base"]) / state["fileref"]
+        if _p.is_file():
+            image_ref = str(_p)
     masks = svc.gateway.call(
         "sam", svc.sam.segment, figure_id=state["figure_id"], trace_id=state["trace_id"],
-        image_ref=state["fileref"], prompts=[],
+        image_ref=image_ref, prompts=[],
         operation="segment",
     )
     # 归一化为 MaskRecord 原子掩膜：seq_id 统一字符串（mock 便捷绑定提示）

@@ -22,12 +22,9 @@ from pathlib import Path
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 from . import naming
-from .agents import Services
 from .agents import s3 as s3_agent
-from .capability import MockOCR, MockSAM, MockVLM
-from .capability.compose import MockCompositor
-from .config import load_flags, load_thresholds
-from .gateway import Gateway
+from .capability.factory import build_services
+from .config import load_flags, load_providers, load_thresholds
 from .integrations import MockReviewBridge
 from .offline import run_single_offline
 from .orchestration import build_graph
@@ -58,7 +55,8 @@ def _book_has_artifact(body_paras: list[dict], figures) -> bool:
 
 
 def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sqlite3",
-             limit: int | None = None, persist: bool = False) -> dict:
+             limit: int | None = None, persist: bool = False,
+             real: bool = False, vl: bool = True) -> dict:
     root = Path(books_dir)
     xml = _find_data_xml(root, book)
     figures, ground, violations = s1_xml.parse_report(xml, book)
@@ -75,11 +73,16 @@ def run_book(book: str, books_dir: str = "books", db: str = "runs/checkpoints.sq
     thresholds = load_thresholds()
     flags = load_flags()
     store = LocalObjectStore("runs/objects")
-    svc = Services(vlm=MockVLM(ground), sam=MockSAM(ground), ocr=MockOCR(ground),
-                   gateway=Gateway(timeouts=thresholds.timeouts, rate_limits=thresholds.rate_limits),
-                   thresholds=thresholds, flags=flags,
-                   object_store=store, compositor=MockCompositor(store),
-                   review_bridge=MockReviewBridge(), ground=ground)
+    providers = load_providers()
+    if real:  # CLI --real：真实视觉链路（--no-vl 时关 VL 仲裁，纯 CV+OCR）
+        providers = providers.model_copy(update={
+            "sam": "cv", "ocr": "paddle", "compositor": "pixel",
+            "vl": "ark" if vl else "mock",
+        })
+    svc = build_services(ground=ground, thresholds=thresholds, flags=flags,
+                         providers=providers, object_store=store,
+                         vl_enabled=vl)
+    svc.review_bridge = MockReviewBridge()
 
     session_factory = make_session_factory(f"sqlite:///{db}.meta.sqlite3") if persist else None
     Path(db).parent.mkdir(parents=True, exist_ok=True)
@@ -171,6 +174,9 @@ def main() -> None:
     rb.add_argument("--db", default="runs/checkpoints.sqlite3")
     rb.add_argument("--limit", type=int, default=None, help="仅处理前 N 图（调试）")
     rb.add_argument("--persist", action="store_true", help="落库 FigureState/PairRecord")
+    rb.add_argument("--real", action="store_true",
+                    help="真实视觉链路（cv 分割+paddle OCR+pixel 合成+ark VL）")
+    rb.add_argument("--no-vl", action="store_true", help="配合 --real：关闭 VL 仲裁（纯 CV+OCR）")
     rbs = sub.add_parser("run-books", help="批量处理目录下所有书")
     rbs.add_argument("--books-dir", default="books", help="书籍根目录（默认 books）")
     rbs.add_argument("--db", default="runs/checkpoints.sqlite3")
@@ -184,7 +190,8 @@ def main() -> None:
                     help="写整图 Pair PNG 到 runs/objects（缺省仅记录级 Pair）")
     args = ap.parse_args()
     if args.cmd == "run-book":
-        out = run_book(args.book, args.books_dir, args.db, args.limit, args.persist)
+        out = run_book(args.book, args.books_dir, args.db, args.limit, args.persist,
+                       real=args.real, vl=not args.no_vl)
         print(json.dumps({k: v for k, v in out.items() if k != "records"},
                          ensure_ascii=False, indent=2))
     elif args.cmd == "run-books":

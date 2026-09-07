@@ -23,18 +23,22 @@ def normalize(text: str) -> str:
     text = text.replace("～", "~").replace("〜", "~")  # 区间号全角波浪线
     text = text.replace("（", "(").replace("）", ")")  # 全角括号半角化
     text = text.replace("\\sim", "~  ").replace("$", " ")  # LaTeX 公式残迹（等宽）
+    text = text.replace("\\~", "~ ")  # pdf2xml 区间残迹 "\~"（反斜杠+半角波浪）→ 等宽 "~ "
     for i, ch in enumerate(_CIRCLED, start=1):         # 圈号归一（匹配用）
         text = text.replace(ch, str(i))
     return text
 
 
 def colon_norm(text: str) -> str:
-    """器物号/键值统一：冒号（:：∶）归一为半角（圈号等其余字符保留原文）。"""
-    return text.replace("∶", ":").replace("：", ":")
+    """器物号/键值统一：冒号（:：∶）归一为半角，并折叠冒号旁空白
+    （pdf2xml 常见 "M19 : 1" 形态 → 规范键 "M19:1"）；圈号等其余字符保留原文。"""
+    text = text.replace("∶", ":").replace("：", ":")
+    return re.sub(r"\s*:\s*", ":", text)
 
 
 # 器物号：M4:6 / 2004CWWM11:5 / C5.1H146:1 / H83:35；部件号 Bb9/Zhb2（§2.2.2）
-ARTIFACT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.\-]*:\d+(?:-\d+)?")
+# 容忍冒号/连字符旁空白（pdf2xml 常见 "M19 : 1"、"M39 : 8-1" 形态）；抽取后由 colon_norm 收敛为规范键
+ARTIFACT_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9.\-]*\s*:\s*\d+(?:\s*-\s*\d+)?")
 COMPONENT_RE = re.compile(r"\b[A-Z][a-z]+\d+\b")
 
 _HEAD_RE = re.compile(r"(?P<seq>\d+(?:\s*[～~]\s*\d+)?(?:\s*[、,]\s*\d+)*|[A-Z])\s*[.、]?")
@@ -43,7 +47,7 @@ _HEAD_RE = re.compile(r"(?P<seq>\d+(?:\s*[～~]\s*\d+)?(?:\s*[、,]\s*\d+)*|[A-Z
 _NOISE_RE = re.compile(r"^[\d\s\-.～~]*厘米?$")
 
 # 无空格紧贴形态："1.00FBG1:2" 中的 "1." 是序号而非器物号前缀
-_LEAD_SEQ_RE = re.compile(r"^\d+\.(?=[A-Za-z0-9.\-]*[A-Za-z][A-Za-z0-9.\-]*:)")
+_LEAD_SEQ_RE = re.compile(r"^\d+\.(?=[A-Za-z0-9.\-]*[A-Za-z][A-Za-z0-9.\-]*\s*:)")
 
 
 def _expand_seq(raw: str) -> list[int]:
@@ -100,8 +104,8 @@ def parse_note_rule(text: str) -> list[NoteItem]:
         if not arts and _NOISE_RE.match(seg):
             continue  # 纯比例尺噪声
         name = text[start:end].strip().split("（")[0].split("(")[0].strip(" .、")
-        if name in arts:
-            name = ""  # 名称实为器物号（无空格紧贴形态）
+        if name in arts or colon_norm(name) in arts:
+            name = ""  # 名称实为器物号（紧贴或空格冒号形态，如 "M19 : 1"）
         if not name and not arts:
             continue
         items.append(NoteItem(seq=m.group("seq").strip(), seq_list=_expand_seq(m.group("seq")),

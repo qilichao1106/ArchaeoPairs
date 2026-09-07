@@ -194,6 +194,8 @@ class GraphState(TypedDict, total=False):
     atom_masks: list[dict]  # S4 原子掩膜；S6 绑定/归组后定稿（掩膜三件套）
     seq_annotations: list[dict]  # S5 链③序号
     scale_annotations: list[dict]  # S5 链③比例尺
+    vision_units: Optional[dict]  # S5 真实识别全量结果（剥 base64；mock 路径不置）
+    view_groups: list[dict]  # S6 真实组装视图归组 [{group_id, mask_idxs, seq_ids, scale_sis}]
     orientation: Optional[str]
     fused: Optional[dict]
     case_type: Optional[CaseType]

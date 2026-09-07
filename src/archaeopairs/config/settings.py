@@ -6,14 +6,26 @@ thresholds.yaml（阈值常量）与 flags.yaml（Feature Flag）。真实配置
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import yaml
 from pydantic import BaseModel, Field
 
 from ..state import PipelineFlags
 
+try:  # .env 加载（VL API key 等；缺库时静默跳过，环境变量仍可手工注入）
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover
+    load_dotenv = None
+
 _CONFIG_DIR = Path(__file__).resolve().parents[3] / "config"
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _load_dotenv() -> None:
+    """加载仓库根 .env（VOLCENGINE_API_KEY 等）。幂等；缺 python-dotenv 时跳过。"""
+    if load_dotenv is not None:
+        load_dotenv(_REPO_ROOT / ".env")
 
 
 class Thresholds(BaseModel):
@@ -29,7 +41,7 @@ class Thresholds(BaseModel):
     pending_pause_ratio: float = 0.20
     # 能力接口契约（§5.1.4/T25）：超时可配；模型网关按 Worker 配额限流（§6.3）
     timeouts: dict[str, float] = Field(default_factory=lambda: {
-        "vlm": 30.0, "sam": 20.0, "ocr": 10.0,
+        "vlm": 30.0, "sam": 20.0, "ocr": 10.0, "vl": 60.0,
     })
     rate_limits: dict[str, float] = Field(default_factory=dict)  # {service: QPS}，空=不限
 
@@ -66,8 +78,39 @@ def load_flags() -> PipelineFlags:
     return PipelineFlags(**{k: v for k, v in raw.items() if k in PipelineFlags.model_fields})
 
 
+class ProviderSettings(BaseModel):
+    """能力 provider 选择与参数（providers.yaml，缺省 VL 启用 ark）。
+
+    provider 段选实现：sam: mock|cv（本地轮廓掩膜，无远程模型）；ocr: mock|paddle；
+    vl: mock|ark（火山方舟 VL 三态仲裁）；compositor: mock|pixel（真像素合成）。
+    cv_seg/paddle/vl_config/assembly/compose 为对应实现的透传参数。
+    """
+    sam: Literal["mock", "cv"] = "mock"
+    ocr: Literal["mock", "paddle"] = "mock"
+    vl: Literal["mock", "ark"] = "ark"
+    compositor: Literal["mock", "pixel"] = "mock"
+    cv_seg: dict = Field(default_factory=lambda: {"dilate_k": 5, "min_area": 15.0})
+    paddle: dict = Field(default_factory=dict)
+    vl_config: dict = Field(default_factory=lambda: {
+        "preset": "glm-53-flash", "cache_dir": "runs/vl_cache", "strict": True,
+    })
+    assembly: dict = Field(default_factory=dict)
+    compose: dict = Field(default_factory=dict)
+
+
+def load_providers() -> ProviderSettings:
+    """读取 providers.yaml（不存在时其余能力 mock，VL 默认 ark）并预载 .env。"""
+    _load_dotenv()
+    raw = _load_yaml("providers.yaml")
+    section = dict(raw.get("provider") or {})
+    params = {k: raw.get(k) for k in
+              ("cv_seg", "paddle", "vl_config", "assembly", "compose") if raw.get(k)}
+    return ProviderSettings(**section, **params)
+
+
 class Settings(BaseModel):
     """运行期设置（环境变量注入敏感项，不入库）。"""
     database_url: str = "sqlite:///archaeopairs.sqlite3"
     object_store_endpoint: Optional[str] = None
     books_dir: str = "books"
+    providers: ProviderSettings = Field(default_factory=ProviderSettings)

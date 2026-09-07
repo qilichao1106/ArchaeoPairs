@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-from ..capability import OCR, SAM, VLM
+from ..capability import OCR, SAM, VLM, VLArbiter
 from ..capability.compose import Compositor
 from ..config import Thresholds
 from ..gateway import Gateway
@@ -25,6 +25,12 @@ class Services:
     object_store: Optional[LocalObjectStore] = None
     compositor: Optional[Compositor] = None
     review_bridge: Optional[ReviewBridge] = None
+    # VL 三态仲裁（真实组装路径用；mock 路径/无 key 时为 None → 纯 CV）
+    vl_arbiter: Optional[VLArbiter] = None
+    # vision.assembly.AssemblyConfig 透传参数（providers.yaml assembly 段）
+    assembly_params: dict = field(default_factory=dict)
+    # vision.compose.ComposeConfig 透传参数（providers.yaml compose 段）
+    compose_params: dict = field(default_factory=dict)
     ground: dict = field(default_factory=dict)
     # book 级文件名去重注册表（文件命名规范（§7.2）重名 _N，跨图共享）
     name_registry: dict = field(default_factory=dict)

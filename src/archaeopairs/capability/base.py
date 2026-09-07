@@ -30,3 +30,23 @@ class SAM(Protocol):
 
 class OCR(Protocol):
     def read(self, *, image_ref: str, regions: list[dict], trace_id: str) -> dict: ...
+
+
+class VLArbiter(Protocol):
+    """VL 三态仲裁接口（True/False/None，None=悬而未决→按 vl_strict 决定报警）。
+
+    独立于 VLM 三方法协议：面向 S4–S6 组装过程中的几何歧义判定
+    （E1.5 复核/E2.5 缺号抢救/E3 归组歧义/E4 L3 前缀读取）。
+    实现永不 raise（三态契约），网关仅作遥测/限流包装。
+    """
+
+    def judge_views(self, *, bgr, units, context: str = "", trace_id: str = "",
+                    figure_id: str = "", timeout: float | None = None, **kw) -> tuple: ...
+    def confirm_absorption(self, *, bgr, host_box, frag_box, trace_id: str = "",
+                           figure_id: str = "", timeout: float | None = None, **kw) -> tuple: ...
+    def read_serials(self, *, crops, context: str = "", trace_id: str = "",
+                     figure_id: str = "", timeout: float | None = None, **kw) -> tuple: ...
+    def same_artifact(self, *, bgr, box_a, box_b, trace_id: str = "",
+                      figure_id: str = "", timeout: float | None = None, **kw) -> tuple: ...
+    def read_scale_prefix(self, *, bgr, scale, where: str = "", trace_id: str = "",
+                          figure_id: str = "", timeout: float | None = None, **kw) -> tuple: ...
