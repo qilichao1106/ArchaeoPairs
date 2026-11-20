@@ -158,13 +158,19 @@ class VlmClient:
         prompt: str,
         *,
         json_mode: bool = True,
+        max_retries: int | None = None,
     ) -> str:
         """Send one image plus ``prompt`` and return the assistant text."""
         content = [
             {"type": "text", "text": prompt},
             {"type": "image_url", "image_url": {"url": _image_data_url(image_path)}},
         ]
-        return self.chat([{"role": "user", "content": content}], json_mode=json_mode)
+        if max_retries is None:
+            return self.chat(
+                [{"role": "user", "content": content}], json_mode=json_mode)
+        return self.chat(
+            [{"role": "user", "content": content}], json_mode=json_mode,
+            max_retries=max_retries)
 
     # -- internals ------------------------------------------------------
     @staticmethod

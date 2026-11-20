@@ -251,12 +251,19 @@ class VlmOCRProvider(OCRProvider):
         except Exception as exc:  # defensive: never leak a partial result
             raise OcrError(f"VLM OCR reply is unusable: {type(exc).__name__}") from exc
 
+    def _describe(self, image_path: str | Path, prompt: str) -> str:
+        """One-shot describe for optional calls (no malformed-JSON retries)."""
+        try:
+            return self.client.describe_image(
+                image_path, prompt, json_mode=True, max_retries=0)
+        except TypeError:  # lightweight fake clients without the kwarg
+            return self.client.describe_image(
+                image_path, prompt, json_mode=True)
+
     def read_scales(self, image_path: str | Path) -> OcrResult:
         """Read only scales/text; seq digits come from the glyph grid."""
         try:
-            reply = self.client.describe_image(
-                image_path, SCALE_PROMPT, json_mode=True
-            )
+            reply = self._describe(image_path, SCALE_PROMPT)
         except OcrError:
             raise
         except Exception as exc:
@@ -294,10 +301,8 @@ class VlmOCRProvider(OCRProvider):
             grid_path = Path(tmp) / "glyphs.png"
             grid.save(grid_path)
             try:
-                reply = self.client.describe_image(
-                    grid_path, GLYPH_PROMPT.format(count=len(boxes)),
-                    json_mode=True,
-                )
+                reply = self._describe(
+                    grid_path, GLYPH_PROMPT.format(count=len(boxes)))
             except OcrError:
                 raise
             except Exception as exc:
