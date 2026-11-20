@@ -123,3 +123,19 @@ class OcrResult(BaseModel):
     texts: list[TextBlock] = Field(default_factory=list)
     source: str = "unknown"  # vlm | paddle | hybrid
     raw: dict[str, Any] = Field(default_factory=dict)
+
+class View(BaseModel):
+    """One pixel-level view (an atomic connected line-drawing region) (T-006).
+
+    ``bbox`` is ``(x0, y0, x1, y1)`` in image pixels with the right/bottom
+    edges exclusive; ``mask_rle`` is a COCO-style column-major RLE string
+    (see :mod:`archaeopairs.vision.rle`) covering the *full* image, not just
+    the bbox.  ``incomplete`` flags a mask known to be cut (e.g. shared
+    baseline, E006); segmentation itself always emits ``False``.
+    """
+
+    view_id: int
+    bbox: BBox
+    area: int
+    mask_rle: str
+    incomplete: bool = False

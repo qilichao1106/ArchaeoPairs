@@ -1,0 +1,7 @@
+RUN check_rle_round_trip
+RUN check_load_image_chinese_path
+RUN check_two_blocks_and_reading_order
+RUN check_small_noise_removed
+RUN check_hole
+RUN check_blank_and_masks
+SELFCHECK OK
