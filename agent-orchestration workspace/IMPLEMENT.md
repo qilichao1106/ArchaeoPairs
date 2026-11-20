@@ -271,3 +271,9 @@
 - 日期：2026-11-21
 - 现象：XML 缺 caption 时 `build_image_name` 二次调用 `extract_fig_number`，把 `image131` 回退成 `图`，多张图靠 `_1/_2` 去重。
 - 修复 `f69bcd6`：`build_image_name` 用传入值作 fallback，保留 `image131` 等原始文件名主干；全量 502 passed。
+
+## D-032 尺线形状 Unit 防护
+
+- 日期：2026-11-21
+- 现象：比例尺未完全被 OCR 框覆盖时，某个 Unit 只剩两条尺线（`图四_11_2004CWWM4-3.png`），无器物内容。
+- 防护 `8845498`：Unit 含“高 ≤25px、宽 ≥40px”的尺线形状视图 → `unit_aux_contaminated` review，不写 PNG；全量 502 passed。
