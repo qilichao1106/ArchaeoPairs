@@ -284,3 +284,10 @@
 - 功能：复用 `audit_run` 的问题清单，把 `view_reused` / `seq_reused` / 垃圾图涉及的 Pair 改为 `review`、清空 `image_path`、加 `qc_reject`，并删除无人引用的 PNG；ledger 保留原始证据。默认 dry-run，`--apply` 落盘。
 - 万州整本：591 Pair（281 output / 310 review）、386 PNG；处置 9 Pair（8 个器物，含 1 个尺线-only 图），复审计 **0 problems**。
 - 位置：`中间过程数据和脚本/curate_run.py`。
+
+## D-034 图级噪声不再阻断干净 Unit
+
+- 日期：2026-11-21
+- 现象：万州整本 217/303 个 L1 Pair 转 review，主因 E001/E005（未绑定序号/组）让整图所有 Unit 都不出图；其中不少 Unit 本身映射完整。
+- 改动 `6357586`：E001/E005（unbound 噪声）不再作为硬阻断；干净 Unit 正常出图，图级状态仍为 pending_review；`conflicts`、E004/E007 等比例尺/映射硬报警仍阻断整图。删除已无用的 `_dirty`。
+- 验证：全量 502 passed；万州以新策略重跑中（旧结果保留 `runs/book_wanzhou_strict`）。
