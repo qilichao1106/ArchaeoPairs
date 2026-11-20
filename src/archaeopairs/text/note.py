@@ -156,11 +156,33 @@ def _label_bounds(chunk: str) -> list[tuple[str, int, int]]:
     return bounds
 
 
+def _join_parenthesized_lines(text: str) -> str:
+    """Join line breaks that fall inside ``（）``/``()`` id lists.
+
+    Book XML often wraps a long artifact-id list across lines; splitting there
+    would move the second id into the next clause (``seq 4、5`` losing its
+    second id to ``seq 6``).
+    """
+    out: list[str] = []
+    depth = 0
+    for char in text:
+        if char in "（(":
+            depth += 1
+        elif char in "）)":
+            depth = max(0, depth - 1)
+        if char in "\r\n" and depth > 0:
+            out.append(" ")
+        else:
+            out.append(char)
+    return "".join(out)
+
+
 def parse_note(text: str) -> list[NoteItem]:
     """Parse one figure-note string into ordered :class:`NoteItem` clauses."""
 
     if not text or not text.strip():
         return []
+    text = _join_parenthesized_lines(text)
     # ``①骨笄（M4:1） ②陶豆（M4:2）``: circled markers are clause boundaries,
     # handled by their own scan so each marker owns its body verbatim.
     if any(ch in _CIRCLED for ch in text):
