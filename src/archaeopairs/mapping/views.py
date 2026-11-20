@@ -75,7 +75,10 @@ def normalize_seq_label(text: str) -> str | None:
     if "、" in value:
         return None
     match = _SEQ_LABEL.fullmatch(value)
-    return match.group(1) if match else None
+    if not match:
+        return None
+    seq_id = match.group(1)
+    return None if seq_id == "0" else seq_id
 
 
 def _centre(bbox) -> tuple[float, float]:
