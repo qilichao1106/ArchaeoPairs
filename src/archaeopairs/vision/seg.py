@@ -139,8 +139,8 @@ def extract_contours(gray, dilate_k: int = 5, min_area: float = 15.0):
     for item in sorted(items, key=_reading_key):
         enclosing = any(
             other["index"] != item["index"]
-            and other["index"] in (hierarchy[item["index"]][3],
-                                   hierarchy[other["index"]][3])
+            and not other["hole"]
+            and other["area"] > item["area"]
             and _contains(other["contour"], item["contour"])
             for other in items
         )
