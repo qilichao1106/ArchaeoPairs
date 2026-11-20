@@ -55,6 +55,17 @@ def build(book: str, run_dir: Path) -> dict:
     by_figure: dict[str, list[dict]] = {}
     for row in rows:
         by_figure.setdefault(row.get("figure_id", ""), []).append(row)
+    evidence: dict[tuple[str, str], dict] = {}
+    ledger_path = run_dir / "ledger.jsonl"
+    if ledger_path.is_file():
+        for line in ledger_path.read_text(encoding="utf-8").splitlines():
+            item = json.loads(line)
+            if item.get("artifact_id"):
+                evidence[(item.get("figure_id", ""), item["artifact_id"])] = {
+                    "alarms": item.get("alarms") or [],
+                    "conflicts": item.get("conflicts") or [],
+                    "unbound": item.get("unbound") or {},
+                }
 
     viewer_dir = run_dir
     out: list[dict] = []
@@ -76,11 +87,14 @@ def build(book: str, run_dir: Path) -> dict:
             pair_line_counts[mapping.get("line", work_line.value)] += 1
             rel = _text(row.get("image_path"))
             crop = rel if rel and (viewer_dir / rel).is_file() else ""
+            ev = evidence.get((fig.figure_id, row.get("artifact_id") or ""), {})
             pairs.append({
                 "artifact_id": row.get("artifact_id") or "",
                 "artifact_name": row.get("artifact_name"),
                 "status": row.get("status") or "",
                 "flags": row.get("quality_flags") or [],
+                "alarms": ev.get("alarms") or [],
+                "conflicts": ev.get("conflicts") or [],
                 "image": crop,
                 "description": row.get("description_text") or "",
                 "text_length": row.get("text_length") or 0,
@@ -291,12 +305,14 @@ function pairCard(p){
   const scales = (p.scale_ids||[]).length
     ? `${(p.scale_ids||[]).join(", ")}（${(p.scale_sources||[]).join(", ") || "unknown"}）`
     : "未绑定";
+  const evidence = [...(p.alarms||[]), ...(p.conflicts||[])].filter(Boolean);
   return `<div class="pair">
     ${media}
     <div class="pair-info">
       <div class="artifact">${esc(p.artifact_id)}${p.artifact_name ? `<small>${esc(p.artifact_name)}</small>` : ""}</div>
       <div class="meta">图中序号 ${esc(seq)} · 视图 ${esc(views)} · 比例尺 ${esc(scales)}</div>
       <div class="meta">状态 ${esc(statusLabel(p.status))} · 文本 ${p.text_length || 0} 字${p.art_source ? ` · 来源 ${esc(p.art_source)}` : ""}</div>
+      ${evidence.length ? `<div class="meta">告警/冲突：${evidence.map(esc).join("；")}</div>` : ""}
       <div class="flags">${flags(p.flags)}</div>
       ${desc}
     </div>
