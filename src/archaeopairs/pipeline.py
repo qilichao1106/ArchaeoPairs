@@ -172,15 +172,42 @@ def _box_inside(inner: tuple, outer: tuple, tol: int = 2) -> bool:
             and inner[2] <= outer[2] + tol and inner[3] <= outer[3] + tol)
 
 
+def _box_area(box: tuple) -> int:
+    return max(0, box[2] - box[0]) * max(0, box[3] - box[1])
+
+
+def _inter_area(a: tuple, b: tuple) -> int:
+    w = max(0, min(a[2], b[2]) - max(a[0], b[0]))
+    h = max(0, min(a[3], b[3]) - max(a[1], b[1]))
+    return w * h
+
+
+def _aux_owned(view_box: tuple, aux_box: tuple) -> bool:
+    """A view belongs to OCR when it is contained in, or mostly overlaps, an
+    auxiliary box.  The dilation pad makes glyph/scale views slightly larger
+    than their OCR bbox, so containment alone is not enough; a drawing that
+    merely surrounds a small label has a tiny overlap ratio and stays."""
+    if _box_inside(view_box, aux_box):
+        return True
+    inter = _inter_area(view_box, aux_box)
+    if inter == 0:
+        return False
+    view_area = _box_area(view_box)
+    aux_area = _box_area(aux_box)
+    return (view_area > 0 and inter / view_area >= 0.35) or (
+        aux_area > 0 and view_area <= aux_area * 1.5
+        and inter / aux_area >= 0.8)
+
+
 def _filter_aux_views(views: list[View], ocr: OcrResult) -> list[View]:
     """Drop views that are just scale bars or sequence-label glyphs.
 
-    Those regions are owned by OCR and must not become artefact views.  A view
-    is dropped only when its bbox is contained in a scale/label bbox; a drawing
-    that merely contains a label stays.  View ids are re-indexed contiguously.
+    Those regions are owned by OCR and must not become artefact views.  View
+    ids are re-indexed contiguously.
     """
     aux = [tuple(s.bbox) for s in ocr.scales] + [tuple(s.bbox) for s in ocr.seqs]
-    kept = [v for v in views if not any(_box_inside(tuple(v.bbox), a) for a in aux)]
+    kept = [v for v in views
+            if not any(_aux_owned(tuple(v.bbox), a) for a in aux)]
     return [v.model_copy(update={"view_id": i}) for i, v in enumerate(kept)]
 
 
@@ -399,6 +426,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     for unit in amap.units:
         review = bool(dirty) or unit.status == "review"
         image_path: str | None = None
+        shared = False
         if write_image and image is not None:
             # R-IMG-10: identical content + identical bars is one asset; two
             # units holding different bars must not share a PNG.
