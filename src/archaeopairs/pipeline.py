@@ -790,7 +790,14 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
             fig.media_path)
         pending_glyphs = pool.submit(
             _read_glyph_labels, ocr, fig.media_path, pre_boxes)
-        ocr_result: OcrResult = pending_ocr.result()
+        try:
+            ocr_result: OcrResult = pending_ocr.result()
+        except Exception:
+            # A malformed scales-only reply must not fail the whole figure;
+            # the full OCR path has its own retry budget and still yields scales.
+            if not callable(scale_reader):
+                raise
+            ocr_result = ocr.read(fig.media_path)
         glyph_labels = pending_glyphs.result()
     if not isinstance(ocr_result, OcrResult):
         raise TypeError(
