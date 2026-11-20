@@ -26,6 +26,7 @@
 - 污染 Unit 防护（`4786795`）：含残留字形或重复尺线的 Unit 转 review 且不写成图（全量 502 passed）。
 - 图注括号内换行归并（`ccdb309`）：修复多器物号跨行错挂，`image16/20` 映射转正；全量 502 passed。
 - 比例尺邻接字形 + 序号 0 拒收（`c70f732` / `dd0f55f`）：`image16` 恢复 9 Pair / 9 PNG；全量 502 passed。
+- 多视图跨度防护（`5da3477`）：≥3 视图且跨度 >60% 图幅的 Unit 转复核；全量 502 passed。
 - 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`、批次汇总 `summarize_batch.py`、逐本审计 `audit_batch.py`、复核报告 `review_report.py`。
 
 - 2026-11-21：整本《万州瓦子坪》415 图运行中；其余 15 本以 2 并发批跑中。

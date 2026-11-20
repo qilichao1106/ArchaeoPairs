@@ -258,3 +258,10 @@
   - `c70f732`：`_filter_aux_views` 对比例尺框也应用 `_glyph_owned`，小视图贴近尺框即归 OCR；
   - `dd0f55f`：`normalize_seq_label` 永不接受 “0”，比例尺读数 “0 4厘米” 不再产生序号。
 - 效果：`image16` 实跑 9 Pair / 9 PNG，8 个 output + 1 个 `no_text` review；全量 502 passed。
+
+## D-030 多视图跨度防护
+
+- 日期：2026-11-21
+- 现象：`image16` 的 seq1/4/8 把相邻器物并进一个 Unit（成图含 3–7 个器物）。
+- 防护 `5da3477`：Unit ≥3 个视图且并集包围盒高度或宽度 >60% 图幅 → `unit_oversized` review，不写 PNG；1–2 个真实多视图不受影响。
+- 全量 502 passed。
