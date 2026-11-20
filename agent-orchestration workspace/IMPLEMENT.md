@@ -175,3 +175,11 @@
 - 验证：dsh 测试 `50af0dd`，独立 65 passed；负向对照（margin=0）→ 10 failed，恢复 → 65 passed。
 - 全量回归：422 passed。
 - AC-05/AC-07 `covered`；下一步 T-010 单图管线编排。
+
+## D-021 T-010 管线合并
+
+- 日期：2026-11-21
+- 实现：Codex `3d7e232`（pipeline/models）；编排侧修复 `a9e17eb`（shared 初始化、辅助视图过滤）。
+- 验证：dsh 测试 `d420774`（重命名 `b23296d`），独立 19 passed；负向对照（过滤失效）→ 6 failed，恢复 → 19 passed；全量 441 passed。
+- AC-01/AC-04 `covered`；下一步 T-011 文件输出 + CLI + 真书冒烟。
+- 例外：pipeline 700+ 行超 450 行上限，记录为编排胶水例外；测试文件名统一带卡号防重名。

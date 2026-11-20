@@ -17,6 +17,7 @@
 - T-007 已合并：序号绑定 + 视图归组 + ArtifactMap；dsh 独立 56 passed，全量 337 passed（`ca6907a` / `09cf21e`）；AC-02/AC-06 covered。
 - T-008 已合并：比例尺三级绑定；dsh 独立 20 passed，全量 357 passed（`918fb3f` / `611c523`）；AC-03 covered。
 - T-009 已合并：成图 + 命名；dsh 独立 65 passed，全量 422 passed（`603ee71` / `50af0dd`）；AC-05/AC-07 covered。
+- T-010 已合并：单图管线 L1/L2/L3/L4；dsh 独立 19 passed，全量 441 passed（`3d7e232` / `a9e17eb` / `b23296d`）；AC-01/AC-04 covered。
 
 ## 阻塞
 

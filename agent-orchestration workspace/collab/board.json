@@ -12,7 +12,8 @@
     "T-007": {"title": "序号绑定 + 视图归组 + ArtifactMap", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 6, "commit": "09cf21e", "implementation_commit": "ca6907a", "verdict": "pass", "updated_at": "2026-11-21"},
     "T-008": {"title": "比例尺三级绑定", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 7, "commit": "611c523", "implementation_commit": "918fb3f", "verdict": "pass", "updated_at": "2026-11-21"},
     "T-009": {"title": "成图合成 + 命名规范", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 8, "commit": "50af0dd", "implementation_commit": "603ee71", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-010": {"title": "单图管线编排（L1/L2/L3/L4）", "owner": "codex", "verifier": "dsh", "state": "ready", "wave": 9, "deps": ["T-002", "T-003", "T-005", "T-006", "T-007", "T-008", "T-009"], "updated_at": "2026-11-21"}
+    "T-010": {"title": "单图管线编排（L1/L2/L3/L4）", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 9, "commit": "b23296d", "implementation_commits": ["3d7e232", "a9e17eb"], "verdict": "pass", "updated_at": "2026-11-21"},
+    "T-011": {"title": "文件输出 + CLI + 真书冒烟", "owner": "codex", "verifier": "dsh", "state": "ready", "wave": 10, "deps": ["T-010"], "updated_at": "2026-11-21"}
   },
   "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
 }

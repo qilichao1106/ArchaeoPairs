@@ -21,10 +21,10 @@
 
 | AC | 内容 | 测试 nodeid | 证据 | 状态 |
 |---|---|---|---|---|
-| AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/` | T-002 | partial |
+| AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/`, `tests/qa/T-010/` | T-002/T-010 | covered |
 | AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/`, `tests/qa/T-007/` | T-003/T-007 | covered |
 | AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-008/` | T-008 | covered |
-| AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
+| AC-04 | L2/L3 整图直通、01 命名 | `tests/qa/T-010/` | T-010 | covered |
 | AC-05 | 成图白底/纯平移/留白/比例尺置底 | `tests/qa/T-009/` | T-009 | covered |
 | AC-06 | 未映射/缺视图进入 unbound 并复核 | `tests/qa/T-007/` | T-007 | covered |
 | AC-07 | 命名规则（图号、冒号、_N、后缀） | `tests/qa/T-009/` | T-009 | covered |
@@ -43,7 +43,7 @@
 
 - 实现 `e2618b7`（codex）；测试 `6d80d95`（dsh）。
 - dsh 独立执行：52 passed；负向对照（图题优先注入）→ 1 failed，恢复 → 52 passed；全量回归 66 passed。
-- AC-01 标 `partial`：五分类→四线映射已覆盖；流水线实际路由与 L4 零 Pair 待后续卡。
+- AC-01 当时标 `partial`：五分类→四线映射已覆盖；流水线实际路由与 L4 零 Pair 后由 T-010 覆盖。
 - 证据：`tests/qa/T-002/`；copy-proof 指向 `worktrees/dsh/T-002`。
 
 ## T-003 验收说明
@@ -94,3 +94,10 @@
 - dsh 独立执行：65 passed；负向对照（margin=0）→ 10 failed，恢复 → 65 passed；全量 422 passed。
 - AC-05、AC-07 标 `covered`：白底/纯平移/margin/比例尺行、图号/冒号/01/_N/后缀均覆盖。
 - 证据：`tests/qa/T-009/`；copy-proof 指向 `worktrees/dsh/T-009`。
+
+## T-010 验收说明
+
+- 实现 `3d7e232` + 编排侧修复 `a9e17eb`；测试 `d420774`（重命名修复 `b23296d`）。
+- dsh 独立执行：19 passed；负向对照（辅助视图过滤失效）→ 6 failed，恢复 → 19 passed；全量 441 passed。
+- AC-01、AC-04 标 `covered`：四线路由、L4 零 Pair、L2/L3 整图与 01 命名均覆盖。
+- 证据：`tests/qa/T-010/`；copy-proof 指向 `worktrees/dsh/T-010`。
