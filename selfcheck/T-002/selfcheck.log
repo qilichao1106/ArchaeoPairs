@@ -1,0 +1,11 @@
+book_id            : bookA
+figure_ids         : ['bookA:fig212', 'bookA:fig213']
+caption            : 图二一二 铜舟
+figure_note        : 1. 铜舟（M4：6） | 0 8厘米
+body_para_ids      : ['p1', 'p2']
+artifacts(fig212)  : 1
+artifacts(fig213)  : 2
+image_type(fig212) : single_line_artifact -> single_line
+image_type(fig213) : multi_line_artifact -> multi_line
+image_type(no-num) : discarded -> archive
+SELFCHECK OK

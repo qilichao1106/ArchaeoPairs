@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "archaeopairs"
+version = "0.1.0"
+description = "Archaeology figure/text pair extraction pipeline (V1.0)"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2",
+    "Pillow",
+    "numpy",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["archaeopairs*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests", "selfcheck"]
+norecursedirs = ["agent-orchestration workspace/worktrees"]
