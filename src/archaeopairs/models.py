@@ -1,4 +1,4 @@
-﻿"""Core data models for the ArchaeoPairs pipeline (T-002).
+"""Core data models for the ArchaeoPairs pipeline (T-002, T-003).
 
 Five-way image classification and the mapping onto the four work lines
 (``multi_line`` / ``single_line`` / ``single_plate`` / ``archive``) per
@@ -46,3 +46,35 @@ class FigureInput(BaseModel):
     caption: str | None = None
     figure_note: str | None = None
     body_paras: list[dict] = Field(default_factory=list)
+
+
+class NoteItem(BaseModel):
+    """One figure-note clause: a seq fragment plus its artifact ids (T-003)."""
+
+    seq: str
+    seq_list: list[int] = Field(default_factory=list)
+    name: str | None = None
+    artifact_ids: list[str] = Field(default_factory=list)
+
+
+class TextArtifact(BaseModel):
+    """Body text attributed to one artifact id (R-OUT-03, T-003).
+
+    ``markers`` records how the segment was anchored: ``single_anchor`` /
+    ``multi_anchor`` for directly anchored text, ``no_anchor`` for text hung
+    off the nearest preceding anchor.
+    """
+
+    artifact_id: str
+    text: str
+    source_para_ids: list[str] = Field(default_factory=list)
+    markers: list[str] = Field(default_factory=list)
+
+
+class TextMapping(BaseModel):
+    """seq -> artifact mapping for one figure (R-MAP-01..07, T-003)."""
+
+    seq_to_artifacts: dict[str, list[str]] = Field(default_factory=dict)
+    caption_artifacts: list[str] = Field(default_factory=list)
+    case_type: str
+    conflicts: list[str] = Field(default_factory=list)
