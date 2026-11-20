@@ -277,3 +277,10 @@
 - 日期：2026-11-21
 - 现象：比例尺未完全被 OCR 框覆盖时，某个 Unit 只剩两条尺线（`图四_11_2004CWWM4-3.png`），无器物内容。
 - 防护 `8845498`：Unit 含“高 ≤25px、宽 ≥40px”的尺线形状视图 → `unit_aux_contaminated` review，不写 PNG；全量 502 passed。
+
+## D-033 审计后处置（curate_run）
+
+- 日期：2026-11-21
+- 功能：复用 `audit_run` 的问题清单，把 `view_reused` / `seq_reused` / 垃圾图涉及的 Pair 改为 `review`、清空 `image_path`、加 `qc_reject`，并删除无人引用的 PNG；ledger 保留原始证据。默认 dry-run，`--apply` 落盘。
+- 万州整本：591 Pair（281 output / 310 review）、386 PNG；处置 9 Pair（8 个器物，含 1 个尺线-only 图），复审计 **0 problems**。
+- 位置：`中间过程数据和脚本/curate_run.py`。
