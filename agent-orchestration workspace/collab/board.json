@@ -1,19 +1,138 @@
 {
-  "version": 1,
-  "project": "ArchaeoPairs",
-  "updated_at": "2026-11-21",
-  "cards": {
-    "T-001": {"title": "冻结契约测试套件（ArtifactMap / PairRecord）", "owner": "dsh", "verifier": "claude", "state": "merged", "wave": 1, "commit": "04c1109", "updated_at": "2026-11-20"},
-    "T-002": {"title": "XML 摄入 + FigureInput + 四线分类", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 1, "commit": "6d80d95", "implementation_commit": "e2618b7", "verdict": "pass", "updated_at": "2026-11-20"},
-    "T-003": {"title": "图注解析 + seq→artifact 映射 + 正文切分入口", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 2, "commit": "f3738cb", "implementation_commits": ["e23e67c", "3c6eeee"], "verdict": "pass", "updated_at": "2026-11-20"},
-    "T-004": {"title": "VLM 客户端 + 结构化 OCR provider", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 3, "commit": "0ede96d", "implementation_commit": "cb82f45", "verdict": "pass", "updated_at": "2026-11-20"},
-    "T-005": {"title": "PaddleOCR 适配器 + Hybrid OCR", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 4, "commit": "100f6fc", "implementation_commit": "187a788", "verdict": "pass", "updated_at": "2026-11-20"},
-    "T-006": {"title": "OpenCV 掩膜分割 + View/RLE", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 5, "commit": "a3293bc", "implementation_commit": "1aec426", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-007": {"title": "序号绑定 + 视图归组 + ArtifactMap", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 6, "commit": "09cf21e", "implementation_commit": "ca6907a", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-008": {"title": "比例尺三级绑定", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 7, "commit": "611c523", "implementation_commit": "918fb3f", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-009": {"title": "成图合成 + 命名规范", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 8, "commit": "50af0dd", "implementation_commit": "603ee71", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-010": {"title": "单图管线编排（L1/L2/L3/L4）", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 9, "commit": "b23296d", "implementation_commits": ["3d7e232", "a9e17eb"], "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-011": {"title": "文件输出 + CLI + 真书冒烟", "owner": "codex", "verifier": "dsh", "state": "ready", "wave": 10, "deps": ["T-010"], "updated_at": "2026-11-21"}
+ "version": 1,
+ "project": "ArchaeoPairs",
+ "updated_at": "2026-11-21",
+ "cards": {
+  "T-001": {
+   "title": "冻结契约测试套件（ArtifactMap / PairRecord）",
+   "owner": "dsh",
+   "verifier": "claude",
+   "state": "merged",
+   "wave": 1,
+   "commit": "04c1109",
+   "updated_at": "2026-11-20"
   },
-  "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
+  "T-002": {
+   "title": "XML 摄入 + FigureInput + 四线分类",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 1,
+   "commit": "6d80d95",
+   "implementation_commit": "e2618b7",
+   "verdict": "pass",
+   "updated_at": "2026-11-20"
+  },
+  "T-003": {
+   "title": "图注解析 + seq→artifact 映射 + 正文切分入口",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 2,
+   "commit": "f3738cb",
+   "implementation_commits": [
+    "e23e67c",
+    "3c6eeee"
+   ],
+   "verdict": "pass",
+   "updated_at": "2026-11-20"
+  },
+  "T-004": {
+   "title": "VLM 客户端 + 结构化 OCR provider",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 3,
+   "commit": "0ede96d",
+   "implementation_commit": "cb82f45",
+   "verdict": "pass",
+   "updated_at": "2026-11-20"
+  },
+  "T-005": {
+   "title": "PaddleOCR 适配器 + Hybrid OCR",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 4,
+   "commit": "100f6fc",
+   "implementation_commit": "187a788",
+   "verdict": "pass",
+   "updated_at": "2026-11-20"
+  },
+  "T-006": {
+   "title": "OpenCV 掩膜分割 + View/RLE",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 5,
+   "commit": "a3293bc",
+   "implementation_commit": "1aec426",
+   "verdict": "pass",
+   "updated_at": "2026-11-21"
+  },
+  "T-007": {
+   "title": "序号绑定 + 视图归组 + ArtifactMap",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 6,
+   "commit": "09cf21e",
+   "implementation_commit": "ca6907a",
+   "verdict": "pass",
+   "updated_at": "2026-11-21"
+  },
+  "T-008": {
+   "title": "比例尺三级绑定",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 7,
+   "commit": "611c523",
+   "implementation_commit": "918fb3f",
+   "verdict": "pass",
+   "updated_at": "2026-11-21"
+  },
+  "T-009": {
+   "title": "成图合成 + 命名规范",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 8,
+   "commit": "50af0dd",
+   "implementation_commit": "603ee71",
+   "verdict": "pass",
+   "updated_at": "2026-11-21"
+  },
+  "T-010": {
+   "title": "单图管线编排（L1/L2/L3/L4）",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 9,
+   "commit": "b23296d",
+   "implementation_commits": [
+    "3d7e232",
+    "a9e17eb"
+   ],
+   "verdict": "pass",
+   "updated_at": "2026-11-21"
+  },
+  "T-011": {
+   "title": "文件输出 + CLI + 真书冒烟",
+   "owner": "codex",
+   "verifier": "dsh",
+   "state": "merged",
+   "wave": 10,
+   "deps": [
+    "T-010"
+   ],
+   "updated_at": "2026-11-21",
+   "commit": "8c94b87",
+   "implementation_commit": "a6f72ef",
+   "hardening_commit": "c4e0639",
+   "verdict": "pass",
+   "evidence": "T-011 24 passed; full 466 passed; 10-figure smoke 18 Pairs / 18 PNG, 17 output + 1 no_text"
+  }
+ },
+ "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
 }

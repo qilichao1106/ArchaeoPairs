@@ -37,3 +37,7 @@
 {"ts":"2026-11-21T01:25:00+08:00","card":"T-010","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 19 passed; filter bypass -> 6 failed -> 19; AC-01/AC-04/AC-06 pass"}
 {"ts":"2026-11-21T01:28:00+08:00","card":"T-010","from":"passed","to":"merged","actor":"orchestrator","note":"441 passed after test-name fix; merged b23296d"}
 {"ts":"2026-11-21T01:30:00+08:00","card":"T-011","from":"proposed","to":"ready","actor":"orchestrator","note":"file writer + CLI + real book smoke"}
+{"ts": "2026-11-21T03:40:00+08:00", "card": "T-011", "from": "ready", "to": "verifying", "actor": "dsh-verifier", "note": "T-011 frozen tests 24 passed"}
+{"ts": "2026-11-21T03:45:00+08:00", "card": "T-011", "from": "verifying", "to": "passed", "actor": "dsh-verifier", "note": "24 passed; full 466 passed; real-book smoke 18 Pairs / 18 PNG"}
+{"ts": "2026-11-21T03:50:00+08:00", "card": "T-011", "from": "passed", "to": "merged", "actor": "orchestrator", "note": "implementation a6f72ef; tests 8c94b87"}
+{"ts": "2026-11-21T04:20:00+08:00", "card": "T-011", "from": "merged", "to": "hardened", "actor": "orchestrator", "note": "c4e0639: glyph-grid seq reading, scale bar expansion, text-box/oversized guards; smoke 17 output + 1 no_text"}

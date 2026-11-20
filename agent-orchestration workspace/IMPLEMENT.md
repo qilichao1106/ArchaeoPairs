@@ -183,3 +183,19 @@
 - 验证：dsh 测试 `d420774`（重命名 `b23296d`），独立 19 passed；负向对照（过滤失效）→ 6 failed，恢复 → 19 passed；全量 441 passed。
 - AC-01/AC-04 `covered`；下一步 T-011 文件输出 + CLI + 真书冒烟。
 - 例外：pipeline 700+ 行超 450 行上限，记录为编排胶水例外；测试文件名统一带卡号防重名。
+## D-022 T-011 合并与真书加固
+
+- 日期：2026-11-21
+- 实现：Codex `a6f72ef`（FileWriter、run-book/run-books CLI）；测试 dsh `8c94b87`（T-011 24 passed）。
+- 编排侧真书加固（T-011 合并后例外修复，`c4e0639`，全部由全量测试复核）：
+  1. `_relevant_paras`：正文按当前图的 target_ids 过滤，消除全书正文造成的 `body_artifact_unmapped`。
+  2. 标签绑定：中心包含优先，其次 60px 内唯一最近视图；远/并列保持 unbound；字形视图不参与竞争。
+  3. **字形网格识别**：用分割出的小连通域作为序号候选，一次 VLM 调用按网格读取字符（NEAREST 放大到 72px），替代整图 bbox 坐标检测，规避 VLM 框漂移/幻觉。
+  4. 比例尺框向下扩到尺线并在左右留 20% padding，修复只截到“0 4厘米”文字、丢尺线或末字的问题。
+  5. `_text_owned`：大文本块不得吞掉大绘图视图（VLM 把器物误报为 “I” 时保留器物）。
+  6. `_fill_unique_scale`、噪声组比例尺告警过滤、`_sane_ocr`、`oversized_unit` 复核保护。
+  7. Paddle `enable_mkldnn=False`；VLM 默认超时 180s；CLI 默认 VLM-only（`--no-vl` 回 Paddle）。
+- 测试：全量 **466 passed**；T-011 24 passed。
+- 真书冒烟：`books/万州瓦子坪 --limit 10`；3 张 L1 图产出 18 Pair / 18 PNG；图九 8/8、图六 4/4、图四 6/6，全部单视图单器物；1 个 `no_text` 复核（`2004CWWM11:6`）；L2/L3 直通，L4 归档；无 junk 小图。
+- 证据：`runs/smoke_final/pairs.jsonl`、`ledger.jsonl`、`pairs/*.png`。
+- 下一步：T-012 黄金样例 + 全量批跑 + VLM QC 回环。

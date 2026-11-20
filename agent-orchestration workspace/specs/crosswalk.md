@@ -101,3 +101,11 @@
 - dsh 独立执行：19 passed；负向对照（辅助视图过滤失效）→ 6 failed，恢复 → 19 passed；全量 441 passed。
 - AC-01、AC-04 标 `covered`：四线路由、L4 零 Pair、L2/L3 整图与 01 命名均覆盖。
 - 证据：`tests/qa/T-010/`；copy-proof 指向 `worktrees/dsh/T-010`。
+## T-011 验收说明
+
+- 实现 `a6f72ef`（codex）；测试 `8c94b87`（dsh），T-011 24 passed。
+- 全量回归：**466 passed**。
+- 真书冒烟：`books/万州瓦子坪 --limit 10`；10 图 → 18 Pair / 18 PNG；17 output + 1 `no_text` 复核（`2004CWWM11:6`）；L2/L3 直通 2 图、L4 归档 7 图。
+- 合并后加固 `c4e0639`：字形网格读序号、60px 最近标签绑定、比例尺框扩到尺线、大文本块/超大单元保护；复跑同一冒烟仍为 18/18，图九 8/8、图六 4/4、图四 6/6，无 junk 图。
+- AC-04/AC-05/AC-07 保持 `covered`；AC-08 仍未覆盖（全量 17 本批跑 + 负向对照未做）。
+- 证据：`runs/smoke_final/pairs.jsonl`、`ledger.jsonl`、`pairs/*.png`。
