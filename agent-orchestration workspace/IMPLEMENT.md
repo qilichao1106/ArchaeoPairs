@@ -208,3 +208,22 @@
 - 验证：dsh 独立 24 passed；全量 **490 passed**；selfcheck OK。
 - 风险：T-012 名称用例依赖 `d774464`，在 `c4e0639` 上会失败（已补齐）。
 - 下一步：整本《万州瓦子坪》415 图批跑 + 黄金集审计。
+
+## D-024 L1 轻量 OCR 与图例带过滤
+
+- 日期：2026-11-21
+- 背景：整图 OCR 在大 N:M 图（如 `万州瓦子坪:image16`，9 个序号、两把尺）上返回的 seqs JSON 过大，偶发慢响应/畸形 JSON，单图可卡 5–9 分钟；序号本可由字形网格精确获得。
+- 改动 `0a2ee70`：
+  - 新增 `SCALE_PROMPT` 与 `VlmOCRProvider.read_scales`，L1 只读比例尺与印刷文字，不再整图识别序号；
+  - 字形网格仍并行执行；仅当网格无标签时回退整图 `read` 取序号；
+  - `HybridOCRProvider.read_scales` 优先委托 VLM，缺失时回退完整 read。
+- 修复 `9fb29b2`：scales-only 的文字框不含图例前导数字，残留小字形会让整图 dirty、0 成图；`_filter_aux_views` 增加“顶部 3% 图例带的小字形”独立过滤。
+- 验证：全量 **490 passed**；`image9` 单独实跑 6 Pair / 6 PNG，名称 陶鼎/陶盒/陶壶/陶豆/陶勺/陶斗，1 个 `no_text` 复核。
+- 证据：`release` 批次见 `runs/book_wanzhou/`。
+
+## D-025 比例尺漏检重试
+
+- 日期：2026-11-21
+- 现象：scales-only 调用偶发返回空 scales，整图所有 Unit 变为 `no_scale`，成图丢尺线（`万州瓦子坪:image9` 首轮）。
+- 修复 `2ed477b`：首次 `read_scales` 为空时立即重试一次，成功则合并 scales/texts；仍为空才走 `no_scale` 复核。
+- 验证：`image9` 实跑 6 Pair，全部 `scale_ids=[0]`，6 张 PNG 均含比例尺行；全量 490 passed。

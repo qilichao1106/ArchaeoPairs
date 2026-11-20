@@ -21,7 +21,8 @@
 - T-011 已合并：文件输出 + CLI + 真书冒烟；T-011 24 passed，全量 466 passed（`a6f72ef` / `8c94b87`）。
 - T-011 真书加固（`c4e0639`）：字形网格读序号、标签 60px 最近绑定、比例尺框扩到尺线、辅助视图/大文本块/超大单元保护；`万州瓦子坪 --limit 10` 产出 **18 Pair / 18 PNG**，17 output + 1 `no_text` 复核；图九 8/8、图六 4/4、图四 6/6 全部单视图单器物，无 junk 图。
 - T-012 已合并：dsh 独立新增 24 条加固冻结测试（`5082d7d`）；产品补丁 `d774464` 写入 `artifact_name`、清理目录行、整图 OCR 与字形网格并发；全量 **490 passed**。
-- 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`。
+- L1 轻量 OCR（`0a2ee70` / `9fb29b2` / `2ed477b`）：新增 scales-only 提示，序号只走字形网格；顶部图例带小字形独立过滤；比例尺漏检重试一次。`image9` 实跑 6 Pair / 6 PNG 且全部带比例尺。
+- 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`、批次汇总 `summarize_batch.py`。
 
 ## 阻塞
 
