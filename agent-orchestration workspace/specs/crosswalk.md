@@ -58,3 +58,10 @@
 - dsh 独立执行：59 passed；负向对照（不重试 429/5xx）→ 5 failed，恢复 → 59 passed；全量回归 194 passed。
 - 真实 VLM 冒烟：文本返回 OK；`image11.jpg` 图片 OCR 返回带 bbox 的 seqs JSON（usage/latency 可观测）。
 - AC-03 标 `partial`：VLM OCR/比例尺读取能力已覆盖；三级绑定与视图匹配待后续卡。
+
+## T-005 验收说明
+
+- 实现 `187a788`（codex）；测试 `100f6fc`（dsh）。
+- dsh 独立执行：47 passed；负向对照（Hybrid 降级反转）→ 4 failed，恢复 → 47 passed；全量回归 241 passed。
+- 覆盖 Paddle 3.x/legacy、flat/quad bbox、seq/scale/text 分类、Hybrid 单边降级与双边失败。
+- 证据：`tests/qa/T-005/`；copy-proof 指向 `worktrees/dsh/T-005`。

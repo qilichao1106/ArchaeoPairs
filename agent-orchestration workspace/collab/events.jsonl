@@ -19,3 +19,6 @@
 {"ts":"2026-11-20T23:24:00+08:00","card":"T-004","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 59 passed; negative control retry bug -> 5 failed -> 59 passed; AC-03 pass"}
 {"ts":"2026-11-20T23:28:00+08:00","card":"T-004","from":"passed","to":"merged","actor":"orchestrator","note":"regression 194 passed; ff merge 0ede96d; real VLM text+image smoke OK"}
 {"ts":"2026-11-20T23:35:00+08:00","card":"T-005","from":"proposed","to":"ready","actor":"orchestrator","note":"Paddle adapter + hybrid OCR; deps T-004"}
+{"ts":"2026-11-20T23:45:00+08:00","card":"T-005","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 47 passed; hybrid degrade fault -> 4 failed -> 47; AC-03 pass"}
+{"ts":"2026-11-20T23:48:00+08:00","card":"T-005","from":"passed","to":"merged","actor":"orchestrator","note":"regression 241 passed; ff merge 100f6fc; pushed"}
+{"ts":"2026-11-20T23:50:00+08:00","card":"T-006","from":"proposed","to":"ready","actor":"orchestrator","note":"OpenCV segmentation + View/RLE; deps T-002"}

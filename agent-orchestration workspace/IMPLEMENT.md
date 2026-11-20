@@ -133,3 +133,12 @@
 - 真实冒烟：VLM 文本返回 OK；`image11.jpg` OCR 返回带 bbox 的 seqs JSON；usage/latency 可观测。
 - 环境：httpx 0.28.1；模型 `deepseek-v4.1-flash-1017`；密钥 `DASHSCOPE_API_KEY`。
 - 下一步：T-005 PaddleOCR 适配器 + Hybrid OCR；随后分割/映射/成图。
+
+## D-016 T-005 Hybrid OCR
+
+- 日期：2026-11-20
+- 实现：Codex `187a788`（PaddleOCR 3.x/legacy 适配、flat/quad bbox、seq/scale/text 分类、Hybrid 降级）。
+- 验证：dsh 测试 `100f6fc`，独立 47 passed；负向对照（Hybrid 降级反转）→ 4 failed，恢复 → 47 passed；全量 241 passed。
+- 例外：Codex 多次超时；编排侧补齐 flat 8 bbox 与 selfcheck 200 行约束（selfcheck 288 行，记录例外）。
+- AC-03 `partial`：OCR 已覆盖；比例尺三级绑定/视图匹配待后续卡。
+- 下一步：T-006 OpenCV 分割 + View/RLE。
