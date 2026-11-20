@@ -72,10 +72,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--books", nargs="*", default=None)
+    parser.add_argument("--exclude", nargs="*", default=[])
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
     selected = book_dirs()
+    if args.exclude:
+        excluded = set(args.exclude)
+        selected = [path for path in selected if path.name not in excluded]
     if args.books:
         wanted = set(args.books)
         selected = [path for path in selected if path.name in wanted]
