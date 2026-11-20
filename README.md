@@ -7,6 +7,7 @@
 - **V1.0 管线已实现**：XML 摄入 → 五分类 → 文本映射 → 分割 → VLM OCR/字形网格序号 → ArtifactMap → 比例尺绑定 → 成图 → Pair/ledger 落盘；T-001–T-012 已合并，全量 **490 passed**。
 - 四条工作线：多器物线图 L1 / 单器物线图 L2 / 单器物版图 L3 / 其它归档 L4。
 - 真书冒烟：`万州瓦子坪 --limit 10` → 18 Pair / 18 PNG；其中 17 output、1 个 `no_text` 复核。
+- 数据集字段与复核语义见 `agent-orchestration workspace/specs/dataset_card.md`；黄金样例见 `specs/golden_set.md`。
 - 旧实现（V0.5.x / V0.6）整体归档于本地 `v1/`，不入库；`books/` 为图版数据，不入库。
 - 协作基线：L0 档，Claude Code 编排、Codex 实现、dsh 独立验证。
 
