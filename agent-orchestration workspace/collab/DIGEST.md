@@ -24,7 +24,9 @@
 - L1 轻量 OCR（`0a2ee70` / `9fb29b2` / `2ed477b`）：新增 scales-only 提示，序号只走字形网格；顶部图例带小字形独立过滤；比例尺漏检重试一次。`image9` 实跑 6 Pair / 6 PNG 且全部带比例尺。
 - T-013 已合并：L1 轻量 OCR/图例带/比例尺重试冻结测试 12 passed（`eb313e3`）；可选 VLM 调用单次化 `c066a86`；全量 **502 passed**。
 - 污染 Unit 防护（`4786795`）：含残留字形或重复尺线的 Unit 转 review 且不写成图（全量 502 passed）。
-- 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`、批次汇总 `summarize_batch.py`。
+- 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`、批次汇总 `summarize_batch.py`、逐本审计 `audit_batch.py`、复核报告 `review_report.py`。
+
+- 2026-11-21：整本《万州瓦子坪》415 图运行中；其余 15 本以 2 并发批跑中。
 
 ## 阻塞
 
