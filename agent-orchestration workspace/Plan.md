@@ -36,8 +36,9 @@
 - [x] `contracts/alarms.md`、`contracts/naming.md`
 - [x] `specs/crosswalk.md`（R-xxx → AC-xx → 卡 → 测试）
 - [x] `contracts/validate.py`（schema + 样例 + 负向对照）
-- [ ] `tests/contracts/` 冻结验收测试（Verifier）与人工签字
-- 验收命令：`python contracts/validate.py` 退出 0
+- [x] `tests/contracts/` 契约测试（T-001，14 passed，commit 04c1109）
+- [ ] 契约人工签字冻结
+- 验收命令：`python -m pytest tests/contracts -q` 退出 0（14 passed）
 
 ### M2 L1 多器物线图纵切
 

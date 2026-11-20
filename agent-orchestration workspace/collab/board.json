@@ -7,8 +7,10 @@
       "title": "冻结契约测试套件（ArtifactMap / PairRecord）",
       "owner": "dsh",
       "verifier": "claude",
-      "state": "ready",
+      "state": "merged",
       "wave": 1,
+      "commit": "04c1109",
+      "evidence": "selfcheck/T-001/pytest.log",
       "updated_at": "2026-11-20"
     }
   },

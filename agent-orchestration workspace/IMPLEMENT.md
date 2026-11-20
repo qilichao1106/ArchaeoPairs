@@ -98,3 +98,12 @@
   `contracts/alarms.md`、`contracts/naming.md`、`specs/crosswalk.md`。
 - 校验：两个 JSON Schema 通过 `jsonschema` metaschema 与样例实例校验。
 - 状态：草案，待 `tests/contracts/` 契约测试与人工签字后冻结。
+
+## D-012 T-001 契约测试合并
+
+- 日期：2026-11-20
+- 结果：dsh 写 `tests/contracts/`（5 文件，299 行），dsh 沙箱 ACL 阻塞 pytest；
+  编排侧在 worktree 实跑 `python -m pytest -q` → 14 passed，代提交 `04c1109`。
+- 验证：verifier=claude，copy-proof 指向 `worktrees/dsh/T-001`，diff ⊆ allow。
+- 口径：T-001 只证明 schema 形状，不证明 AC-02 映射行为/AC-07 命名输出；二者仍为 gap。
+- 后续：契约人工签字 → 开 L1 纵切产品卡。

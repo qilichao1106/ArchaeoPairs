@@ -31,3 +31,9 @@
 | AC-08 | 全量回归 + 负向对照 | 待建 | 待建 | gap |
 
 状态枚举：`covered` / `partial` / `failed` / `gap` / `out_of_scope`。只有测试进主干且通过才可标 `covered`。
+
+## T-001 契约测试说明
+
+- T-001（commit `04c1109`）只验证 **JSON Schema 形状**：14 passed。
+- 不证明 AC-02 的映射行为，也不证明 AC-07 的命名输出；二者仍为 `gap`，待产品卡。
+- 证据：`selfcheck/T-001/pytest.log`；copy-proof 指向 `worktrees/dsh/T-001`。

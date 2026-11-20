@@ -1,1 +1,5 @@
 {"ts":"2026-11-20T21:10:00+08:00","card":"T-001","from":"proposed","to":"ready","actor":"orchestrator","note":"契约测试卡创建；owner=dsh verifier=claude"}
+{"ts":"2026-11-20T21:28:00+08:00","card":"T-001","from":"ready","to":"implementing","actor":"orchestrator","note":"dsh worktree; sandbox ACL blocked pytest"}
+{"ts":"2026-11-20T21:29:00+08:00","card":"T-001","from":"implementing","to":"verifying","actor":"orchestrator","note":"surrogate commit 04c1109"}
+{"ts":"2026-11-20T21:30:00+08:00","card":"T-001","from":"verifying","to":"passed","actor":"claude-verifier","note":"python -m pytest -q: 14 passed; copy-proof worktree; diff within allow"}
+{"ts":"2026-11-20T21:31:00+08:00","card":"T-001","from":"passed","to":"merged","actor":"orchestrator","note":"ff-only merge 04c1109; pushed origin/main"}
