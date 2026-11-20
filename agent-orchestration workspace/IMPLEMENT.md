@@ -249,3 +249,12 @@
 - 修复 `ccdb309`：`_join_parenthesized_lines` 在解析前把 `（）/()` 内的换行替换为空格；括号外的换行仍是子句分隔。
 - 效果：`image16`/`image20` 变为 `rule_a` 且无冲突；`image19` 的 range cardinality 冲突消失；`image18` 仍有一个真实 3seq/2art 计数不符（转复核）。
 - 全量 502 passed。
+
+## D-029 比例尺字形与 0 序号
+
+- 日期：2026-11-21
+- 现象：比例尺 OCR 框差一个字符时，残留的“4厘米/0”小视图变成 unbound；字形网格把比例尺的 “0” 读成序号 0，形成 `unbound_groups` → E005，整图所有 Pair 变 review 且不出图（`image16` 9 个正确 Pair 全部无图）。
+- 修复：
+  - `c70f732`：`_filter_aux_views` 对比例尺框也应用 `_glyph_owned`，小视图贴近尺框即归 OCR；
+  - `dd0f55f`：`normalize_seq_label` 永不接受 “0”，比例尺读数 “0 4厘米” 不再产生序号。
+- 效果：`image16` 实跑 9 Pair / 9 PNG，8 个 output + 1 个 `no_text` review；全量 502 passed。
