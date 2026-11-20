@@ -2,7 +2,7 @@
 """协作基线预检（stdlib only）：工具、配置、目录、密钥存在性。
 
 工作区：agent-orchestration workspace/
-项目根：工作区上一级（books/、src/、tests/、contracts/、specs/、selfcheck/）
+项目根：工作区上一级（books/、src/、tests/、contracts/）
 退出 0 = 全部通过；1 = 有失败项。不打印任何密钥值。
 """
 from __future__ import annotations
@@ -19,7 +19,8 @@ RESULTS: list[tuple[str, bool, str]] = []
 
 # 运行期目录不入库，预检时自动补齐（保证新克隆可用）
 for runtime_dir in (WORKSPACE / "artifacts", WORKSPACE / "worktrees",
-                    WORKSPACE / "collab" / "artifacts"):
+                    WORKSPACE / "collab" / "artifacts",
+                    WORKSPACE / "中间过程数据和脚本"):
     runtime_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -64,15 +65,16 @@ if which("dsh"):
 
 # ---- 项目根（功能代码/数据） ----
 for rel in (".git", "books", "v1", "README.md", "AGENTS.md", "CLAUDE.md",
-            ".gitignore", "src", "tests", "contracts", "specs", "selfcheck"):
+            ".gitignore", "src", "tests", "contracts"):
     check(f"project:{rel}", (ROOT / rel).exists())
 
-# ---- 编排工作区（协作/流程/证据） ----
+# ---- 编排工作区（协作/流程/证据/验收辅助） ----
 for rel in ("AGENTS.md", "CLAUDE.md", "Plan.md", "IMPLEMENT.md", "Makefile",
             "docs/协作开发方式.md", "docs/mh/execution-baseline.md", "docs/mh/env.md",
             "collab/board.json", "collab/events.jsonl", "collab/cards",
             "collab/inbox/codex", "collab/inbox/dsh", "collab/inbox/claude",
-            "collab/artifacts", "scripts/preflight.py", "scripts/doctor.cmd"):
+            "collab/artifacts", "scripts/preflight.py", "scripts/doctor.cmd",
+            "specs", "selfcheck", "中间过程数据和脚本"):
     check(f"workspace:{rel}", (WORKSPACE / rel).exists())
 
 # ---- codex 配置（只读事实，不打印密钥） ----

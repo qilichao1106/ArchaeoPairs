@@ -1,7 +1,7 @@
 # 环境台账 env.md
 
 > 环境事实不写下来就会反复踩。密钥只记存在方式，不记值。
-> 编排工作区：`agent-orchestration workspace/`；功能代码在项目根 `src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`。
+> 编排工作区：`agent-orchestration workspace/`；功能代码与契约在项目根 `src/`、`tests/`、`contracts/`；验收辅助 `specs/`、`selfcheck/` 在工作区。
 
 ## 工具
 

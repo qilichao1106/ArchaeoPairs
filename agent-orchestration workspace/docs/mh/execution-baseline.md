@@ -3,7 +3,7 @@
 > 本基线是项目排布的唯一登记处；行为契约见 `AGENTS.md`，协作细节见 `docs/协作开发方式.md`。
 > 新增路径/角色先在此登记，再进 AGENTS.md。未登记的路径默认谁都不许写。
 >
-> **路径约定**：编排工件（`AGENTS.md`、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`scripts/`、`artifacts/`、`worktrees/`）相对 `agent-orchestration workspace/`；功能代码与测试（`src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`、`books/`、`out/`）相对项目根。
+> **路径约定**：编排工件（`AGENTS.md`、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`scripts/`、`artifacts/`、`worktrees/`、`specs/`、`selfcheck/`、`中间过程数据和脚本/`）相对 `agent-orchestration workspace/`；功能代码与契约（`src/`、`tests/`、`contracts/`、`books/`、`out/`）相对项目根。
 
 ## 1. 角色与 RACI
 
@@ -19,7 +19,7 @@
 
 ## 2. 路径写权
 
-见 `AGENTS.md` §1 与 `docs/协作开发方式.md` §4。产品代码按卡 `allow` 精确路径；`contracts/`、`specs/`（项目根）与 `collab/`（工作区）归 Orchestrator；`tests/`、`qa/`（项目根）归 Verifier。
+见 `AGENTS.md` §1 与 `docs/协作开发方式.md` §4。产品代码按卡 `allow` 精确路径；`contracts/`（项目根）与 `specs/`、`collab/`（工作区）归 Orchestrator；`tests/`、`qa/`（项目根）归 Verifier。
 
 ## 3. 卡模型与预算
 

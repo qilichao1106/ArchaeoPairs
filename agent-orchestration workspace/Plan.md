@@ -46,3 +46,4 @@
 - 2026-11-20：v1 整体归档（保留 books）；新方案设计待定稿；协作基线按方法论 L0+C 建立。
 - 2026-11-20：codex 0.169 只支持 `wire_api = "responses"`，MaaS 端点已验证 `/responses` 可用。
 - 2026-11-20：编排/协作工件迁入 `agent-orchestration workspace/`；根目录只保留功能代码、数据与两个入口指针。
+- 2026-11-20：`specs/`、`selfcheck/`、`中间过程数据和脚本/` 二次归并到工作区；`contracts/` 留在项目根。

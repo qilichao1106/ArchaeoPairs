@@ -14,6 +14,9 @@ collab/                任务卡、信箱、看板、事件流、每日摘要、
 docs/
   协作开发方式.md       L0 协作流程（角色/卡/门禁/闭环）
   mh/                  执行基线、环境台账
+specs/                 AC 场景与 crosswalk
+selfcheck/             实现者自检
+中间过程数据和脚本/     中间数据、临时结果、辅助脚本
 scripts/               preflight.py / doctor.cmd
 artifacts/             证据（不入库）
 worktrees/             隔离工作树（不入库）
@@ -21,8 +24,8 @@ worktrees/             隔离工作树（不入库）
 
 ## 路径约定
 
-- **工作区内**：`AGENTS.md`、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`scripts/`、`artifacts/`、`worktrees/`。
-- **项目根**：`src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`、`books/`、`中间过程数据和脚本/`、`v1/`。
+- **工作区内**：`AGENTS.md`、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`specs/`、`selfcheck/`、`中间过程数据和脚本/`、`scripts/`、`artifacts/`、`worktrees/`。
+- **项目根**：`src/`、`tests/`、`contracts/`、`books/`、`v1/`。
 
 ## 常用命令
 

@@ -15,11 +15,8 @@
 ```text
 src/                    产品代码
 tests/                  冻结验收测试（Verifier 写）
-contracts/              数据契约（M1 冻结）
-specs/                  AC 场景（M1 冻结）
-selfcheck/              实现者自检
+contracts/              数据契约（产品代码直接消费，M1 冻结）
 books/                  图版数据（不入库）
-中间过程数据和脚本/      中间产物与辅助脚本
 v1/                     旧版归档（不入库）
 AGENTS.md / CLAUDE.md   入口指针，指向编排工作区契约
 ```
@@ -31,6 +28,9 @@ AGENTS.md / CLAUDE.md   行为契约单一真源
 Plan.md / IMPLEMENT.md  里程碑与决策日志
 collab/                 任务卡、信箱、看板、证据
 docs/                   协作方式、执行基线、环境台账
+specs/                  AC 场景（M1 冻结）
+selfcheck/              实现者自检
+中间过程数据和脚本/      中间数据、临时结果、辅助脚本
 scripts/                preflight / doctor
 artifacts/              证据（不入库）
 worktrees/              隔离工作树（不入库）

@@ -4,7 +4,7 @@
 > 本文件由人审定；每次人工纠偏先沉淀为脚本/门禁，再追加一行到这里。
 > 协作细节见 `docs/协作开发方式.md`。
 >
-> **路径约定**：编排工件（本文件、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`scripts/`、`artifacts/`、`worktrees/`）相对本工作区 `agent-orchestration workspace/`；功能代码与测试（`src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`、`books/`）相对项目根。
+> **路径约定**：编排工件（本文件、`Plan.md`、`IMPLEMENT.md`、`Makefile`、`collab/`、`docs/`、`scripts/`、`artifacts/`、`worktrees/`、`specs/`、`selfcheck/`、`中间过程数据和脚本/`）相对本工作区 `agent-orchestration workspace/`；功能代码与契约（`src/`、`tests/`、`contracts/`、`books/`）相对项目根。
 
 ## 1. 角色与写权
 
