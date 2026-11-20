@@ -64,6 +64,11 @@ python "agent-orchestration workspace/中间过程数据和脚本/batch_books.py
 
 # 产物审计（垃圾图/重名/视图复用）
 python "agent-orchestration workspace/中间过程数据和脚本/audit_run.py" runs/万州瓦子坪
+
+# 批次汇总 / 逐本审计 / 复核原因
+python "agent-orchestration workspace/中间过程数据和脚本/summarize_batch.py" runs/batch
+python "agent-orchestration workspace/中间过程数据和脚本/audit_batch.py" runs/batch
+python "agent-orchestration workspace/中间过程数据和脚本/review_report.py" runs/万州瓦子坪
 ```
 
 ## 协作要点
