@@ -18,6 +18,7 @@ or the disk: :class:`NullWriter` is the default no-op writer.
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
@@ -434,6 +435,22 @@ def _read_glyph_labels(ocr, image_path, boxes: list[tuple]) -> list[SeqLabel]:
     return labels
 
 
+def _drop_aux_glyph_labels(labels: list[SeqLabel],
+                           ocr: OcrResult) -> list[SeqLabel]:
+    """Remove glyph candidates that OCR later identified as text or scale."""
+    boxes = ([tuple(t.bbox) for t in ocr.texts if t.bbox[3] - t.bbox[1] <= 60]
+             + [tuple(s.bbox) for s in ocr.scales])
+
+    def inside(box: tuple, outer: tuple, tol: float = 2.0) -> bool:
+        cx = (box[0] + box[2]) / 2.0
+        cy = (box[1] + box[3]) / 2.0
+        return (outer[0] - tol <= cx <= outer[2] + tol
+                and outer[1] - tol <= cy <= outer[3] + tol)
+
+    return [label for label in labels
+            if not any(inside(tuple(label.bbox), box) for box in boxes)]
+
+
 def _filter_aux_views(views: list[View], ocr: OcrResult) -> list[View]:
     """Drop views that are just scale bars or sequence-label glyphs.
 
@@ -503,6 +520,33 @@ def _fill_unique_scale(bindings_by_group, scales):
     return bindings_by_group, filled
 
 
+def _note_names(note_items) -> dict[str, str]:
+    """Map printed seq id -> artefact name from the figure note."""
+    names: dict[str, str] = {}
+    for item in note_items or []:
+        if not item.name:
+            continue
+        for seq in item.seq_list or []:
+            names.setdefault(str(seq), item.name)
+    return names
+
+
+def _named_unit(unit: ArtifactUnit, names: dict[str, str]) -> ArtifactUnit:
+    if unit.artifact_name or not names:
+        return unit
+    found = {names[seq] for seq in unit.seq_ids if seq in names}
+    if len(found) == 1:
+        return unit.model_copy(update={"artifact_name": found.pop()})
+    return unit
+
+
+def _note_name_for_id(note_items, artifact_id: str) -> str | None:
+    for item in note_items or []:
+        if artifact_id in item.artifact_ids and item.name:
+            return item.name
+    return None
+
+
 def _seq_part(unit: ArtifactUnit) -> str | None:
     """Naming seq: single seq, comma-joined seq string, or ``None`` (=01)."""
     seqs = [str(s) for s in unit.seq_ids if str(s).strip()]
@@ -555,20 +599,39 @@ def _body_artifact_ids(paras: list[dict]) -> list[TextArtifact]:
     return _body_artifacts(paras)
 
 
+def _is_toc_line(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped:
+        return False
+    if "...." in stripped or "····" in stripped:
+        return True
+    if "……" in stripped and stripped[-1:].isdigit():
+        return True
+    return False
+
+
+def _clean_toc_text(text: str) -> str:
+    return "\n".join(line for line in text.splitlines()
+                     if not _is_toc_line(line)).strip()
+
+
 def _relevant_paras(fig: FigureInput, target_ids: set[str]) -> list[dict]:
     """Body paragraphs that mention one of the figure's artifact ids.
 
     ``FigureInput.body_paras`` is the whole book body; without this filter
     every figure would see every other artifact and raise spurious
-    ``body_artifact_unmapped`` conflicts.
+    ``body_artifact_unmapped`` conflicts.  TOC lines mention ids too, so they
+    are stripped from each paragraph before splitting.
     """
     if not target_ids:
         return []
     out: list[dict] = []
     for para in fig.body_paras:
-        text = str(para.get("text", ""))
+        text = _clean_toc_text(str(para.get("text", "")))
+        if not text:
+            continue
         if set(extract_artifacts(text)) & target_ids:
-            out.append(para)
+            out.append({**para, "text": text})
     return out
 
 
@@ -683,21 +746,31 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         note_items, caption_artifacts, body_artifacts
     )
     views = segment_views(fig.media_path)
-    ocr_result: OcrResult = ocr.read(fig.media_path)
+    image_shape = _image_shape(fig.media_path)
+    # Both VLM calls are independent; run them together to halve L1 latency.
+    # Candidate boxes here only need geometry (size + top band); OCR text and
+    # scale boxes arrive later and prune scale digits from the glyph labels.
+    pre_boxes = _glyph_candidate_boxes(
+        views, OcrResult(seqs=[], scales=[], texts=[], source="vlm"),
+        image_shape)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        pending_ocr = pool.submit(ocr.read, fig.media_path)
+        pending_glyphs = pool.submit(
+            _read_glyph_labels, ocr, fig.media_path, pre_boxes)
+        ocr_result: OcrResult = pending_ocr.result()
+        glyph_labels = pending_glyphs.result()
     if not isinstance(ocr_result, OcrResult):
         raise TypeError(
             f"OCR provider returned {type(ocr_result).__name__}, expected OcrResult"
         )
 
-    image_shape = _image_shape(fig.media_path)
     ocr_result = _sane_ocr(ocr_result, image_shape)
     ocr_result = ocr_result.model_copy(update={
         "scales": _expand_scale_boxes(fig.media_path, list(ocr_result.scales)),
     })
+    glyph_labels = _drop_aux_glyph_labels(glyph_labels, ocr_result)
     # Whole-image box coordinates drift between VLM calls; segmentation gives
     # exact glyph boxes, so read each digit from its crop when possible.
-    glyph_boxes = _glyph_candidate_boxes(views, ocr_result, image_shape)
-    glyph_labels = _read_glyph_labels(ocr, fig.media_path, glyph_boxes)
     ocr_result = ocr_result.model_copy(update={
         "seqs": glyph_labels
         or _sanitize_seq_labels(list(ocr_result.seqs), views),
@@ -742,6 +815,11 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
             ],
             "alarms": _unique(list(amap.alarms)
                               + [f"unit_oversized:{a}" for a in sorted(oversized)]),
+        })
+    names = _note_names(note_items)
+    if names:
+        amap = amap.model_copy(update={
+            "units": [_named_unit(unit, names) for unit in amap.units],
         })
 
     alarms = _alarms_from_map(amap)
@@ -859,11 +937,10 @@ def _resolve_unique_artifact(fig: FigureInput, image_type: ImageType) -> tuple[
     Indices are built once: with the same body paragraphs repeated for every
     figure of a book, a paragraph-anchored walk would cost O(figures x body).
     """
+    note_items = parse_note(fig.figure_note) if fig.figure_note else []
     note_ids = _unique([
-        aid
-        for item in (parse_note(fig.figure_note) if fig.figure_note else [])
-        for aid in item.artifact_ids
-    ])
+        aid for item in note_items for aid in item.artifact_ids
+    ] + (extract_artifacts(fig.figure_note) if fig.figure_note else []))
     caption_ids = _unique(extract_caption_artifacts(fig.caption))
     target_ids = set(note_ids) | set(caption_ids)
     text_ids = [
@@ -951,6 +1028,10 @@ def _l2l3_impl(fig: FigureInput, image_type: ImageType,
         return result, [], stage
 
     unit = _whole_image_unit(aid, source, case, line)
+    note_items = parse_note(fig.figure_note) if fig.figure_note else []
+    name = _note_name_for_id(note_items, aid)
+    if name:
+        unit = unit.model_copy(update={"artifact_name": name})
     writer = cfg.resolved_writer()
     registry = cfg.name_registry if cfg.name_registry is not None else {}
     alarms: list[str] = []
