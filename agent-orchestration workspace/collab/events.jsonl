@@ -8,3 +8,4 @@
 {"ts":"2026-11-20T21:48:00+08:00","card":"T-002","from":"implementing","to":"verifying","actor":"orchestrator","note":"fix round: note-first; surrogate commit e2618b7"}
 {"ts":"2026-11-20T21:55:00+08:00","card":"T-002","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh full-access run: 52 passed; negative control caption-first -> 1 failed, restore -> 52 passed"}
 {"ts":"2026-11-20T21:58:00+08:00","card":"T-002","from":"passed","to":"merged","actor":"orchestrator","note":"rebase onto main; regression 66 passed; ff merge 6d80d95; pushed"}
+{"ts":"2026-11-20T22:05:00+08:00","card":"T-003","from":"proposed","to":"ready","actor":"orchestrator","note":"note parser + text mapping; deps T-002 merged"}

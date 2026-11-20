@@ -24,6 +24,15 @@
       "verdict": "pass",
       "evidence": "tests/qa/T-002; dsh 52 passed; regression 66 passed",
       "updated_at": "2026-11-20"
+    },
+    "T-003": {
+      "title": "图注解析 + seq→artifact 映射 + 正文切分入口",
+      "owner": "codex",
+      "verifier": "dsh",
+      "state": "ready",
+      "wave": 2,
+      "deps": ["T-002"],
+      "updated_at": "2026-11-20"
     }
   },
   "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
