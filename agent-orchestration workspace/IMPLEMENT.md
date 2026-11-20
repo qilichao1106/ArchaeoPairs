@@ -234,3 +234,10 @@
 - 背景：字形网格响应畸形时，`VlmClient` 默认 3 次尝试 × 180s，单图可卡 9 分钟。
 - 改动 `c066a86`：`describe_image` 增加 `max_retries` 参数；`read_scales`/`read_glyphs` 使用 `max_retries=0`，失败由管线级比例尺重试与整图回退处理；fake client 无该参数时自动退回旧签名。
 - 测试：dsh 独立 `eb313e3`，T-013 12 passed；全量 **502 passed**；selfcheck OK。
+
+## D-027 污染 Unit 防护
+
+- 日期：2026-11-21
+- 现象：VLM 序号框漂移时，`image14` 的 seq4 Unit 同时包含器物 4/5 与两行比例尺，成图出现两个器物。
+- 防护 `4786795`：`_aux_contaminated_units` 检出“Unit 仍含 ≤60px 字形视图”或“同一 scale_id 重复绑定”，标记 `review` + `unit_aux_contaminated:<id>`，不写 PNG；正常 Unit 继续输出。
+- 测试：全量 502 passed。

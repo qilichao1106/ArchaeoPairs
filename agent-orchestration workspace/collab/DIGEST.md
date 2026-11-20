@@ -23,6 +23,7 @@
 - T-012 已合并：dsh 独立新增 24 条加固冻结测试（`5082d7d`）；产品补丁 `d774464` 写入 `artifact_name`、清理目录行、整图 OCR 与字形网格并发；全量 **490 passed**。
 - L1 轻量 OCR（`0a2ee70` / `9fb29b2` / `2ed477b`）：新增 scales-only 提示，序号只走字形网格；顶部图例带小字形独立过滤；比例尺漏检重试一次。`image9` 实跑 6 Pair / 6 PNG 且全部带比例尺。
 - T-013 已合并：L1 轻量 OCR/图例带/比例尺重试冻结测试 12 passed（`eb313e3`）；可选 VLM 调用单次化 `c066a86`；全量 **502 passed**。
+- 污染 Unit 防护（`4786795`）：含残留字形或重复尺线的 Unit 转 review 且不写成图（全量 502 passed）。
 - 新增黄金集 `specs/golden_set.md`；新增批跑工具 `中间过程数据和脚本/batch_books.py`、产物审计 `audit_run.py`、批次汇总 `summarize_batch.py`。
 
 ## 阻塞
