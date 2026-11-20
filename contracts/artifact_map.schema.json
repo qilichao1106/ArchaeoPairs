@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archaeopairs.local/contracts/artifact_map.schema.json",
+  "title": "ArtifactMap",
+  "description": "单图器物↔图中序号↔器物号映射表（需求 V1.0 §3、§5）。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "book_id",
+    "figure_id",
+    "line",
+    "units",
+    "unbound_groups",
+    "unbound_views",
+    "unbound_seqs",
+    "conflicts",
+    "alarms"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "book_id": { "type": "string", "minLength": 1 },
+    "figure_id": { "type": "string", "minLength": 1 },
+    "line": { "enum": ["multi_line", "single_line", "single_plate", "archive"] },
+    "case_type": {
+      "type": ["string", "null"],
+      "enum": [
+        "rule_a",
+        "rule_b",
+        "split_same_seq",
+        "range_split",
+        "seq_missing",
+        "single_line_artifact",
+        "single_plate_artifact",
+        null
+      ]
+    },
+    "units": { "type": "array", "items": { "$ref": "#/$defs/ArtifactUnit" } },
+    "unbound_groups": { "type": "array", "items": { "$ref": "#/$defs/Unbound" } },
+    "unbound_views": { "type": "array", "items": { "$ref": "#/$defs/Unbound" } },
+    "unbound_seqs": { "type": "array", "items": { "$ref": "#/$defs/Unbound" } },
+    "conflicts": { "type": "array", "items": { "type": "string" } },
+    "alarms": {
+      "type": "array",
+      "items": { "enum": ["E001", "E002", "E003", "E004", "E005", "E006", "E007"] }
+    },
+    "status": { "enum": ["composed", "pending_review", "output", "excluded"] }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ScaleBinding": {
+      "type": "object",
+      "required": ["scale_id", "source", "shared"],
+      "properties": {
+        "scale_id": { "type": "integer", "minimum": 0 },
+        "source": {
+          "enum": ["L1_prefix", "L2_unique_shared", "L3_vl", "unknown"]
+        },
+        "shared": { "type": "boolean" },
+        "text": { "type": "string" },
+        "value": { "type": ["number", "null"] },
+        "unit": { "type": ["string", "null"] },
+        "prefix_nos": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "ArtifactUnit": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "seq_ids",
+        "view_ids",
+        "scale_bindings",
+        "line",
+        "source",
+        "confidence",
+        "whole_image"
+      ],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "artifact_name": { "type": ["string", "null"] },
+        "seq_ids": { "type": "array", "items": { "type": "string" } },
+        "view_ids": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "group_ids": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "scale_bindings": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ScaleBinding" }
+        },
+        "line": { "enum": ["multi_line", "single_line", "single_plate", "archive"] },
+        "case": { "type": ["string", "null"] },
+        "source": { "enum": ["figure_note", "caption", "text", "manual"] },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "whole_image": { "type": "boolean" },
+        "status": { "enum": ["output", "review", "archived"] },
+        "evidence": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "Unbound": {
+      "type": "object",
+      "required": ["reason"],
+      "properties": {
+        "seq_id": { "type": ["string", "null"] },
+        "view_ids": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "group_id": { "type": "integer", "minimum": 0 },
+        "artifact_ids": { "type": "array", "items": { "type": "string" } },
+        "reason": {
+          "enum": [
+            "unmapped_seq",
+            "no_seq",
+            "no_view",
+            "multi_panel",
+            "cross_group_artifact"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

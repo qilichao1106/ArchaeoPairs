@@ -46,3 +46,19 @@
 - 依据：`image11.jpg`（单尺）、`image250.jpg`（三把前缀尺）、`image236.jpg`（范围前缀）、
   `image62.jpg`（单线图有尺）、`image777.jpg`（单版图无尺）。
 - 失效条件：黄金集显示前缀组绑定不可行，或领域要求文字尺寸替代图形尺。
+
+## ADR-007 需求 V1.0 冻结
+
+- 日期：2026-11-20
+- 决策：10 项补充决定全部采纳建议默认；`specs/需求文档_V1.0.md` 冻结为需求基线。
+- 关键约束：多面板不裁切；跨图各自成 Pair + same_artifact_index；Pair 元数据与文本长度规则；
+  通用 JSONL；内部训练使用；VLM P0 关闭；CPU/60s；JSONL 复核队列；OpenCV；本地文件存储。
+- 后续：契约冻结 → 首批任务卡；需求变更走 CR/ADR。
+
+## ADR-008 契约草案 V1.0
+
+- 日期：2026-11-20
+- 决策：落 `artifact_map.schema.json`、`pair_record.schema.json`、`alarms.md`、`naming.md`、
+  `specs/crosswalk.md`；字段与需求 V1.0 对齐。
+- 校验：JSON Schema metaschema + 样例实例通过。
+- 状态：草案，待 `tests/contracts/` 与人工签字后冻结；实现者只读。

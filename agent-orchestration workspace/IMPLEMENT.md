@@ -80,3 +80,21 @@
   前缀组硬绑、唯一尺共享、无前缀多尺 VL 兜底后复核、无图形尺按 L1/L2/L3 分流、成图复制并留痕。
 - 影响：8 项边界全部对齐；需求文档状态改为待人工评审冻结。
 - 样例：`image11.jpg`（单尺共享）、`image250.jpg`（三把尺前缀组）、`image236.jpg`（范围前缀）、`image62.jpg`（单线图有尺）、`image777.jpg`（单版图无尺）。
+
+## D-010 需求冻结
+
+- 日期：2026-11-20
+- 决策：10 项补充决定全部采纳建议默认；`specs/需求文档_V1.0.md` 状态改为已冻结。
+- 关键约束：多面板不自动裁切；跨图线图/版图各自成 Pair + `same_artifact_index`；
+  Pair 增 `artifact_name`/`figure_number`/`source_role`，文本全文保留、>2000 字复核；
+  通用 JSONL、下游切分；内部训练使用；VLM P0 默认关闭；CPU、60s 单图超时；JSONL 复核队列；
+  OpenCV 默认；本地文件存储。
+- 下一步：契约冻结（ArtifactMap / PairRecord / 报警码 / 命名），再拆首批任务卡。
+
+## D-011 契约草案落地
+
+- 日期：2026-11-20
+- 产出：`contracts/artifact_map.schema.json`、`contracts/pair_record.schema.json`、
+  `contracts/alarms.md`、`contracts/naming.md`、`specs/crosswalk.md`。
+- 校验：两个 JSON Schema 通过 `jsonschema` metaschema 与样例实例校验。
+- 状态：草案，待 `tests/contracts/` 契约测试与人工签字后冻结。

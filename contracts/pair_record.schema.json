@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://archaeopairs.local/contracts/pair_record.schema.json",
+  "title": "PairRecord",
+  "description": "一条器物图文 Pair（需求 V1.0 §5）。唯一键：book_id + figure_id + artifact_id。",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "book_id",
+    "figure_id",
+    "artifact_id",
+    "source_role",
+    "image_path",
+    "provenance",
+    "quality_flags"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "book_id": { "type": "string", "minLength": 1 },
+    "figure_id": { "type": "string", "minLength": 1 },
+    "artifact_id": { "type": "string", "minLength": 1 },
+    "artifact_name": { "type": ["string", "null"] },
+    "figure_number": { "type": ["string", "null"] },
+    "source_role": { "enum": ["line", "plate"] },
+    "image_path": { "type": "string", "minLength": 1 },
+    "candidate_images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "role"],
+        "properties": {
+          "path": { "type": "string" },
+          "role": { "enum": ["line", "plate", "candidate"] },
+          "source_figure_id": { "type": ["string", "null"] },
+          "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "image_merge_mode": {
+      "enum": ["line_only", "plate_only", "line_plus_plate", "multi_candidate"]
+    },
+    "description_text": { "type": ["string", "null"] },
+    "text_length": { "type": "integer", "minimum": 0 },
+    "provenance": {
+      "type": "object",
+      "required": ["mapping"],
+      "properties": {
+        "mapping": { "$ref": "#/$defs/MappingRef" },
+        "source_para_ids": { "type": "array", "items": { "type": "string" } },
+        "art_source": { "enum": ["figure_note", "caption", "text", "manual"] },
+        "case": { "type": ["string", "null"] },
+        "shared_group": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "quality_flags": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "no_text",
+          "no_scale",
+          "long_text",
+          "degraded",
+          "multi_panel",
+          "shared_image"
+        ]
+      }
+    },
+    "status": { "enum": ["output", "review", "archived"] }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "MappingRef": {
+      "type": "object",
+      "required": [
+        "artifact_id",
+        "seq_ids",
+        "view_ids",
+        "scale_ids",
+        "scale_sources",
+        "confidence",
+        "line",
+        "source_role"
+      ],
+      "properties": {
+        "artifact_id": { "type": "string", "minLength": 1 },
+        "seq_ids": { "type": "array", "items": { "type": "string" } },
+        "view_ids": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "scale_ids": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+        "scale_sources": {
+          "type": "array",
+          "items": { "enum": ["L1_prefix", "L2_unique_shared", "L3_vl", "unknown"] }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "line": { "enum": ["multi_line", "single_line", "single_plate", "archive"] },
+        "source_role": { "enum": ["line", "plate"] }
+      },
+      "additionalProperties": false
+    }
+  }
+}

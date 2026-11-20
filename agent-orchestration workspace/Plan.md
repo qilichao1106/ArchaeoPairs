@@ -23,11 +23,21 @@
 - [x] 输入基准与 8 项边界全部对齐（2026-11-20）
 - [x] 第 4 项拆为 R-MAP-07a/b/c；R-ID-06 后缀规则；R-SCALE-01–05 比例尺规则；附录 A 补真实图版样例
 - [x] 需求文档草案：`specs/需求文档_V1.0.md` / `.docx`
-- [ ] 人工评审并签字冻结需求
-- [ ] V1.0 设计草案评审（项目根 `v1/docs/V1.0_四条工作线架构方案.docx` 或重新起草）
-- [ ] 数据/媒体根目录复核（`books/` 去留、`--media-root`）
+- [x] 需求文档冻结：`specs/需求文档_V1.0.md` / `.docx`（2026-11-20，用户确认 10 项补充决定）
+- [x] V1.0 设计草案由需求文档 V1.0 取代
+- [x] 数据/媒体根目录确认：`books/<book>/data.xml + media`
 - [ ] 契约冻结：ArtifactMap / PairRecord / 报警码 / 命名规则
-- 验收命令：`specs/需求文档_V1.0.md` 存在且含冻结签字行（待建）
+- 验收命令：`specs/需求文档_V1.0.md` 含冻结记录；`python scripts/preflight.py` 退出 0
+
+### M1.5 契约冻结（进行中）
+
+- [x] `contracts/artifact_map.schema.json`（jsonschema 校验通过）
+- [x] `contracts/pair_record.schema.json`（jsonschema 校验通过）
+- [x] `contracts/alarms.md`、`contracts/naming.md`
+- [x] `specs/crosswalk.md`（R-xxx → AC-xx → 卡 → 测试）
+- [x] `contracts/validate.py`（schema + 样例 + 负向对照）
+- [ ] `tests/contracts/` 冻结验收测试（Verifier）与人工签字
+- 验收命令：`python contracts/validate.py` 退出 0
 
 ### M2 L1 多器物线图纵切
 

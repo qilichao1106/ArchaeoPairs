@@ -4,8 +4,8 @@
 
 ## P0（当前）
 
-- M1 需求评审：`specs/需求文档_V1.0.md` / `.docx` 人工评审与冻结。
-- 冻结后：契约（ArtifactMap / PairRecord / 报警码 / 命名）与首批实现卡。
+- 契约冻结：`contracts/artifact_map.schema.json`、`pair_record.schema.json`、`alarms.md`、`naming.md`。
+- 冻结后：首批实现卡（输入解析与四线分类 → L1 纵切）。
 
 ## P1
 

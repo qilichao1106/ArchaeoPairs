@@ -5,7 +5,8 @@
 - v1 归档，`books/` 保留。
 - codex / dsh 配置为 `deepseek-v4.1-flash-1017`，两端冒烟通过。
 - 协作基线：AGENTS.md、CLAUDE.md、docs/协作开发方式.md、Plan.md、IMPLEMENT.md、collab/、docs/mh/。
-- 需求 8 项边界全部对齐，产出 `specs/需求文档_V1.0.md` / `.docx`；附录 A 补真实图版样例；待人工评审冻结。
+- 需求 8 项边界 + 10 项补充决定全部确认，`specs/需求文档_V1.0.md` / `.docx` 已冻结。
+- 契约草案：ArtifactMap / PairRecord JSON Schema、报警码、命名、crosswalk；schema 校验通过，待契约测试与签字。
 
 ## 阻塞
 
