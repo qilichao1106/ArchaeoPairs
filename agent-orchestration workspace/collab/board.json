@@ -150,6 +150,22 @@
    "implementation_commit": "d774464",
    "verdict": "pass",
    "evidence": "dsh independent: T-012 24 passed; full 490 passed; selfcheck OK"
+  },
+  "T-013": {
+   "title": "L1 轻量 OCR / 图例带 / 比例尺重试冻结测试",
+   "owner": "dsh",
+   "verifier": "claude",
+   "state": "merged",
+   "wave": 12,
+   "deps": [
+    "T-010",
+    "T-012"
+   ],
+   "updated_at": "2026-11-21",
+   "commit": "eb313e3",
+   "implementation_commit": "c066a86",
+   "verdict": "pass",
+   "evidence": "dsh independent: T-013 12 passed; full 502 passed; selfcheck OK"
   }
  },
  "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."

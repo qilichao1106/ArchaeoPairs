@@ -227,3 +227,10 @@
 - 现象：scales-only 调用偶发返回空 scales，整图所有 Unit 变为 `no_scale`，成图丢尺线（`万州瓦子坪:image9` 首轮）。
 - 修复 `2ed477b`：首次 `read_scales` 为空时立即重试一次，成功则合并 scales/texts；仍为空才走 `no_scale` 复核。
 - 验证：`image9` 实跑 6 Pair，全部 `scale_ids=[0]`，6 张 PNG 均含比例尺行；全量 490 passed。
+
+## D-026 可选 VLM 调用单次化（T-013）
+
+- 日期：2026-11-21
+- 背景：字形网格响应畸形时，`VlmClient` 默认 3 次尝试 × 180s，单图可卡 9 分钟。
+- 改动 `c066a86`：`describe_image` 增加 `max_retries` 参数；`read_scales`/`read_glyphs` 使用 `max_retries=0`，失败由管线级比例尺重试与整图回退处理；fake client 无该参数时自动退回旧签名。
+- 测试：dsh 独立 `eb313e3`，T-013 12 passed；全量 **502 passed**；selfcheck OK。

@@ -45,3 +45,7 @@
 {"ts": "2026-11-21T03:36:00+08:00", "card": "T-012", "from": "ready", "to": "verifying", "actor": "dsh-verifier", "note": "independent test session started; tests only, no src edits"}
 {"ts": "2026-11-21T03:44:00+08:00", "card": "T-012", "from": "verifying", "to": "passed", "actor": "dsh-verifier", "note": "24 passed; full 490 passed; selfcheck OK"}
 {"ts": "2026-11-21T03:46:00+08:00", "card": "T-012", "from": "passed", "to": "merged", "actor": "orchestrator", "note": "tests 5082d7d; implementation d774464"}
+{"ts": "2026-11-21T04:00:00+08:00", "card": "T-013", "from": "proposed", "to": "ready", "actor": "orchestrator", "note": "freeze light OCR/legend/retry behavior"}
+{"ts": "2026-11-21T04:02:00+08:00", "card": "T-013", "from": "ready", "to": "verifying", "actor": "dsh-verifier", "note": "independent tests for light OCR/legend/retry"}
+{"ts": "2026-11-21T04:05:00+08:00", "card": "T-013", "from": "verifying", "to": "passed", "actor": "dsh-verifier", "note": "12 passed; full 502 passed; selfcheck OK"}
+{"ts": "2026-11-21T04:06:00+08:00", "card": "T-013", "from": "passed", "to": "merged", "actor": "orchestrator", "note": "tests eb313e3; implementation c066a86"}
