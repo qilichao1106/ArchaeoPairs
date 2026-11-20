@@ -779,6 +779,15 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         )
 
     ocr_result = _sane_ocr(ocr_result, image_shape)
+    if not ocr_result.scales and callable(scale_reader):
+        # VLM occasionally misses a printed bar on the first pass; one cheap
+        # retry is cheaper than publishing every unit with no_scale.
+        retry = scale_reader(fig.media_path)
+        if isinstance(retry, OcrResult) and retry.scales:
+            ocr_result = ocr_result.model_copy(update={
+                "scales": retry.scales,
+                "texts": retry.texts or ocr_result.texts,
+            })
     ocr_result = ocr_result.model_copy(update={
         "scales": _expand_scale_boxes(fig.media_path, list(ocr_result.scales)),
     })
