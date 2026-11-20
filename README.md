@@ -4,7 +4,9 @@
 
 ## 当前状态
 
-- **V1.0 设计待定稿**：四条工作线（多器物线图 / 单器物线图 / 单器物版图 / 其它不处理）。
+- **V1.0 管线已实现**：XML 摄入 → 五分类 → 文本映射 → 分割 → VLM OCR/字形网格序号 → ArtifactMap → 比例尺绑定 → 成图 → Pair/ledger 落盘；T-001–T-012 已合并，全量 **490 passed**。
+- 四条工作线：多器物线图 L1 / 单器物线图 L2 / 单器物版图 L3 / 其它归档 L4。
+- 真书冒烟：`万州瓦子坪 --limit 10` → 18 Pair / 18 PNG；其中 17 output、1 个 `no_text` 复核。
 - 旧实现（V0.5.x / V0.6）整体归档于本地 `v1/`，不入库；`books/` 为图版数据，不入库。
 - 协作基线：L0 档，Claude Code 编排、Codex 实现、dsh 独立验证。
 
@@ -46,6 +48,22 @@ python "agent-orchestration workspace/scripts/preflight.py"
 cd "agent-orchestration workspace"
 python scripts/preflight.py
 # Windows 也可用 scripts\doctor.cmd
+```
+
+## 运行
+
+```bash
+export DASHSCOPE_API_KEY=...   # 用户级环境变量，不入库
+
+# 单本（默认 VLM OCR；--no-vl 回退 Paddle）
+PYTHONPATH=src python -m archaeopairs.cli run-book \
+  --book 万州瓦子坪 --out runs/万州瓦子坪
+
+# 全量批跑（每本一个子进程，跳过已有 pairs.jsonl 的书）
+python "agent-orchestration workspace/中间过程数据和脚本/batch_books.py" --workers 4
+
+# 产物审计（垃圾图/重名/视图复用）
+python "agent-orchestration workspace/中间过程数据和脚本/audit_run.py" runs/万州瓦子坪
 ```
 
 ## 协作要点
