@@ -451,22 +451,33 @@ def _drop_aux_glyph_labels(labels: list[SeqLabel],
             if not any(inside(tuple(label.bbox), box) for box in boxes)]
 
 
-def _filter_aux_views(views: list[View], ocr: OcrResult) -> list[View]:
+def _filter_aux_views(views: list[View], ocr: OcrResult,
+                      image_shape: tuple[int, int] | None = None) -> list[View]:
     """Drop views that are just scale bars or sequence-label glyphs.
 
-    Those regions are owned by OCR and must not become artefact views.  View
-    ids are re-indexed contiguously.
+    Those regions are owned by OCR and must not become artefact views.  Small
+    glyphs in the top legend band are dropped even when the OCR text box omits
+    their leading number; otherwise one stray legend digit makes the whole
+    figure dirty.  View ids are re-indexed contiguously.
     """
     scale_boxes = [tuple(s.bbox) for s in ocr.scales]
     text_boxes = [tuple(t.bbox) for t in ocr.texts]
     seq_boxes = [tuple(s.bbox) for s in ocr.seqs]
-    kept = [
-        view for view in views
-        if not any(_aux_owned(tuple(view.bbox), a) for a in scale_boxes)
-        and not any(_text_owned(tuple(view.bbox), a) for a in text_boxes)
-        and not any(_aux_owned(tuple(view.bbox), a)
-                    or _glyph_owned(tuple(view.bbox), a) for a in seq_boxes)
-    ]
+    legend_limit = 0.03 * image_shape[1] if image_shape else None
+    kept = []
+    for view in views:
+        box = tuple(view.bbox)
+        if legend_limit is not None and (
+                box[2] - box[0] <= 60 and box[3] - box[1] <= 60
+                and (box[1] + box[3]) / 2.0 < legend_limit):
+            continue
+        if any(_aux_owned(box, a) for a in scale_boxes):
+            continue
+        if any(_text_owned(box, a) for a in text_boxes):
+            continue
+        if any(_aux_owned(box, a) or _glyph_owned(box, a) for a in seq_boxes):
+            continue
+        kept.append(view)
     return [v.model_copy(update={"view_id": i}) for i, v in enumerate(kept)]
 
 
@@ -782,7 +793,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         "seqs": glyph_labels
         or _sanitize_seq_labels(list(ocr_result.seqs), views),
     })
-    views = _filter_aux_views(views, ocr_result)
+    views = _filter_aux_views(views, ocr_result, image_shape)
     bindings = bind_labels_to_views(views, list(ocr_result.seqs))
     all_unlabeled_rule_b = bool(
         views and note_items and not bindings
