@@ -1,4 +1,4 @@
-# 任务卡模板（复制为 collab/cards/T-xxx.md）
+# 任务卡模板（复制为 agent-orchestration workspace/collab/cards/T-xxx.md）
 
 ```yaml
 id: T-xxx

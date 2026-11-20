@@ -1,5 +1,9 @@
 # CLAUDE.md（入口）
 
-本文件仅为 Claude Code 入口，行为契约单一真源见：
+开始工作前先读：
 
-@AGENTS.md
+- `agent-orchestration workspace/AGENTS.md`（行为契约）
+- `agent-orchestration workspace/docs/协作开发方式.md`（协作流程）
+
+功能代码在项目根 `src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`；
+编排、计划、任务卡、看板、证据全部在 `agent-orchestration workspace/`。

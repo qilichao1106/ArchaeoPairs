@@ -4,7 +4,7 @@
 
 - v1 归档，`books/` 保留。
 - codex / dsh 配置为 `deepseek-v4.1-flash-1017`，两端冒烟通过。
-- 协作基线：AGENTS.md、CLAUDE.md、docs/协作开发方式.md、Plan.md、IMPLEMENT.md、collab/、docs/mh/。
+- 协作基线（均在 `agent-orchestration workspace/`）：AGENTS.md、CLAUDE.md、docs/协作开发方式.md、Plan.md、IMPLEMENT.md、collab/、docs/mh/。
 
 ## 阻塞
 

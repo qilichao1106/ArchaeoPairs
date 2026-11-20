@@ -16,11 +16,11 @@
 - [x] codex / dsh 配置并冒烟通过（模型 `deepseek-v4.1-flash-1017`）
 - [x] AGENTS.md / CLAUDE.md / 协作方式文档 / 协同目录
 - [ ] 人工审定 AGENTS.md 与协作方式
-- 验收命令：`python scripts/preflight.py` 退出 0
+- 验收命令（工作区内）：`python scripts/preflight.py` 退出 0；从项目根执行：`python "agent-orchestration workspace/scripts/preflight.py"`。
 
 ### M1 设计冻结（待人工）
 
-- [ ] V1.0 设计草案评审（`v1/docs/V1.0_四条工作线架构方案.docx` 或重新起草）
+- [ ] V1.0 设计草案评审（项目根 `v1/docs/V1.0_四条工作线架构方案.docx` 或重新起草）
 - [ ] 数据/媒体根目录确定（`books/` 去留、`--media-root`）
 - [ ] 契约冻结：ArtifactMap / PairRecord / 报警码 / 命名规则
 - 验收命令：`docs/mh/design-freeze.md` 存在且含签字行（待建）
@@ -45,3 +45,4 @@
 
 - 2026-11-20：v1 整体归档（保留 books）；新方案设计待定稿；协作基线按方法论 L0+C 建立。
 - 2026-11-20：codex 0.169 只支持 `wire_api = "responses"`，MaaS 端点已验证 `/responses` 可用。
+- 2026-11-20：编排/协作工件迁入 `agent-orchestration workspace/`；根目录只保留功能代码、数据与两个入口指针。

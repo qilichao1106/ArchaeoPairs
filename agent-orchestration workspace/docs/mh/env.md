@@ -1,6 +1,7 @@
 # 环境台账 env.md
 
 > 环境事实不写下来就会反复踩。密钥只记存在方式，不记值。
+> 编排工作区：`agent-orchestration workspace/`；功能代码在项目根 `src/`、`tests/`、`contracts/`、`specs/`、`selfcheck/`。
 
 ## 工具
 
@@ -36,4 +37,4 @@
 4. **v1/.venv 已失效**：旧虚拟环境随 v1 移动，路径不可用；新实现重建环境。
 5. **books 2GB**：`books/` 未入库；新方案需明确 `--media-root`。
 6. **dsh/codex 沙箱写不了 worktree `.git`**：实现者留工作区，Orchestrator 代提交。
-7. **本机无 make**：统一用 `python scripts/preflight.py` 或 `scripts\doctor.cmd`；`Makefile` 仅作有 make 环境的等价入口。
+7. **本机无 make**：在工作区内统一用 `python scripts/preflight.py` 或 `scripts\doctor.cmd`；从项目根执行：`python "agent-orchestration workspace/scripts/preflight.py"`。`Makefile` 仅作有 make 环境的等价入口。

@@ -6,32 +6,53 @@
 
 - **V1.0 设计待定稿**：四条工作线（多器物线图 / 单器物线图 / 单器物版图 / 其它不处理）。
 - 旧实现（V0.5.x / V0.6）整体归档于本地 `v1/`，不入库；`books/` 为图版数据，不入库。
-- 协作基线已建立：L0 档，Claude Code 编排、Codex 实现、dsh 独立验证。
+- 协作基线：L0 档，Claude Code 编排、Codex 实现、dsh 独立验证。
 
-## 目录
+## 工作区划分
+
+**功能工作区（项目根）**
 
 ```text
-AGENTS.md / CLAUDE.md     行为契约（CLAUDE.md 导入 AGENTS.md）
-Plan.md / IMPLEMENT.md    里程碑与决策日志
-docs/                     协作方式、执行基线、环境台账
-collab/                   任务卡、信箱、看板、证据
-contracts/ specs/         数据契约与 AC 场景（M1 冻结）
-src/ tests/ selfcheck/    产品代码、冻结测试、实现者自检
-scripts/preflight.py      派单前预检
+src/                    产品代码
+tests/                  冻结验收测试（Verifier 写）
+contracts/              数据契约（M1 冻结）
+specs/                  AC 场景（M1 冻结）
+selfcheck/              实现者自检
+books/                  图版数据（不入库）
+中间过程数据和脚本/      中间产物与辅助脚本
+v1/                     旧版归档（不入库）
+AGENTS.md / CLAUDE.md   入口指针，指向编排工作区契约
+```
+
+**编排工作区（`agent-orchestration workspace/`）**
+
+```text
+AGENTS.md / CLAUDE.md   行为契约单一真源
+Plan.md / IMPLEMENT.md  里程碑与决策日志
+collab/                 任务卡、信箱、看板、证据
+docs/                   协作方式、执行基线、环境台账
+scripts/                preflight / doctor
+artifacts/              证据（不入库）
+worktrees/              隔离工作树（不入库）
 ```
 
 ## 快速开始
 
 ```bash
-python scripts/preflight.py        # 检查工具/配置/目录基线
-# Windows: scripts\doctor.cmd
+# 从项目根
+python "agent-orchestration workspace/scripts/preflight.py"
+
+# 或在编排工作区内
+cd "agent-orchestration workspace"
+python scripts/preflight.py
+# Windows 也可用 scripts\doctor.cmd
 ```
 
 ## 协作要点
 
 - 同一张卡的实现者 ≠ 验证者；门禁只看退出码/结构化比较/哈希。
 - 一任务一 worktree；实现者只改卡内 `allow` 路径；验证者只写 `tests/qa/`。
-- 详见 `docs/协作开发方式.md` 与 `AGENTS.md`。
+- 详见 `agent-orchestration workspace/docs/协作开发方式.md` 与 `agent-orchestration workspace/AGENTS.md`。
 
 ## 模型与工具
 

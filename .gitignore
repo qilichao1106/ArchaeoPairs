@@ -2,10 +2,10 @@
 books/
 v1/
 
-# 协同运行时
-worktrees/
-artifacts/
-collab/artifacts/
+# 协同运行时（编排工作区）
+agent-orchestration workspace/worktrees/
+agent-orchestration workspace/artifacts/
+agent-orchestration workspace/collab/artifacts/
 
 # 凭据（永不入库）
 .env

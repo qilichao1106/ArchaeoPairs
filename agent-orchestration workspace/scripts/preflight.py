@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """协作基线预检（stdlib only）：工具、配置、目录、密钥存在性。
 
+工作区：agent-orchestration workspace/
+项目根：工作区上一级（books/、src/、tests/、contracts/、specs/、selfcheck/）
 退出 0 = 全部通过；1 = 有失败项。不打印任何密钥值。
 """
 from __future__ import annotations
@@ -11,8 +13,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+WORKSPACE = Path(__file__).resolve().parents[1]
+ROOT = WORKSPACE.parent
 RESULTS: list[tuple[str, bool, str]] = []
+
+# 运行期目录不入库，预检时自动补齐（保证新克隆可用）
+for runtime_dir in (WORKSPACE / "artifacts", WORKSPACE / "worktrees",
+                    WORKSPACE / "collab" / "artifacts"):
+    runtime_dir.mkdir(parents=True, exist_ok=True)
 
 
 def check(name: str, ok: bool, detail: str = "") -> None:
@@ -54,17 +62,18 @@ if which("codex"):
 if which("dsh"):
     check("version:dsh", True, version(["dsh", "--version"]))
 
-# ---- 目录/文件 ----
-required = [
-    ".git", "books", "v1",
-    "AGENTS.md", "CLAUDE.md", "Plan.md", "IMPLEMENT.md", ".gitignore",
-    "docs/协作开发方式.md", "docs/mh/execution-baseline.md", "docs/mh/env.md",
-    "collab/board.json", "collab/events.jsonl", "collab/cards",
-    "collab/inbox/codex", "collab/inbox/dsh", "collab/inbox/claude",
-    "collab/artifacts", "scripts/preflight.py",
-]
-for rel in required:
-    check(f"path:{rel}", (ROOT / rel).exists())
+# ---- 项目根（功能代码/数据） ----
+for rel in (".git", "books", "v1", "README.md", "AGENTS.md", "CLAUDE.md",
+            ".gitignore", "src", "tests", "contracts", "specs", "selfcheck"):
+    check(f"project:{rel}", (ROOT / rel).exists())
+
+# ---- 编排工作区（协作/流程/证据） ----
+for rel in ("AGENTS.md", "CLAUDE.md", "Plan.md", "IMPLEMENT.md", "Makefile",
+            "docs/协作开发方式.md", "docs/mh/execution-baseline.md", "docs/mh/env.md",
+            "collab/board.json", "collab/events.jsonl", "collab/cards",
+            "collab/inbox/codex", "collab/inbox/dsh", "collab/inbox/claude",
+            "collab/artifacts", "scripts/preflight.py", "scripts/doctor.cmd"):
+    check(f"workspace:{rel}", (WORKSPACE / rel).exists())
 
 # ---- codex 配置（只读事实，不打印密钥） ----
 codex_cfg = Path.home() / ".codex" / "config.toml"
@@ -93,10 +102,11 @@ key = user_env("DASHSCOPE_API_KEY")
 check("env:DASHSCOPE_API_KEY", len(key) > 0, f"len={len(key)}")
 check("key:looks-valid", key.startswith("sk-") if key else False)
 
-# ---- 仓库内不得出现密钥明文 ----
+# ---- 仓库内不得出现密钥明文（跳过数据、归档、运行证据） ----
 leaks: list[str] = []
+skip_parts = {"v1", "books", "worktrees", "artifacts", "__pycache__", ".git"}
 for p in ROOT.rglob("*"):
-    if not p.is_file() or "v1" in p.parts or "books" in p.parts:
+    if not p.is_file() or skip_parts.intersection(p.parts):
         continue
     if p.suffix.lower() in {".png", ".jpg", ".jpeg", ".docx", ".sqlite", ".pyc"}:
         continue
