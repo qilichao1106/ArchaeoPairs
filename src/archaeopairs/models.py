@@ -1,4 +1,4 @@
-"""Core data models for the ArchaeoPairs pipeline (T-002, T-003, T-004).
+﻿"""Core data models for the ArchaeoPairs pipeline (T-002, T-003, T-004).
 
 Five-way image classification and the mapping onto the four work lines
 (``multi_line`` / ``single_line`` / ``single_plate`` / ``archive``) per
@@ -139,3 +139,62 @@ class View(BaseModel):
     area: int
     mask_rle: str
     incomplete: bool = False
+
+# --- View binding / grouping / ArtifactMap (T-007) -------------------------
+
+
+class ViewBinding(BaseModel):
+    """One seq label bound to the view that spatially contains it (T-007).
+
+    ``method`` records how the binding was found: ``inside`` / ``smallest_containing``
+    for an unambiguous / multi-candidate bbox hit, ``unbound`` when no view
+    bbox contains the label centre (never distance-guessed).
+    """
+
+    view_id: int
+    seq_id: str | None
+    method: str = "inside"  # inside | smallest_containing | unbound
+    confidence: float = 1.0
+
+
+class ViewGroup(BaseModel):
+    """All views sharing one ``seq_id`` (or the whole figure under rule B)."""
+
+    group_id: int
+    view_ids: list[int] = Field(default_factory=list)
+    seq_ids: list[str] = Field(default_factory=list)
+    evidence: dict = Field(default_factory=dict)
+
+
+class ArtifactUnit(BaseModel):
+    """One artifact id with the seqs/views/groups that resolve to it (T-007)."""
+
+    artifact_id: str
+    artifact_name: str | None = None
+    seq_ids: list[str] = Field(default_factory=list)
+    view_ids: list[int] = Field(default_factory=list)
+    group_ids: list[int] = Field(default_factory=list)
+    scale_bindings: list[dict] = Field(default_factory=list)  # left to T-008
+    line: str = "multi_line"
+    case: str | None = None
+    source: str = "figure_note"
+    confidence: float = 0.0
+    whole_image: bool = False
+    status: str = "output"
+    evidence: dict = Field(default_factory=dict)
+
+
+class ArtifactMap(BaseModel):
+    """Per-figure ledger of artifact units plus unbound items/conflicts."""
+
+    book_id: str
+    figure_id: str
+    line: str = "multi_line"
+    case_type: str | None = None
+    units: list[ArtifactUnit] = Field(default_factory=list)
+    unbound_groups: list[dict] = Field(default_factory=list)
+    unbound_views: list[dict] = Field(default_factory=list)
+    unbound_seqs: list[dict] = Field(default_factory=list)
+    conflicts: list[str] = Field(default_factory=list)
+    alarms: list[str] = Field(default_factory=list)
+    status: str = "composed"

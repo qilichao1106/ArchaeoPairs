@@ -1,0 +1,16 @@
+RUN check_normalize
+RUN check_binding_smallest
+RUN check_binding_group_label_and_multi
+RUN check_group_same_seq
+RUN check_group_rule_b_all_unlabeled
+RUN check_n_to_one_merge
+RUN check_one_to_n_shared
+RUN check_n_to_n_zip
+RUN check_rule_b_caption_unique
+RUN check_unbound_views_and_seqs
+RUN check_unmapped_group_vs_unbound_seq
+RUN check_cross_group_merge
+RUN check_cross_group_conflict
+RUN check_text_mapping_conflicts_and_status
+RUN check_artifact_map_fields
+SELFCHECK OK
