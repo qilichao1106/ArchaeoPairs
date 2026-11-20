@@ -501,7 +501,15 @@ def _oversized_units(amap: ArtifactMap, views: list[View],
         y0 = min(box[1] for box in boxes)
         x1 = max(box[2] for box in boxes)
         y1 = max(box[3] for box in boxes)
-        if _box_area((x0, y0, x1, y1)) > limit * total:
+        area = _box_area((x0, y0, x1, y1))
+        if area > limit * total:
+            oversized.add(unit.artifact_id)
+            continue
+        # Three or more views spanning most of the figure usually means a
+        # misread seq merged neighbouring drawings, not a legitimate
+        # front/side/top set.
+        if len(unit.view_ids) >= 3 and (
+                (y1 - y0) > 0.6 * height or (x1 - x0) > 0.6 * width):
             oversized.add(unit.artifact_id)
     return oversized
 
