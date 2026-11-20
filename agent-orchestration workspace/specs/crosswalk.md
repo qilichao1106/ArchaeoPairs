@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/` | T-002 | partial |
 | AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/`, `tests/qa/T-007/` | T-003/T-007 | covered |
-| AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-004/` | T-004 | partial |
+| AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-008/` | T-008 | covered |
 | AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
 | AC-05 | 成图白底/纯平移/留白/比例尺置底 | 待建 | 待建 | gap |
 | AC-06 | 未映射/缺视图进入 unbound 并复核 | `tests/qa/T-007/` | T-007 | covered |
@@ -80,3 +80,10 @@
 - dsh 独立执行：56 passed；负向对照（status 恒 composed）→ 6 failed，恢复 → 56 passed；全量 337 passed。
 - AC-02、AC-06 标 `covered`：文本/视图四类基数、unbound/冲突、复核状态均已覆盖。
 - 证据：`tests/qa/T-007/`；copy-proof 指向 `worktrees/dsh/T-007`。
+
+## T-008 验收说明
+
+- 实现 `918fb3f`（codex）；测试 `853867e`（dsh）；测试重名修复 `611c523`。
+- dsh 独立执行：20 passed；负向对照（去掉 E004）→ 3 failed，恢复 → 20 passed；全量 357 passed。
+- AC-03 `covered`：L1/L2/L3、共享、来源落盘、Unit 应用与无尺复核均已覆盖。
+- 证据：`tests/qa/T-008/`；copy-proof 指向 `worktrees/dsh/T-008`。

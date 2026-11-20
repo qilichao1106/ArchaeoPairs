@@ -10,7 +10,8 @@
     "T-005": {"title": "PaddleOCR 适配器 + Hybrid OCR", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 4, "commit": "100f6fc", "implementation_commit": "187a788", "verdict": "pass", "updated_at": "2026-11-20"},
     "T-006": {"title": "OpenCV 掩膜分割 + View/RLE", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 5, "commit": "a3293bc", "implementation_commit": "1aec426", "verdict": "pass", "updated_at": "2026-11-21"},
     "T-007": {"title": "序号绑定 + 视图归组 + ArtifactMap", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 6, "commit": "09cf21e", "implementation_commit": "ca6907a", "verdict": "pass", "updated_at": "2026-11-21"},
-    "T-008": {"title": "比例尺三级绑定", "owner": "codex", "verifier": "dsh", "state": "ready", "wave": 7, "deps": ["T-007"], "updated_at": "2026-11-21"}
+    "T-008": {"title": "比例尺三级绑定", "owner": "codex", "verifier": "dsh", "state": "merged", "wave": 7, "commit": "611c523", "implementation_commit": "918fb3f", "verdict": "pass", "updated_at": "2026-11-21"},
+    "T-009": {"title": "成图合成 + 命名规范", "owner": "codex", "verifier": "dsh", "state": "ready", "wave": 8, "deps": ["T-006", "T-008"], "updated_at": "2026-11-21"}
   },
   "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
 }

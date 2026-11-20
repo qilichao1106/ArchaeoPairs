@@ -159,3 +159,11 @@
 - 验证：dsh 测试 `09cf21e`，独立 56 passed；负向对照（status 恒 composed）→ 6 failed，恢复 → 56 passed；全量 337 passed。
 - 例外：Codex 超时；编排侧修正 rule_b 合并 case 与未绑定标签 seq 的 unbound_seqs。
 - AC-02/AC-06 `covered`；下一步 T-008 比例尺三级绑定。
+
+## D-019 T-008 比例尺合并
+
+- 日期：2026-11-21
+- 实现：Codex `918fb3f`（ScaleBinding、L1/L2/L3、apply 并集/去重/无尺 review）。
+- 验证：dsh 测试 `853867e`，独立 20 passed；负向对照（去掉 E004）→ 3 failed，恢复 → 20 passed。
+- 测试基建：T-006/T-008 模块重名导致全量收集失败，修复为唯一名后 **357 passed**（`611c523`）。
+- AC-03 `covered`；下一步 T-009 成图 + 命名。

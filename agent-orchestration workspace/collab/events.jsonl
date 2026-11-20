@@ -28,3 +28,6 @@
 {"ts":"2026-11-21T00:25:00+08:00","card":"T-007","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 56 passed; status fault -> 6 failed -> 56; AC-02/AC-06 pass"}
 {"ts":"2026-11-21T00:28:00+08:00","card":"T-007","from":"passed","to":"merged","actor":"orchestrator","note":"regression 337 passed; ff merge 09cf21e; pushed"}
 {"ts":"2026-11-21T00:30:00+08:00","card":"T-008","from":"proposed","to":"ready","actor":"orchestrator","note":"scale binding L1/L2/L3; deps T-007"}
+{"ts":"2026-11-21T00:45:00+08:00","card":"T-008","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 20 passed; E004 drop -> 3 failed -> 20; AC-03 pass"}
+{"ts":"2026-11-21T00:48:00+08:00","card":"T-008","from":"passed","to":"merged","actor":"orchestrator","note":"full suite 357 passed after test-name collision fix; merged 611c523"}
+{"ts":"2026-11-21T00:50:00+08:00","card":"T-009","from":"proposed","to":"ready","actor":"orchestrator","note":"compose + naming; deps T-006/T-008"}
