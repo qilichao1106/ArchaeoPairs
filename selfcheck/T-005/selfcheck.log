@@ -1,0 +1,13 @@
+RUN check_v3_dict
+RUN check_v3_json_object
+RUN check_legacy
+RUN check_top_level_legacy_line
+RUN check_classification
+RUN check_empty
+RUN check_engine_errors
+RUN check_lazy_import_failure
+RUN check_lazy_import_success
+RUN check_hybrid_both_ok
+RUN check_hybrid_degrade
+RUN check_hybrid_both_fail
+SELFCHECK OK
