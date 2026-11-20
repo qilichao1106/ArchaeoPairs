@@ -1,0 +1,9 @@
+RUN check_missing_key
+RUN check_success_and_describe
+RUN check_invalid_json
+RUN check_retries_and_errors
+RUN check_ocr_parse
+RUN check_ocr_errors_and_empty
+RUN check_merge
+RUN check_prompts
+SELFCHECK OK

@@ -11,6 +11,7 @@ dependencies = [
     "pydantic>=2",
     "Pillow",
     "numpy",
+    "httpx>=0.27",
 ]
 
 [tool.setuptools.packages.find]
@@ -21,3 +22,4 @@ include = ["archaeopairs*"]
 pythonpath = ["src"]
 testpaths = ["tests", "selfcheck"]
 norecursedirs = ["agent-orchestration workspace/worktrees"]
+

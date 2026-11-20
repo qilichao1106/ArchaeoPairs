@@ -1,15 +1,20 @@
-"""Core data models for the ArchaeoPairs pipeline (T-002, T-003).
+"""Core data models for the ArchaeoPairs pipeline (T-002, T-003, T-004).
 
 Five-way image classification and the mapping onto the four work lines
 (``multi_line`` / ``single_line`` / ``single_plate`` / ``archive``) per
-requirements V1.0 R-IN-11.
+requirements V1.0 R-IN-11, plus the OCR result models consumed by the
+pluggable OCR providers (AC-03).
 """
 
 from __future__ import annotations
 
 from enum import Enum
+from typing import Any
 
 from pydantic import BaseModel, Field
+
+# An OCR bounding box is always ``[x0, y0, x1, y1]`` in image pixels.
+BBox = tuple[int, int, int, int]
 
 
 class ImageType(str, Enum):
@@ -78,3 +83,43 @@ class TextMapping(BaseModel):
     caption_artifacts: list[str] = Field(default_factory=list)
     case_type: str
     conflicts: list[str] = Field(default_factory=list)
+
+
+class SeqLabel(BaseModel):
+    """A sequence number printed beside/drawn on an artifact (T-004, AC-03)."""
+
+    text: str
+    bbox: BBox
+    conf: float | None = None
+
+
+class ScaleBar(BaseModel):
+    """A scale bar reading, optionally shared by several artifact numbers."""
+
+    text: str
+    bbox: BBox
+    value: float | None = None
+    unit: str | None = None
+    prefix_nos: list[str] = Field(default_factory=list)
+
+
+class TextBlock(BaseModel):
+    """Any other printed text block (title, annotation, note fragment)."""
+
+    text: str
+    bbox: BBox
+
+
+class OcrResult(BaseModel):
+    """Structured OCR output for one figure image.
+
+    ``source`` is ``vlm`` / ``paddle`` for a single provider or ``hybrid``
+    after :func:`archaeopairs.ocr.base.merge_ocr_results`.  ``raw`` keeps the
+    provider payload (or merged provenance such as ``raw["conflicts"]``).
+    """
+
+    seqs: list[SeqLabel] = Field(default_factory=list)
+    scales: list[ScaleBar] = Field(default_factory=list)
+    texts: list[TextBlock] = Field(default_factory=list)
+    source: str = "unknown"  # vlm | paddle | hybrid
+    raw: dict[str, Any] = Field(default_factory=dict)
