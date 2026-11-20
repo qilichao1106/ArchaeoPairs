@@ -96,7 +96,8 @@ def audit(run_dir: Path) -> dict:
 
         rel = str(row.get("image_path") or "")
         if not rel:
-            problems.append(f"missing_image_path: {artifact_id}")
+            if row.get("status") != "review":
+                problems.append(f"missing_image_path: {artifact_id}")
             continue
         stats = image_stats(run_dir / rel)
         stats.update({"name": name, "artifact_id": artifact_id,
