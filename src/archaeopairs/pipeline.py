@@ -506,6 +506,25 @@ def _oversized_units(amap: ArtifactMap, views: list[View],
     return oversized
 
 
+def _aux_contaminated_units(amap: ArtifactMap,
+                            views: list[View]) -> set[str]:
+    """Units that still hold a glyph-sized view or a duplicated scale bar."""
+    small = {view.view_id for view in views
+             if view.bbox[2] - view.bbox[0] <= 60
+             and view.bbox[3] - view.bbox[1] <= 60}
+    bad: set[str] = set()
+    for unit in amap.units:
+        if small.intersection(unit.view_ids):
+            bad.add(unit.artifact_id)
+            continue
+        scale_ids = [int(binding.get("scale_id", -1))
+                     for binding in unit.scale_bindings
+                     if isinstance(binding, dict)]
+        if len(scale_ids) != len(set(scale_ids)):
+            bad.add(unit.artifact_id)
+    return bad
+
+
 def _fill_unique_scale(bindings_by_group, scales):
     """With exactly one scale, copy it to groups that L1 left unbound.
 
@@ -833,15 +852,19 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     amap = apply_scale_bindings(amap, bindings_by_group)
     amap = amap.model_copy(update={"alarms": _unique(list(amap.alarms) + list(scale_alarms))})
     oversized = _oversized_units(amap, views, image_shape)
-    if oversized:
+    contaminated = _aux_contaminated_units(amap, views)
+    blocked = oversized | contaminated
+    if blocked:
         amap = amap.model_copy(update={
             "units": [
                 unit.model_copy(update={"status": "review"})
-                if unit.artifact_id in oversized else unit
+                if unit.artifact_id in blocked else unit
                 for unit in amap.units
             ],
-            "alarms": _unique(list(amap.alarms)
-                              + [f"unit_oversized:{a}" for a in sorted(oversized)]),
+            "alarms": _unique(
+                list(amap.alarms)
+                + [f"unit_oversized:{a}" for a in sorted(oversized)]
+                + [f"unit_aux_contaminated:{a}" for a in sorted(contaminated)]),
         })
     names = _note_names(note_items)
     if names:
@@ -879,7 +902,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         review = bool(dirty) or unit.status == "review"
         image_path: str | None = None
         shared = False
-        if write_image and image is not None and unit.artifact_id not in oversized:
+        if write_image and image is not None and unit.artifact_id not in blocked:
             # R-IMG-10: identical content + identical bars is one asset; two
             # units holding different bars must not share a PNG.
             key = (tuple(unit.view_ids), bool(unit.whole_image),
