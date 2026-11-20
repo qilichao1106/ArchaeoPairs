@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/` | T-002 | partial |
 | AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/` | T-003 | partial |
-| AC-03 | 比例尺三级绑定与来源落盘 | 待建 | 待建 | gap |
+| AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-004/` | T-004 | partial |
 | AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
 | AC-05 | 成图白底/纯平移/留白/比例尺置底 | 待建 | 待建 | gap |
 | AC-06 | 未映射/缺视图进入 unbound 并复核 | 待建 | 待建 | gap |
@@ -51,3 +51,10 @@
 - dsh 独立执行：69 passed；负向对照（区间 bug 注入）→ 2 failed，恢复 → 69 passed；全量回归 135 passed。
 - AC-02 标 `partial`：文本层四类基数与冲突已覆盖；视图/比例尺映射待后续卡。
 - 证据：`tests/qa/T-003/`；copy-proof 指向 `worktrees/dsh/T-003`。
+
+## T-004 验收说明
+
+- 实现 `cb82f45`（codex）；测试 `0ede96d`（dsh）。
+- dsh 独立执行：59 passed；负向对照（不重试 429/5xx）→ 5 failed，恢复 → 59 passed；全量回归 194 passed。
+- 真实 VLM 冒烟：文本返回 OK；`image11.jpg` 图片 OCR 返回带 bbox 的 seqs JSON（usage/latency 可观测）。
+- AC-03 标 `partial`：VLM OCR/比例尺读取能力已覆盖；三级绑定与视图匹配待后续卡。

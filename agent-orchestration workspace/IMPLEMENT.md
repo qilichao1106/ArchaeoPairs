@@ -124,3 +124,12 @@
 - 口径：AC-02 `partial`（文本层四类基数已覆盖；视图/比例尺映射待后续卡）。
 - CR-001：运行时启用 `deepseek-v4.1-flash-1017` VLM，用于 OCR、整体视觉识别、效果判断/QC；需求 §6.4 新增 R-VLM-01–05；T-004 实现。
 - 例外记录：Codex 在 T-003 的圈号/映射/正则修复上多次超时，编排侧对 `_RANGE_RE` 做了一行修复，已由 dsh 测试复核。
+
+## D-015 T-004 VLM 客户端与 OCR 合并
+
+- 日期：2026-11-20
+- 实现：Codex `cb82f45`（VlmClient、prompts、OCRProvider、VlmOCRProvider、models、pyproject）。
+- 验证：dsh 测试 `0ede96d`，独立 59 passed；负向对照（不重试 429/5xx）→ 5 failed，恢复 → 59 passed；全量 194 passed。
+- 真实冒烟：VLM 文本返回 OK；`image11.jpg` OCR 返回带 bbox 的 seqs JSON；usage/latency 可观测。
+- 环境：httpx 0.28.1；模型 `deepseek-v4.1-flash-1017`；密钥 `DASHSCOPE_API_KEY`。
+- 下一步：T-005 PaddleOCR 适配器 + Hybrid OCR；随后分割/映射/成图。

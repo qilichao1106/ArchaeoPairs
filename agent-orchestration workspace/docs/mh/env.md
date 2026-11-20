@@ -27,6 +27,7 @@
 - 密钥：`DASHSCOPE_API_KEY`（用户环境变量）；不入仓库、不进日志。
 - 约束：结构化 JSON 输出；超时/失败 fail-closed 转复核；记录模型 ID、耗时、token；离线模式禁用。
 - 图片以 base64 发送；仅内部训练使用，不公开发布。
+- 2026-11-20 冒烟：`chat("只回复 OK")` → `OK`（latency≈1.8s）；`image11.jpg` + OCR_PROMPT → 带 bbox 的 `seqs` JSON（327 字符）。
 
 ## 凭据
 

@@ -11,7 +11,7 @@
 - 契约已冻结（T-001 14 passed）；角色确认：Codex 实现 / dsh 验证 / Claude 编排与整体效果负责。
 - T-002 已合并：XML 摄入 + FigureInput + 四线分类；dsh 独立 52 passed，全量 66 passed（`e2618b7` / `6d80d95`）。
 - T-003 已合并：图注解析 + 文本映射 + 正文切分；dsh 独立 69 passed，全量 135 passed（`e23e67c` / `3c6eeee` / `f3738cb`）。
-- CR-001：运行时启用 `deepseek-v4.1-flash-1017` VLM，用于 OCR/视觉识别/QC；T-004 实现。
+- CR-001：运行时启用 `deepseek-v4.1-flash-1017` VLM，用于 OCR/视觉识别/QC；T-004 已合并，59 passed；真实文本+图片冒烟通过（返回带 bbox 的 seqs JSON）。
 
 ## 阻塞
 

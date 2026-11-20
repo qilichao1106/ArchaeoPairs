@@ -44,7 +44,8 @@
 
 - [x] 输入解析 + FigureInput + 四线分类（T-002，135 passed 基线）
 - [x] 图注解析 + seq→artifact 文本映射 + 正文切分（T-003，69 passed）
-- [ ] VLM 能力层 + OCR 适配器（T-004，CR-001）
+- [x] VLM 能力层 + OCR 适配器（T-004，59 passed；真实 VLM 冒烟通过）
+- [ ] PaddleOCR 适配器 + Hybrid OCR（T-005）
 - [ ] 分割 → 映射 → 组合 → 绑比例尺 → 成图 全链
 - [ ] 映射不变量测试 + 黄金样例 + 负向对照
 - 验收命令：待 M1 冻结后写入（不得使用时间型条件）
