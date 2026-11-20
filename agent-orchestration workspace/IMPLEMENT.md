@@ -241,3 +241,11 @@
 - 现象：VLM 序号框漂移时，`image14` 的 seq4 Unit 同时包含器物 4/5 与两行比例尺，成图出现两个器物。
 - 防护 `4786795`：`_aux_contaminated_units` 检出“Unit 仍含 ≤60px 字形视图”或“同一 scale_id 重复绑定”，标记 `review` + `unit_aux_contaminated:<id>`，不写 PNG；正常 Unit 继续输出。
 - 测试：全量 502 passed。
+
+## D-028 图注括号内换行归并
+
+- 日期：2026-11-21
+- 现象：XML 图注把长器物号列表折行，`parse_note` 的换行切分把第二个器物号挂到下一子句（`image16` seq4、5 丢掉 ID4，seq6 多出 ID4；`image20` 同类）。
+- 修复 `ccdb309`：`_join_parenthesized_lines` 在解析前把 `（）/()` 内的换行替换为空格；括号外的换行仍是子句分隔。
+- 效果：`image16`/`image20` 变为 `rule_a` 且无冲突；`image19` 的 range cardinality 冲突消失；`image18` 仍有一个真实 3seq/2art 计数不符（转复核）。
+- 全量 502 passed。
