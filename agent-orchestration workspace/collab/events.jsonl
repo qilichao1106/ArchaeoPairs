@@ -13,3 +13,4 @@
 {"ts":"2026-11-20T22:38:00+08:00","card":"T-003","from":"implementing","to":"verifying","actor":"orchestrator","note":"surrogate commits e23e67c + 3c6eeee"}
 {"ts":"2026-11-20T22:45:00+08:00","card":"T-003","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 69 passed; negative control range bug -> 2 failed -> 69 passed; AC-02 pass"}
 {"ts":"2026-11-20T22:48:00+08:00","card":"T-003","from":"passed","to":"merged","actor":"orchestrator","note":"regression 135 passed; ff merge f3738cb; pushed"}
+{"ts":"2026-11-20T23:00:00+08:00","card":"T-004","from":"proposed","to":"ready","actor":"orchestrator","note":"VLM client + structured OCR provider; CR-001"}
