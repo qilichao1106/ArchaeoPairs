@@ -149,24 +149,6 @@ def _alarms_from_map(amap: ArtifactMap) -> list[str]:
     return _unique(alarms)
 
 
-def _dirty(amap: ArtifactMap) -> list[str]:
-    """Reasons the mapping cannot be auto-emitted (empty means clean)."""
-    reasons: list[str] = []
-    if not amap.units:
-        reasons.append("no_units")
-    if any(str(a).startswith("E") for a in amap.alarms):
-        reasons.append("alarms")
-    if amap.conflicts:
-        reasons.append("conflicts")
-    for kind, items in (
-        ("unbound_seqs", amap.unbound_seqs),
-        ("unbound_groups", amap.unbound_groups),
-    ):
-        if items:
-            reasons.append(kind)
-    return reasons
-
-
 def _views_by_id(views: list[View]) -> dict[int, View]:
     return {view.view_id: view for view in views}
 
@@ -892,7 +874,12 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
 
     alarms = _alarms_from_map(amap)
     conflicts = list(amap.conflicts)
-    dirty = _dirty(amap)
+    # E001/E005 here come from unbound seqs/groups (noise on a figure); clean
+    # Units may still be published.  Scale/mapping alarms stay hard blockers.
+    hard = bool(conflicts) or any(
+        str(alarm).startswith("E") and str(alarm) not in ("E001", "E005")
+        for alarm in alarms
+    )
 
     figure_number = extract_fig_number(
         fig.caption, fallback=Path(fig.fileref).stem
@@ -904,12 +891,11 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     scale_map = _scales_by_id(list(ocr_result.scales))
 
     image: np.ndarray | None = None
-    write_image = not dirty
+    write_image = not hard
     if write_image:
         try:
             image = load_image(fig.media_path)
-        except Exception as exc:  # unreadable image -> review, not a crash
-            dirty.append(f"image_unreadable:{type(exc).__name__}")
+        except Exception:  # unreadable image -> no PNG, review, not a crash
             write_image = False
 
     pairs: list[PairRecord] = []
@@ -917,7 +903,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     written: dict[tuple, str] = {}
     compose_error: str | None = None
     for unit in amap.units:
-        review = bool(dirty) or unit.status == "review"
+        review = unit.status == "review" or unit.artifact_id in blocked
         image_path: str | None = None
         shared = False
         if write_image and image is not None and unit.artifact_id not in blocked:
