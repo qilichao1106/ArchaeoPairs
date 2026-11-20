@@ -36,6 +36,6 @@ python "agent-orchestration workspace/scripts/preflight.py"
 
 ## 状态
 
-- L0 协作基线已建立，预检 37 项通过。
+- L0 协作基线已建立，预检 47 项通过。
 - 产品设计待冻结（M1）；冻结前不建产品卡。
 - 详见 `docs/协作开发方式.md`、`Plan.md`、`collab/DIGEST.md`。
