@@ -18,12 +18,15 @@
 - [ ] 人工审定 AGENTS.md 与协作方式
 - 验收命令（工作区内）：`python scripts/preflight.py` 退出 0；从项目根执行：`python "agent-orchestration workspace/scripts/preflight.py"`。
 
-### M1 设计冻结（待人工）
+### M1 需求冻结（待人工评审）
 
+- [x] 输入基准与 8 项边界对齐（2026-11-20；输入以 `books/<book>/data.xml + media` 为准，其余采用建议默认）
+- [x] 需求文档草案：`specs/需求文档_V1.0.md` / `.docx`
+- [ ] 人工评审并签字冻结需求
 - [ ] V1.0 设计草案评审（项目根 `v1/docs/V1.0_四条工作线架构方案.docx` 或重新起草）
-- [ ] 数据/媒体根目录确定（`books/` 去留、`--media-root`）
+- [ ] 数据/媒体根目录复核（`books/` 去留、`--media-root`）
 - [ ] 契约冻结：ArtifactMap / PairRecord / 报警码 / 命名规则
-- 验收命令：`docs/mh/design-freeze.md` 存在且含签字行（待建）
+- 验收命令：`specs/需求文档_V1.0.md` 存在且含冻结签字行（待建）
 
 ### M2 L1 多器物线图纵切
 
