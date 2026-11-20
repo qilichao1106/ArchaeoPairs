@@ -4,3 +4,7 @@
 {"ts":"2026-11-20T21:30:00+08:00","card":"T-001","from":"verifying","to":"passed","actor":"claude-verifier","note":"python -m pytest -q: 14 passed; copy-proof worktree; diff within allow"}
 {"ts":"2026-11-20T21:31:00+08:00","card":"T-001","from":"passed","to":"merged","actor":"orchestrator","note":"ff-only merge 04c1109; pushed origin/main"}
 {"ts":"2026-11-20T21:40:00+08:00","card":"T-002","from":"proposed","to":"ready","actor":"orchestrator","note":"XML ingest + FigureInput + four-line classification; owner=codex verifier=dsh"}
+{"ts":"2026-11-20T21:42:00+08:00","card":"T-002","from":"ready","to":"implementing","actor":"orchestrator","note":"codex worktree; selfcheck OK"}
+{"ts":"2026-11-20T21:48:00+08:00","card":"T-002","from":"implementing","to":"verifying","actor":"orchestrator","note":"fix round: note-first; surrogate commit e2618b7"}
+{"ts":"2026-11-20T21:55:00+08:00","card":"T-002","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh full-access run: 52 passed; negative control caption-first -> 1 failed, restore -> 52 passed"}
+{"ts":"2026-11-20T21:58:00+08:00","card":"T-002","from":"passed","to":"merged","actor":"orchestrator","note":"rebase onto main; regression 66 passed; ff merge 6d80d95; pushed"}

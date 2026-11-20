@@ -38,4 +38,4 @@
 5. **books 2GB**：`books/` 未入库；新方案需明确 `--media-root`。
 6. **dsh/codex 沙箱写不了 worktree `.git`**：实现者留工作区，Orchestrator 代提交。
 7. **本机无 make**：在工作区内统一用 `python scripts/preflight.py` 或 `scripts\doctor.cmd`；从项目根执行：`python "agent-orchestration workspace/scripts/preflight.py"`。`Makefile` 仅作有 make 环境的等价入口。
-8. **dsh Windows 沙箱**：`--permission-mode workspace-write` 在 ACL 授权阶段失败（`SetNamedSecurityInfoW failed (Win32 5)` / `sandbox-local windows-acl temp grant materialization failed`），shell 不可用；`--permission-mode read-only` 的 shell 正常。验证任务用 `dsh --profile headless --json --permission-mode read-only`，配合 `PYTHONDONTWRITEBYTECODE=1 python -m pytest ... -p no:cacheprovider`；实现任务 dsh 可用文件工具写代码，但 pytest 由 Orchestrator/Verifier 实跑。
+8. **dsh Windows 沙箱**：`--permission-mode workspace-write` 在 ACL 授权阶段失败（`SetNamedSecurityInfoW failed (Win32 5)` / `sandbox-local windows-acl temp grant materialization failed`），shell 不可用；`--permission-mode read-only` 的 shell 可运行，但 pytest 无法创建 tmp 目录。**验证任务统一用 `--permission-mode danger-full-access --approval-policy never`**，配合 `PYTHONDONTWRITEBYTECODE=1 python -m pytest ... -p no:cacheprovider`；实现任务 dsh 可用文件工具写代码，pytest 由 Orchestrator/Verifier 实跑。

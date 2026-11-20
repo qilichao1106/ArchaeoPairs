@@ -107,3 +107,12 @@
 - 验证：verifier=claude，copy-proof 指向 `worktrees/dsh/T-001`，diff ⊆ allow。
 - 口径：T-001 只证明 schema 形状，不证明 AC-02 映射行为/AC-07 命名输出；二者仍为 gap。
 - 后续：契约人工签字 → 开 L1 纵切产品卡。
+
+## D-013 T-002 输入与分类合并
+
+- 日期：2026-11-20
+- 实现：Codex `e2618b7`（pyproject + models + ingest/xml + classify/image_type + work_line + selfcheck）。
+- 验证：dsh 写 `tests/qa/T-002/`（`6d80d95`）并独立执行 52 passed；负向对照（图题优先注入）→ 1 failed，恢复 → 52 passed；全量回归 66 passed。
+- 修正：Codex 首轮把图题当主源，fix_request 改为图注优先；docstring 编码修正。
+- 口径：AC-01 `partial`（分类→四线映射已覆盖；流水线路由/L4 零 Pair 待后续卡）。
+- 环境：dsh 验证改用 `danger-full-access --approval-policy never`；read-only 无 tmp 目录。

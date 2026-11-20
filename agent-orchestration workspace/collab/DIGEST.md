@@ -9,6 +9,7 @@
 - 契约草案：ArtifactMap / PairRecord JSON Schema、报警码、命名、crosswalk；schema 校验通过。
 - T-001 契约测试已合并：14 passed（commit `04c1109`）；dsh 沙箱 ACL 阻塞 pytest，由编排侧实跑并代提交。契约待人工签字。
 - 契约已冻结（T-001 14 passed）；角色确认：Codex 实现 / dsh 验证 / Claude 编排与整体效果负责。
+- T-002 已合并：XML 摄入 + FigureInput + 四线分类；dsh 独立 52 passed，全量 66 passed（`e2618b7` / `6d80d95`）。
 
 ## 阻塞
 

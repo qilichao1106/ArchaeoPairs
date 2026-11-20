@@ -17,8 +17,12 @@
       "title": "XML 摄入 + FigureInput + 四线分类",
       "owner": "codex",
       "verifier": "dsh",
-      "state": "ready",
+      "state": "merged",
       "wave": 1,
+      "commit": "6d80d95",
+      "implementation_commit": "e2618b7",
+      "verdict": "pass",
+      "evidence": "tests/qa/T-002; dsh 52 passed; regression 66 passed",
       "updated_at": "2026-11-20"
     }
   },

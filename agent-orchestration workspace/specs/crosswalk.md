@@ -21,7 +21,7 @@
 
 | AC | 内容 | 测试 nodeid | 证据 | 状态 |
 |---|---|---|---|---|
-| AC-01 | 四条工作线路由，L4 零 Pair | 待建 | 待建 | gap |
+| AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/` | T-002 | partial |
 | AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | 待建 | 待建 | gap |
 | AC-03 | 比例尺三级绑定与来源落盘 | 待建 | 待建 | gap |
 | AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
@@ -37,3 +37,10 @@
 - T-001（commit `04c1109`）只验证 **JSON Schema 形状**：14 passed。
 - 不证明 AC-02 的映射行为，也不证明 AC-07 的命名输出；二者仍为 `gap`，待产品卡。
 - 证据：`selfcheck/T-001/pytest.log`；copy-proof 指向 `worktrees/dsh/T-001`。
+
+## T-002 验收说明
+
+- 实现 `e2618b7`（codex）；测试 `6d80d95`（dsh）。
+- dsh 独立执行：52 passed；负向对照（图题优先注入）→ 1 failed，恢复 → 52 passed；全量回归 66 passed。
+- AC-01 标 `partial`：五分类→四线映射已覆盖；流水线实际路由与 L4 零 Pair 待后续卡。
+- 证据：`tests/qa/T-002/`；copy-proof 指向 `worktrees/dsh/T-002`。
