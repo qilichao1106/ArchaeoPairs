@@ -1,3 +1,18 @@
+# 数据与归档
+books/
+v1/
+
+# 协同运行时
+worktrees/
+artifacts/
+collab/artifacts/
+
+# 凭据（永不入库）
+.env
+.env.*
+keys/
+*.pem
+
 # Python
 __pycache__/
 *.py[cod]
@@ -7,39 +22,14 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-htmlcov/
 .coverage
-coverage.xml
+htmlcov/
 
-# 本地配置/临时产物（真实配置不入库）
-config/thresholds.yaml
-config/flags.yaml
-*.local.yaml
+# 运行产物
+out/
 runs/
-artifacts/
-*.sqlite
-*.sqlite3
 
-# 模型权重与大数据（不提交，README 说明下载方式）
-*.pt
-*.pth
-*.onnx
-*.safetensors
-data/
-books/*
-
-# IDE
+# IDE / OS
 .vscode/
 .idea/
-
-# OS
 .DS_Store
-
-# QwenWork 缓存
-.workbuddy/
-
-# 临时/备份文件
-.$*
-*.bkp
-~$*
-verify/

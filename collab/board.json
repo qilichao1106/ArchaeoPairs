@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "project": "ArchaeoPairs",
+  "updated_at": "2026-11-20",
+  "cards": {},
+  "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
+}

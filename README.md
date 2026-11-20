@@ -1,95 +1,39 @@
 # ArchaeoPairs
 
-考古报告图文 Pair 数据构造多智能体管线。以《考古报告图文Pair数据构造_多智能体方案 V0.5.3》为唯一设计依据，采用 **LangGraph** 编排，实现"大图拆小图、图文配对、异常闭环"，产出（器物号, 图像, 描述文本）三元组语料。
+考古报告器物图 Pair 数据构造项目。从结构化 XML 与图版像素中，为单件器物产出（器物号、图像、描述文本）三元组，并保留"器物↔图中序号↔器物号"映射台账。
 
-## 架构
+## 当前状态
 
-Supervisor-Worker 范式：S1–S10 十个智能体映射为 LangGraph StateGraph 节点。单器物（线图/彩图）：S1→S2→S7→S8→S10；多器物线图：S1→S2→S3/S4→S5→S6→S8→S9→S10。S10 输出/复核桥接两级：合格→输出 Pair，不合格/存疑→Label Studio 复核。checkpointer 断点续跑、interrupt 人工复核。
+- **V1.0 设计待定稿**：四条工作线（多器物线图 / 单器物线图 / 单器物版图 / 其它不处理）。
+- 旧实现（V0.5.x / V0.6）整体归档于本地 `v1/`，不入库；`books/` 为图版数据，不入库。
+- 协作基线已建立：L0 档，Claude Code 编排、Codex 实现、dsh 独立验证。
 
-```mermaid
-graph TD
-  S1[S1 报告索引] --> S2[S2 器类判定器<br>XML器物号+像素·五分类]
-  S2 -->|单器物线图/彩图| S7[S7 单器物解析器<br>整图=单一器物]
-  S2 -->|多器物线图| MT[🔄 多器物线图处理管线 S3~S6]
-  S2 -->|multi_plate/discarded| AR[(归档丢弃)]
-  subgraph MT ["多器物线图处理管线 (S3~S6)"]
-    direction LR
-    S3[S3 文本源解析器] --> S5[S5 融合仲裁器<br>双源三链对齐]
-    S4[S4 图像源解析器<br>OCR序号/比例尺] --> S5
-    S5 --> S6[S6 视觉分割器<br>SAM掩膜切分]
-  end
-  S6 --> S8
-  S7 --> S8[S8 组装器<br>单器物整图即Pair / 多器物拆分]
-  S8 -->|单器物| S10[S10 输出/复核桥接器]
-  S8 -->|多器物线图| S9[S9 Supervisor VLM<br>诊断&回环≤3轮]
-  S9 -->|合格| S10
-  S9 -.->|缺陷:重切正文| S3
-  S9 -.->|缺陷:重对齐| S4
-  S9 -.->|缺陷:重分割| S6
-  S10 -->|合格/无缺陷| O[输出图文Pair]
-  S10 -->|不合格/存疑/E005等| LS[Label Studio 复核]
+## 目录
+
+```text
+AGENTS.md / CLAUDE.md     行为契约（CLAUDE.md 导入 AGENTS.md）
+Plan.md / IMPLEMENT.md    里程碑与决策日志
+docs/                     协作方式、执行基线、环境台账
+collab/                   任务卡、信箱、看板、证据
+contracts/ specs/         数据契约与 AC 场景（M1 冻结）
+src/ tests/ selfcheck/    产品代码、冻结测试、实现者自检
+scripts/preflight.py      派单前预检
 ```
-
-## 环境要求
-
-- Python >= 3.11
-- 依赖见 `pyproject.toml`（锁定）与 `requirements.lock`
 
 ## 快速开始
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -e ".[dev]"   # Windows
-# 或: .venv/bin/python -m pip install -e ".[dev]"  # Linux/macOS
-.venv/Scripts/python -m pytest                    # 运行测试
+python scripts/preflight.py        # 检查工具/配置/目录基线
+# Windows: scripts\doctor.cmd
 ```
 
-跑批（P0，mock 能力接口），两种输入方式：
+## 协作要点
 
-```bash
-# 方式一：指定单本书（默认数据目录 books/，书名 = books/<书名>/data.xml）
-.venv/Scripts/python -m archaeopairs.cli run-book --book 郑州商城
-.venv/Scripts/python -m archaeopairs.cli run-book --book 郑州商城 --books-dir books/ --limit 30
+- 同一张卡的实现者 ≠ 验证者；门禁只看退出码/结构化比较/哈希。
+- 一任务一 worktree；实现者只改卡内 `allow` 路径；验证者只写 `tests/qa/`。
+- 详见 `docs/协作开发方式.md` 与 `AGENTS.md`。
 
-# 方式二：指定目录批量跑所有书（books/<子目录>/data.xml）
-.venv/Scripts/python -m archaeopairs.cli run-books
-.venv/Scripts/python -m archaeopairs.cli run-books --books-dir books/
-```
+## 模型与工具
 
-## 目录结构
-
-```
-src/archaeopairs/
-  state.py               # pydantic v2 State/数据契约（§6.1）
-  errors.py              # E-code 异常体系（§6.4）
-  gateway.py             # 模型网关：录制/回放/重试（§9.1）
-  capability/            # VLM/SAM/OCR 抽象 + mock 实现
-  parsers/               # S1 XML / S3 图注(策略注册) / S3 正文
-  agents/                # S1–S10 智能体模块
-  orchestration/         # graph.py(StateGraph) / nodes.py / routing.py
-  storage/               # SQLAlchemy 模型 + 对象存储
-  schemas/               # JSON Schema 契约
-  config/                # thresholds/flags 加载
-tests/                   # 三层测试
-ddl.sql                  # PostgreSQL DDL（§6.5）
-migrations/             # Flyway/Liquibase 迁移脚本（V001__init.sql 起，§6.5.1）
-config/*.example.yaml    # 配置样例（真实配置不入库）
-```
-
-## 配置
-
-复制样例后编辑（真实配置不提交）：
-
-```bash
-cp config/thresholds.example.yaml config/thresholds.yaml
-cp config/flags.example.yaml config/flags.yaml
-```
-
-## 数据与模型
-
-- 书籍数据 `books/`（每本一个子目录，内含 `data.xml`；`books/*` 不入库）；media/原图与模型权重同样不入库，经对象存储/HuggingFace 获取。
-- 能力接口（VLM/SAM/OCR）为抽象层，P0 用 `capability/mock.py`，生产可替换 transformers 实现。
-
-## License
-
-见 [LICENSE](LICENSE)（Apache-2.0）。
+- Codex 0.169.0 / dsh 0.2.2-rc.1 / Claude Code 2.1.329
+- 统一模型：`deepseek-v4.1-flash-1017`（用户级配置，密钥不入库）
