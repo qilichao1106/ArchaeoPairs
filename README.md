@@ -70,6 +70,11 @@ python "agent-orchestration workspace/中间过程数据和脚本/audit_run.py" 
 python "agent-orchestration workspace/中间过程数据和脚本/summarize_batch.py" runs/batch
 python "agent-orchestration workspace/中间过程数据和脚本/audit_batch.py" runs/batch
 python "agent-orchestration workspace/中间过程数据和脚本/review_report.py" runs/万州瓦子坪
+
+# 生成单本 HTML 展示页（原图 + 四条工作线 + Pair 图文）
+PYTHONPATH=src python "agent-orchestration workspace/中间过程数据和脚本/build_viewer.py" \
+  --book 万州瓦子坪 --run runs/book_wanzhou
+# 浏览：runs/book_wanzhou/viewer.html（或根目录 万州瓦子坪_图文展示.html）
 ```
 
 ## 协作要点
