@@ -34,6 +34,8 @@ def _rejected_artifacts(problems: list[str]) -> set[str]:
         elif problem.startswith("suspect_junk_image:"):
             # mapped by image path below
             continue
+        elif problem.startswith("missing_image_path:"):
+            rejected.add(problem.split(": ", 1)[1].strip())
     return rejected
 
 

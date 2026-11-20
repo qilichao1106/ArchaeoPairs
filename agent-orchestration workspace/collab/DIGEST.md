@@ -37,7 +37,8 @@
 - 当前：万州余家河 118、后屯上 143、大兴 33 PNG 在跑。
 - 万州余家河墓群完成：732 Pair（491 L1 + 19 L2 + 222 L3；352 output / 380 review），审计处置后 **0 problems**。
 - 后屯墓地（战国卷）上册完成：1070 Pair（754 output / 316 review），处置 28 Pair 后 0 problems。
-- 已完成 6 本合计 **3141 Pair / 2046 output / 1095 review**，结构问题 **0**（万州按新策略重跑中）。
+- 万州新策略重跑完成：584 Pair（381 output / 203 review）、494 PNG；处置 28 Pair 后 0 problems，已替换批次副本。
+- 已完成 6 本合计 **3134 Pair / 2146 output / 988 review**，结构问题 **0**。
 
 ## 阻塞
 

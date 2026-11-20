@@ -291,3 +291,9 @@
 - 现象：万州整本 217/303 个 L1 Pair 转 review，主因 E001/E005（未绑定序号/组）让整图所有 Unit 都不出图；其中不少 Unit 本身映射完整。
 - 改动 `6357586`：E001/E005（unbound 噪声）不再作为硬阻断；干净 Unit 正常出图，图级状态仍为 pending_review；`conflicts`、E004/E007 等比例尺/映射硬报警仍阻断整图。删除已无用的 `_dirty`。
 - 验证：全量 502 passed；万州以新策略重跑中（旧结果保留 `runs/book_wanzhou_strict`）。
+
+## D-035 审计处置补充（缺失图/硬报警）
+
+- 日期：2026-11-21
+- `c49db4c`：硬报警（E004/E007 等）阻断出图时，Unit/Pair 必须同步 `review`，修复“output 但 image_path 为空”。
+- `curate_run.py` 增加 `missing_image_path` 处置；万州新策略结果 584 Pair（381 output / 203 review / 494 PNG），处置 28 Pair 后 **0 problems**。
