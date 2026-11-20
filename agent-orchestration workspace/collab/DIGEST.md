@@ -8,7 +8,7 @@
 - 需求 8 项边界 + 10 项补充决定全部确认，`specs/需求文档_V1.0.md` / `.docx` 已冻结。
 - 契约草案：ArtifactMap / PairRecord JSON Schema、报警码、命名、crosswalk；schema 校验通过。
 - T-001 契约测试已合并：14 passed（commit `04c1109`）；dsh 沙箱 ACL 阻塞 pytest，由编排侧实跑并代提交。契约待人工签字。
-- 环境结论：dsh `workspace-write` 的 Windows ACL 授权失败；`read-only` shell 正常。后续 dsh 验证任务改用 read-only + 无缓存 pytest。
+- 契约已冻结（T-001 14 passed）；角色确认：Codex 实现 / dsh 验证 / Claude 编排与整体效果负责。
 
 ## 阻塞
 

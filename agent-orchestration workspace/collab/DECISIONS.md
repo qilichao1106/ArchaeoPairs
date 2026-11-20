@@ -62,3 +62,10 @@
   `specs/crosswalk.md`；字段与需求 V1.0 对齐。
 - 校验：JSON Schema metaschema + 样例实例通过。
 - 状态：草案，待 `tests/contracts/` 与人工签字后冻结；实现者只读。
+
+## ADR-009 契约冻结
+
+- 日期：2026-11-20
+- 决策：`contracts/` 标记 frozen；依据 T-001 契约测试 14 passed（commit 04c1109）
+  与用户明确授权“Codex 实现、dsh 验证、Claude 编排及整体效果负责”。
+- 变更：任何 schema/命名/报警码变更走 CR/ADR，实现者不得直接改。
