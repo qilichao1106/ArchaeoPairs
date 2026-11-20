@@ -903,7 +903,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     written: dict[tuple, str] = {}
     compose_error: str | None = None
     for unit in amap.units:
-        review = unit.status == "review" or unit.artifact_id in blocked
+        review = hard or unit.status == "review" or unit.artifact_id in blocked
         image_path: str | None = None
         shared = False
         if write_image and image is not None and unit.artifact_id not in blocked:
