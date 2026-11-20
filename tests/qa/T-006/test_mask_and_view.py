@@ -20,7 +20,7 @@ from archaeopairs.vision.seg import (
     mask_iou,
     segment_views,
 )
-from synthetic import canvas, rect, save_gray
+from t006_synthetic import canvas, rect, save_gray
 
 
 def test_view_bbox_contains_the_mask_and_area_matches_mask_sum(tmp_path) -> None:

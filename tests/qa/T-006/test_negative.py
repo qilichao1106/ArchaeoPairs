@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from archaeopairs.vision import load_image, segment_views
-from synthetic import canvas, save_gray
+from t006_synthetic import canvas, save_gray
 
 
 def test_negative_missing_image_raises_oserror(tmp_path) -> None:

@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 
 from archaeopairs.vision import extract_contours, rle_decode, segment_views
-from synthetic import bbox_contains, canvas, rect, save_gray
+from t006_synthetic import bbox_contains, canvas, rect, save_gray
 
 
 def _mask(view):
