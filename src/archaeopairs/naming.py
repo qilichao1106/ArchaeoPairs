@@ -70,7 +70,7 @@ def path_artifact(artifact_id: str) -> str:
 
 def build_image_name(fig_number: str, seq: str | None, artifact_id: str) -> str:
     """``<fig>_<seq|01>_<artifact>.png`` (R-NAME-01/05)."""
-    figure = extract_fig_number(fig_number) if fig_number else "图"
+    figure = extract_fig_number(fig_number, fallback=fig_number) if fig_number else "图"
     seq_part = "01" if seq is None or not str(seq).strip() else str(seq).strip()
     return f"{figure}_{seq_part}_{path_artifact(artifact_id)}.png"
 
