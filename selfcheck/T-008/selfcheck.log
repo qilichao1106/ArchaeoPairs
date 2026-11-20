@@ -1,0 +1,9 @@
+RUN check_l1_prefix
+RUN check_l1_one_scale_many_groups
+RUN check_l2_unique_shared
+RUN check_l3_multi_no_prefix
+RUN check_group_no_scale
+RUN check_record_shape
+RUN check_apply_union_and_dedupe
+RUN check_apply_no_scale_review
+SELFCHECK OK

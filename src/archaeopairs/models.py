@@ -103,6 +103,25 @@ class ScaleBar(BaseModel):
     prefix_nos: list[str] = Field(default_factory=list)
 
 
+class ScaleBinding(BaseModel):
+    """One scale bar bound to a view group / unit (T-008, R-SCALE-01..05).
+
+    ``source`` records the binding tier: ``L1_prefix`` (bar prefix numbers
+    intersect the group's seqs), ``L2_unique_shared`` (the figure has exactly
+    one bar, copied to every unit), ``L3_vl`` (reserved for a future VLM
+    prefix reader) or ``unknown``.  ``shared`` marks copies of one bar handed
+    to several units.  No field is ever derived from pixel distance.
+    """
+
+    scale_id: int
+    source: str = "unknown"  # L1_prefix | L2_unique_shared | L3_vl | unknown
+    shared: bool = False
+    text: str = ""
+    value: float | None = None
+    unit: str | None = None
+    prefix_nos: list[str] = Field(default_factory=list)
+
+
 class TextBlock(BaseModel):
     """Any other printed text block (title, annotation, note fragment)."""
 
@@ -174,7 +193,7 @@ class ArtifactUnit(BaseModel):
     seq_ids: list[str] = Field(default_factory=list)
     view_ids: list[int] = Field(default_factory=list)
     group_ids: list[int] = Field(default_factory=list)
-    scale_bindings: list[dict] = Field(default_factory=list)  # left to T-008
+    scale_bindings: list[dict] = Field(default_factory=list)  # ScaleBinding dumps (T-008)
     line: str = "multi_line"
     case: str | None = None
     source: str = "figure_note"
