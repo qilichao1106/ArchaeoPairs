@@ -9,7 +9,7 @@ pluggable OCR providers (AC-03).
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -217,3 +217,92 @@ class ArtifactMap(BaseModel):
     conflicts: list[str] = Field(default_factory=list)
     alarms: list[str] = Field(default_factory=list)
     status: str = "composed"
+
+
+# --- PairRecord / FigureResult (T-010) -------------------------------------
+
+QualityFlag = Literal[
+    "no_text", "no_scale", "long_text", "degraded", "multi_panel", "shared_image"
+]
+SourceRole = Literal["line", "plate"]
+PairStatus = Literal["output", "review", "archived"]
+FigureStatus = Literal["output", "pending_review", "excluded", "failed"]
+
+
+class MappingRef(BaseModel):
+    """``provenance.mapping`` of one Pair (R-OUT-06, pair_record.schema.json)."""
+
+    artifact_id: str
+    seq_ids: list[str] = Field(default_factory=list)
+    view_ids: list[int] = Field(default_factory=list)
+    scale_ids: list[int] = Field(default_factory=list)
+    scale_sources: list[str] = Field(default_factory=list)
+    confidence: float = 0.0
+    line: WorkLine = WorkLine.MULTI_LINE
+    source_role: SourceRole = "line"
+
+
+class CandidateImage(BaseModel):
+    """One candidate image for a Pair (line / plate / fallback candidate)."""
+
+    path: str
+    role: Literal["line", "plate", "candidate"] = "candidate"
+    source_figure_id: str | None = None
+    confidence: float | None = None
+
+
+class Provenance(BaseModel):
+    """Audit trail of a Pair; ``mapping`` is the frozen required member."""
+
+    mapping: MappingRef
+    source_para_ids: list[str] = Field(default_factory=list)
+    art_source: Literal["figure_note", "caption", "text", "manual"] | None = None
+    case: str | None = None
+    shared_group: str | None = None
+
+
+class PairRecord(BaseModel):
+    """One artifact image_pair row (requirements R-OUT-01..08).
+
+    Frozen schema 1.0 has exactly one review value (``review``); the pipeline
+    stage vocabulary (``pending_review`` / ``failed``) lives on
+    :class:`FigureResult` and in the ledger, never on a Pair.
+    """
+
+    book_id: str
+    figure_id: str
+    artifact_id: str
+    artifact_name: str | None = None
+    figure_number: str | None = None
+    source_role: SourceRole = "line"
+    image_path: str
+    candidate_images: list[CandidateImage] = Field(default_factory=list)
+    image_merge_mode: Literal[
+        "line_only", "plate_only", "line_plus_plate", "multi_candidate"
+    ] = "line_only"
+    description_text: str | None = None
+    text_length: int = Field(default=0, ge=0)
+    provenance: Provenance
+    quality_flags: list[QualityFlag] = Field(default_factory=list)
+    status: PairStatus = "output"
+    schema_version: Literal["1.0"] = "1.0"
+
+
+class FigureResult(BaseModel):
+    """Outcome of :func:`archaeopairs.pipeline.process_figure` for one figure.
+
+    ``status`` is ``output`` (pairs emitted), ``pending_review`` (no pairs, or
+    pairs hold back for review), ``excluded`` (L4 archive, zero pairs) or
+    ``failed`` (exception; the batch continues).
+    """
+
+    book_id: str
+    figure_id: str
+    image_type: ImageType
+    work_line: WorkLine
+    status: FigureStatus = "pending_review"
+    pairs: list[PairRecord] = Field(default_factory=list)
+    artifact_map: ArtifactMap | None = None
+    alarms: list[str] = Field(default_factory=list)
+    conflicts: list[str] = Field(default_factory=list)
+    exclude_reason: str | None = None

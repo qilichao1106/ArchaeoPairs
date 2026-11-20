@@ -1,0 +1,7 @@
+T-010 selfcheck
+L1 status=output pairs=2 views_written=2
+L2 status=output pairs=1
+L3 status=output pairs=1
+L4 status=excluded pairs=0
+book results=2 pairs=3 ledger=11
+SELFCHECK OK
