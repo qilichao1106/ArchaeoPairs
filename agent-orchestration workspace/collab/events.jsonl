@@ -25,3 +25,6 @@
 {"ts":"2026-11-21T00:05:00+08:00","card":"T-006","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 40 passed; containment defect found and fixed; AC-09 pass"}
 {"ts":"2026-11-21T00:08:00+08:00","card":"T-006","from":"passed","to":"merged","actor":"orchestrator","note":"regression 281 passed; ff merge a3293bc; pushed"}
 {"ts":"2026-11-21T00:10:00+08:00","card":"T-007","from":"proposed","to":"ready","actor":"orchestrator","note":"label binding + view grouping + ArtifactMap; deps T-003/T-006"}
+{"ts":"2026-11-21T00:25:00+08:00","card":"T-007","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 56 passed; status fault -> 6 failed -> 56; AC-02/AC-06 pass"}
+{"ts":"2026-11-21T00:28:00+08:00","card":"T-007","from":"passed","to":"merged","actor":"orchestrator","note":"regression 337 passed; ff merge 09cf21e; pushed"}
+{"ts":"2026-11-21T00:30:00+08:00","card":"T-008","from":"proposed","to":"ready","actor":"orchestrator","note":"scale binding L1/L2/L3; deps T-007"}

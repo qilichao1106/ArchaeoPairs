@@ -22,11 +22,11 @@
 | AC | 内容 | 测试 nodeid | 证据 | 状态 |
 |---|---|---|---|---|
 | AC-01 | 四条工作线路由，L4 零 Pair | `tests/qa/T-002/` | T-002 | partial |
-| AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/` | T-003 | partial |
+| AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/`, `tests/qa/T-007/` | T-003/T-007 | covered |
 | AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-004/` | T-004 | partial |
 | AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
 | AC-05 | 成图白底/纯平移/留白/比例尺置底 | 待建 | 待建 | gap |
-| AC-06 | 未映射/缺视图进入 unbound 并复核 | 待建 | 待建 | gap |
+| AC-06 | 未映射/缺视图进入 unbound 并复核 | `tests/qa/T-007/` | T-007 | covered |
 | AC-07 | 命名规则（图号、冒号、_N、后缀） | 待建 | 待建 | gap |
 | AC-08 | 全量回归 + 负向对照 | 待建 | 待建 | gap |
 | AC-09 | 分割掩膜/视图质量（R-L1-01 派生） | `tests/qa/T-006/` | T-006 | covered |
@@ -73,3 +73,10 @@
 - dsh 独立执行：40 passed；验证中发现包含轮廓剔除缺陷（1 failed），修复后 40 passed；全量 281 passed。
 - 覆盖 IO、分割/阅读序、孔洞/包含剔除、mask/bbox、RLE、负向输入。
 - AC-09 `covered`；卡面原写 AC-01 属标签复用，实际验收以 AC-09 为准。
+
+## T-007 验收说明
+
+- 实现 `ca6907a`（codex）；测试 `09cf21e`（dsh）。
+- dsh 独立执行：56 passed；负向对照（status 恒 composed）→ 6 failed，恢复 → 56 passed；全量 337 passed。
+- AC-02、AC-06 标 `covered`：文本/视图四类基数、unbound/冲突、复核状态均已覆盖。
+- 证据：`tests/qa/T-007/`；copy-proof 指向 `worktrees/dsh/T-007`。

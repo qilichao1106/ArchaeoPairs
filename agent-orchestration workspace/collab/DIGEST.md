@@ -14,6 +14,7 @@
 - CR-001：运行时启用 `deepseek-v4.1-flash-1017` VLM，用于 OCR/视觉识别/QC；T-004 已合并，59 passed；真实文本+图片冒烟通过（返回带 bbox 的 seqs JSON）。
 - T-005 已合并：PaddleOCR 适配器 + Hybrid OCR；dsh 独立 47 passed，全量 241 passed（`187a788` / `100f6fc`）。
 - T-006 已合并：OpenCV 分割 + View/RLE；dsh 独立 40 passed（发现并修复包含轮廓缺陷），全量 281 passed（`1aec426` / `a3293bc`）。
+- T-007 已合并：序号绑定 + 视图归组 + ArtifactMap；dsh 独立 56 passed，全量 337 passed（`ca6907a` / `09cf21e`）；AC-02/AC-06 covered。
 
 ## 阻塞
 

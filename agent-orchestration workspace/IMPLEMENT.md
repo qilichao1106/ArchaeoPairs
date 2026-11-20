@@ -151,3 +151,11 @@
 - 例外：Codex 超时；编排侧修正 selfcheck 噪点尺寸/删除坏 helper，并补上包含轮廓剔除（任意更大非孔轮廓包含即剔除）。
 - AC-09 `covered`；卡面 AC-01 标签复用，实际以 AC-09 为准。
 - 下一步：T-007 序号绑定 + 视图归组 + ArtifactMap。
+
+## D-018 T-007 映射合并
+
+- 日期：2026-11-21
+- 实现：Codex `ca6907a`（ViewBinding/ViewGroup/ArtifactUnit/ArtifactMap、标签绑定、归组、四类基数、unbound/冲突）。
+- 验证：dsh 测试 `09cf21e`，独立 56 passed；负向对照（status 恒 composed）→ 6 failed，恢复 → 56 passed；全量 337 passed。
+- 例外：Codex 超时；编排侧修正 rule_b 合并 case 与未绑定标签 seq 的 unbound_seqs。
+- AC-02/AC-06 `covered`；下一步 T-008 比例尺三级绑定。

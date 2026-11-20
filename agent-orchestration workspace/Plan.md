@@ -47,7 +47,8 @@
 - [x] VLM 能力层 + OCR 适配器（T-004，59 passed；真实 VLM 冒烟通过）
 - [x] PaddleOCR 适配器 + Hybrid OCR（T-005，47 passed）
 - [x] OpenCV 掩膜分割 + View/RLE（T-006，40 passed；AC-09 covered）
-- [ ] 序号绑定 + 视图归组 + ArtifactMap（T-007）
+- [x] 序号绑定 + 视图归组 + ArtifactMap（T-007，56 passed；AC-02/AC-06 covered）
+- [ ] 比例尺三级绑定（T-008）
 - [ ] 分割 → 映射 → 组合 → 绑比例尺 → 成图 全链
 - [ ] 映射不变量测试 + 黄金样例 + 负向对照
 - 验收命令：待 M1 冻结后写入（不得使用时间型条件）
