@@ -265,3 +265,9 @@
 - 现象：`image16` 的 seq1/4/8 把相邻器物并进一个 Unit（成图含 3–7 个器物）。
 - 防护 `5da3477`：Unit ≥3 个视图且并集包围盒高度或宽度 >60% 图幅 → `unit_oversized` review，不写 PNG；1–2 个真实多视图不受影响。
 - 全量 502 passed。
+
+## D-031 无图题图的命名回退
+
+- 日期：2026-11-21
+- 现象：XML 缺 caption 时 `build_image_name` 二次调用 `extract_fig_number`，把 `image131` 回退成 `图`，多张图靠 `_1/_2` 去重。
+- 修复 `f69bcd6`：`build_image_name` 用传入值作 fallback，保留 `image131` 等原始文件名主干；全量 502 passed。
