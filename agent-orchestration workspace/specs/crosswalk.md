@@ -25,9 +25,9 @@
 | AC-02 | 1:1 / N:1 / 1:N / N:M 映射正确 | `tests/qa/T-003/`, `tests/qa/T-007/` | T-003/T-007 | covered |
 | AC-03 | 比例尺三级绑定与来源落盘 | `tests/qa/T-008/` | T-008 | covered |
 | AC-04 | L2/L3 整图直通、01 命名 | 待建 | 待建 | gap |
-| AC-05 | 成图白底/纯平移/留白/比例尺置底 | 待建 | 待建 | gap |
+| AC-05 | 成图白底/纯平移/留白/比例尺置底 | `tests/qa/T-009/` | T-009 | covered |
 | AC-06 | 未映射/缺视图进入 unbound 并复核 | `tests/qa/T-007/` | T-007 | covered |
-| AC-07 | 命名规则（图号、冒号、_N、后缀） | 待建 | 待建 | gap |
+| AC-07 | 命名规则（图号、冒号、_N、后缀） | `tests/qa/T-009/` | T-009 | covered |
 | AC-08 | 全量回归 + 负向对照 | 待建 | 待建 | gap |
 | AC-09 | 分割掩膜/视图质量（R-L1-01 派生） | `tests/qa/T-006/` | T-006 | covered |
 
@@ -36,7 +36,7 @@
 ## T-001 契约测试说明
 
 - T-001（commit `04c1109`）只验证 **JSON Schema 形状**：14 passed。
-- 不证明 AC-02 的映射行为，也不证明 AC-07 的命名输出；二者仍为 `gap`，待产品卡。
+- 不证明 AC-02 的映射行为，也不证明 AC-07 的命名输出；二者当时为 `gap`，后由 T-007（AC-02）/T-009（AC-07）覆盖。
 - 证据：`selfcheck/T-001/pytest.log`；copy-proof 指向 `worktrees/dsh/T-001`。
 
 ## T-002 验收说明
@@ -87,3 +87,10 @@
 - dsh 独立执行：20 passed；负向对照（去掉 E004）→ 3 failed，恢复 → 20 passed；全量 357 passed。
 - AC-03 `covered`：L1/L2/L3、共享、来源落盘、Unit 应用与无尺复核均已覆盖。
 - 证据：`tests/qa/T-008/`；copy-proof 指向 `worktrees/dsh/T-008`。
+
+## T-009 验收说明
+
+- 实现 `603ee71`（codex）；测试 `50af0dd`（dsh）。
+- dsh 独立执行：65 passed；负向对照（margin=0）→ 10 failed，恢复 → 65 passed；全量 422 passed。
+- AC-05、AC-07 标 `covered`：白底/纯平移/margin/比例尺行、图号/冒号/01/_N/后缀均覆盖。
+- 证据：`tests/qa/T-009/`；copy-proof 指向 `worktrees/dsh/T-009`。

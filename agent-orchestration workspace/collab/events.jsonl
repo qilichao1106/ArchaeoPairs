@@ -31,3 +31,6 @@
 {"ts":"2026-11-21T00:45:00+08:00","card":"T-008","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 20 passed; E004 drop -> 3 failed -> 20; AC-03 pass"}
 {"ts":"2026-11-21T00:48:00+08:00","card":"T-008","from":"passed","to":"merged","actor":"orchestrator","note":"full suite 357 passed after test-name collision fix; merged 611c523"}
 {"ts":"2026-11-21T00:50:00+08:00","card":"T-009","from":"proposed","to":"ready","actor":"orchestrator","note":"compose + naming; deps T-006/T-008"}
+{"ts":"2026-11-21T01:05:00+08:00","card":"T-009","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 65 passed; margin=0 -> 10 failed -> 65; AC-05/AC-07 pass"}
+{"ts":"2026-11-21T01:08:00+08:00","card":"T-009","from":"passed","to":"merged","actor":"orchestrator","note":"regression 422 passed; ff merge 50af0dd; pushed"}
+{"ts":"2026-11-21T01:10:00+08:00","card":"T-010","from":"proposed","to":"ready","actor":"orchestrator","note":"per-figure pipeline orchestration L1/L2/L3/L4"}

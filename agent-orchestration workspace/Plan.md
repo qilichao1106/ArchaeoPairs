@@ -49,7 +49,8 @@
 - [x] OpenCV 掩膜分割 + View/RLE（T-006，40 passed；AC-09 covered）
 - [x] 序号绑定 + 视图归组 + ArtifactMap（T-007，56 passed；AC-02/AC-06 covered）
 - [x] 比例尺三级绑定（T-008，20 passed；AC-03 covered）
-- [ ] 成图合成 + 命名规范（T-009）
+- [x] 成图合成 + 命名规范（T-009，65 passed；AC-05/AC-07 covered）
+- [ ] 单图管线编排（T-010）
 - [ ] 分割 → 映射 → 组合 → 绑比例尺 → 成图 全链
 - [ ] 映射不变量测试 + 黄金样例 + 负向对照
 - 验收命令：待 M1 冻结后写入（不得使用时间型条件）

@@ -167,3 +167,11 @@
 - 验证：dsh 测试 `853867e`，独立 20 passed；负向对照（去掉 E004）→ 3 failed，恢复 → 20 passed。
 - 测试基建：T-006/T-008 模块重名导致全量收集失败，修复为唯一名后 **357 passed**（`611c523`）。
 - AC-03 `covered`；下一步 T-009 成图 + 命名。
+
+## D-020 T-009 成图合并
+
+- 日期：2026-11-21
+- 实现：Codex `603ee71`（naming、compose_unit、白底纯平移、比例尺行、whole_image）。
+- 验证：dsh 测试 `50af0dd`，独立 65 passed；负向对照（margin=0）→ 10 failed，恢复 → 65 passed。
+- 全量回归：422 passed。
+- AC-05/AC-07 `covered`；下一步 T-010 单图管线编排。
