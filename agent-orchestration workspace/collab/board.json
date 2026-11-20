@@ -132,6 +132,24 @@
    "hardening_commit": "c4e0639",
    "verdict": "pass",
    "evidence": "T-011 24 passed; full 466 passed; 10-figure smoke 18 Pairs / 18 PNG, 17 output + 1 no_text"
+  },
+  "T-012": {
+   "title": "真书加固冻结测试（字形序号 / 比例尺 / 辅助视图）",
+   "owner": "dsh",
+   "verifier": "claude",
+   "state": "merged",
+   "wave": 11,
+   "deps": [
+    "T-007",
+    "T-008",
+    "T-010",
+    "T-011"
+   ],
+   "updated_at": "2026-11-21",
+   "commit": "5082d7d",
+   "implementation_commit": "d774464",
+   "verdict": "pass",
+   "evidence": "dsh independent: T-012 24 passed; full 490 passed; selfcheck OK"
   }
  },
  "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
