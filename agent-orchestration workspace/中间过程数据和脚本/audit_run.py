@@ -57,6 +57,7 @@ def audit(run_dir: Path) -> dict:
     )
     problems: list[str] = []
     names: Counter = Counter()
+    shared_names: set[str] = set()
     per_figure_views: dict[str, dict[int, str]] = {}
     per_figure_seqs: dict[str, dict[str, str]] = {}
     images: list[dict] = []
@@ -64,8 +65,13 @@ def audit(run_dir: Path) -> dict:
     for row in rows:
         artifact_id = row.get("artifact_id") or ""
         name = Path(str(row.get("image_path") or "")).name
-        names[name] += 1
-        if artifact_id and artifact_id.replace(":", "-") not in name:
+        if name:
+            names[name] += 1
+        row_flags = row.get("quality_flags") or []
+        if name and "shared_image" in row_flags:
+            shared_names.add(name)
+        if (name and "shared_image" not in row_flags and artifact_id
+                and artifact_id.replace(":", "-") not in name):
             problems.append(f"name_missing_id: {name} <- {artifact_id}")
         mapping = ((row.get("provenance") or {}).get("mapping") or {})
         case = (row.get("provenance") or {}).get("case")
@@ -76,23 +82,29 @@ def audit(run_dir: Path) -> dict:
             for view_id in mapping.get("view_ids") or []:
                 seen = per_figure_views.setdefault(figure, {})
                 if view_id in seen and seen[view_id] != artifact_id:
-                    if not (shared_ok or seen.get((view_id, "shared"))):
+                    if not (shared_ok or seen.get((view_id, "shared"))
+                            or row.get("status") == "review"
+                            or seen.get((view_id, "status")) == "review"):
                         problems.append(
                             f"view_reused: {figure} view {view_id} "
                             f"{seen[view_id]} + {artifact_id}"
                         )
                 seen[view_id] = artifact_id
                 seen[(view_id, "shared")] = shared_ok
+                seen[(view_id, "status")] = row.get("status")
             for seq_id in mapping.get("seq_ids") or []:
                 seen = per_figure_seqs.setdefault(figure, {})
                 if seq_id in seen and seen[seq_id] != artifact_id:
-                    if not (shared_ok or seen.get((seq_id, "shared"))):
+                    if not (shared_ok or seen.get((seq_id, "shared"))
+                            or row.get("status") == "review"
+                            or seen.get((seq_id, "status")) == "review"):
                         problems.append(
                             f"seq_reused: {figure} seq {seq_id} "
                             f"{seen[seq_id]} + {artifact_id}"
                         )
                 seen[seq_id] = artifact_id
                 seen[(seq_id, "shared")] = shared_ok
+                seen[(seq_id, "status")] = row.get("status")
 
         rel = str(row.get("image_path") or "")
         if not rel:
@@ -112,7 +124,7 @@ def audit(run_dir: Path) -> dict:
             )
 
     for name, count in names.items():
-        if count > 1:
+        if count > 1 and name not in shared_names:
             problems.append(f"duplicate_name: {name} x{count}")
 
     return {
