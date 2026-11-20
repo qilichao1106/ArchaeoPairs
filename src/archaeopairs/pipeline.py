@@ -471,7 +471,7 @@ def _filter_aux_views(views: list[View], ocr: OcrResult,
                 box[2] - box[0] <= 60 and box[3] - box[1] <= 60
                 and (box[1] + box[3]) / 2.0 < legend_limit):
             continue
-        if any(_aux_owned(box, a) for a in scale_boxes):
+        if any(_aux_owned(box, a) or _glyph_owned(box, a) for a in scale_boxes):
             continue
         if any(_text_owned(box, a) for a in text_boxes):
             continue
