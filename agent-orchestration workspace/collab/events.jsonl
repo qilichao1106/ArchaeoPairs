@@ -3,3 +3,4 @@
 {"ts":"2026-11-20T21:29:00+08:00","card":"T-001","from":"implementing","to":"verifying","actor":"orchestrator","note":"surrogate commit 04c1109"}
 {"ts":"2026-11-20T21:30:00+08:00","card":"T-001","from":"verifying","to":"passed","actor":"claude-verifier","note":"python -m pytest -q: 14 passed; copy-proof worktree; diff within allow"}
 {"ts":"2026-11-20T21:31:00+08:00","card":"T-001","from":"passed","to":"merged","actor":"orchestrator","note":"ff-only merge 04c1109; pushed origin/main"}
+{"ts":"2026-11-20T21:40:00+08:00","card":"T-002","from":"proposed","to":"ready","actor":"orchestrator","note":"XML ingest + FigureInput + four-line classification; owner=codex verifier=dsh"}

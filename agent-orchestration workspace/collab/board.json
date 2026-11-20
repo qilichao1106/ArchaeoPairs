@@ -12,6 +12,14 @@
       "commit": "04c1109",
       "evidence": "selfcheck/T-001/pytest.log",
       "updated_at": "2026-11-20"
+    },
+    "T-002": {
+      "title": "XML 摄入 + FigureInput + 四线分类",
+      "owner": "codex",
+      "verifier": "dsh",
+      "state": "ready",
+      "wave": 1,
+      "updated_at": "2026-11-20"
     }
   },
   "notes": "L0 lightweight board; Orchestrator-only writes. State transitions append to events.jsonl."
