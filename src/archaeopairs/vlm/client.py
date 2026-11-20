@@ -72,6 +72,7 @@ class VlmClient:
         base_url: str | None = None,
         model: str | None = None,
         transport: httpx.BaseTransport | None = None,
+        timeout: float = 180.0,
     ) -> None:
         self.api_key = (api_key or os.environ.get("DASHSCOPE_API_KEY", "")).strip()
         self.base_url = (
@@ -79,6 +80,7 @@ class VlmClient:
         ).rstrip("/")
         self.model = model or DEFAULT_MODEL
         self._transport = transport
+        self.timeout = float(timeout)
         self.last_usage: dict[str, Any] = {}
         self.last_latency_ms: float = 0.0
         self.last_reply: _VlmReply | None = None
@@ -89,10 +91,12 @@ class VlmClient:
         messages: list[dict],
         *,
         json_mode: bool = False,
-        timeout: float = 60,
+        timeout: float | None = None,
         max_retries: int = 2,
     ) -> str:
         """POST ``{base_url}/chat/completions`` and return the assistant text."""
+        if timeout is None:
+            timeout = self.timeout
         if not self.api_key:
             raise VlmUnavailableError(
                 "DASHSCOPE_API_KEY is not set; VLM is unavailable"

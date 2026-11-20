@@ -261,9 +261,12 @@ def _build_result(rows: Iterable[tuple[str, Any, Any]]) -> OcrResult:
 class PaddleOCRProvider(OCRProvider):
     """Read one image with PaddleOCR, lazily loading the engine if needed."""
 
-    def __init__(self, engine: Any = None, lang: str = "ch") -> None:
+    def __init__(self, engine: Any = None, lang: str = "ch",
+                 enable_mkldnn: bool = False) -> None:
         self._engine = engine
         self.lang = lang
+        # Paddle 3.3.1 + oneDNN crashes on some CPU builds; plain CPU is stable.
+        self.enable_mkldnn = enable_mkldnn
 
     @property
     def engine(self) -> Any:
@@ -271,7 +274,8 @@ class PaddleOCRProvider(OCRProvider):
             try:
                 module = importlib.import_module("paddleocr")
                 factory = getattr(module, "PaddleOCR")
-                self._engine = factory(lang=self.lang)
+                self._engine = factory(
+                    lang=self.lang, enable_mkldnn=self.enable_mkldnn)
             except Exception as exc:  # ImportError, init failure, no PaddleOCR
                 raise PaddleUnavailableError(
                     f"PaddleOCR unavailable: {type(exc).__name__}"

@@ -10,15 +10,17 @@ from __future__ import annotations
 
 import json
 import re
+import tempfile
 from pathlib import Path
 from typing import Any
 
+from PIL import Image, ImageDraw
 from pydantic import ValidationError
 
 from archaeopairs.models import OcrResult, ScaleBar, SeqLabel, TextBlock
 from archaeopairs.ocr.base import OCRProvider
 from archaeopairs.vlm.client import VlmClient
-from archaeopairs.vlm.prompts import OCR_PROMPT
+from archaeopairs.vlm.prompts import GLYPH_PROMPT, OCR_PROMPT
 
 __all__ = ["OcrError", "VlmOCRProvider"]
 
@@ -167,6 +169,64 @@ def parse_ocr_payload(payload: dict[str, Any]) -> OcrResult:
     )
 
 
+_GLYPH_CELL = 128
+_GLYPH_COLUMNS = 4
+_GLYPH_TARGET = 72
+
+
+def build_glyph_grid(image_path: str | Path, boxes: list[tuple]) -> Image.Image:
+    """Tile glyph crops in reading order so one VLM call reads all digits.
+
+    Whole-image coordinate detection drifts; segmentation already gives exact
+    glyph boxes, so only the character value is asked from the model.  Crops
+    are enlarged with NEAREST (LANCZOS blurs these low-res scans and changes
+    digits such as 5 into 7) and laid on a regular grid, one cell per box.
+    """
+    with Image.open(image_path) as opened:
+        image = opened.convert("RGB")
+    columns = _GLYPH_COLUMNS
+    rows = max(1, (len(boxes) + columns - 1) // columns)
+    canvas = Image.new("RGB", (columns * _GLYPH_CELL, rows * _GLYPH_CELL), "white")
+    draw = ImageDraw.Draw(canvas)
+    for index, box in enumerate(boxes):
+        x0, y0, x1, y1 = (int(v) for v in box)
+        x0, y0 = max(0, x0), max(0, y0)
+        x1, y1 = min(image.width, x1), min(image.height, y1)
+        if x1 <= x0 or y1 <= y0:
+            continue
+        crop = image.crop((x0, y0, x1, y1))
+        scale = max(1, min(8, round(_GLYPH_TARGET / max(1, crop.height))))
+        crop = crop.resize((crop.width * scale, crop.height * scale), Image.NEAREST)
+        crop.thumbnail((_GLYPH_CELL - 8, _GLYPH_CELL - 8), Image.NEAREST)
+        left = (index % columns) * _GLYPH_CELL + (_GLYPH_CELL - crop.width) // 2
+        top = (index // columns) * _GLYPH_CELL + (_GLYPH_CELL - crop.height) // 2
+        canvas.paste(crop, (left, top))
+        draw.rectangle(
+            [(index % columns) * _GLYPH_CELL, (index // columns) * _GLYPH_CELL,
+             (index % columns + 1) * _GLYPH_CELL - 1,
+             (index // columns + 1) * _GLYPH_CELL - 1],
+            outline=(190, 190, 190),
+        )
+    return canvas
+
+
+def _parse_glyph_payload(reply: str, count: int) -> list[str | None]:
+    payload = _load_payload(reply)
+    items = payload.get("glyphs")
+    if not isinstance(items, list):
+        raise OcrError("VLM glyph reply must contain a glyphs array")
+    values: list[str | None] = []
+    for item in items[:count]:
+        if item is None:
+            values.append(None)
+        elif isinstance(item, str):
+            values.append(item.strip() or None)
+        else:
+            values.append(str(item))
+    values.extend([None] * (count - len(values)))
+    return values
+
+
 class VlmOCRProvider(OCRProvider):
     """Read one image with the VLM and return strict structured OCR."""
 
@@ -190,3 +250,37 @@ class VlmOCRProvider(OCRProvider):
             raise
         except Exception as exc:  # defensive: never leak a partial result
             raise OcrError(f"VLM OCR reply is unusable: {type(exc).__name__}") from exc
+
+    def read_glyphs(self, image_path: str | Path,
+                    boxes: list[tuple]) -> list[str | None]:
+        """Read the character in each segmented glyph box, in order."""
+        boxes = list(boxes or [])
+        if not boxes:
+            return []
+        try:
+            grid = build_glyph_grid(image_path, boxes)
+        except Exception as exc:
+            raise OcrError(
+                f"cannot build glyph grid: {type(exc).__name__}") from exc
+        with tempfile.TemporaryDirectory(prefix="archaeopairs_glyphs_") as tmp:
+            grid_path = Path(tmp) / "glyphs.png"
+            grid.save(grid_path)
+            try:
+                reply = self.client.describe_image(
+                    grid_path, GLYPH_PROMPT.format(count=len(boxes)),
+                    json_mode=True,
+                )
+            except OcrError:
+                raise
+            except Exception as exc:
+                raise OcrError(
+                    f"VLM glyph request failed: {type(exc).__name__}") from exc
+        if not isinstance(reply, str):
+            raise OcrError("VLM glyph reply content is not text")
+        try:
+            return _parse_glyph_payload(reply, len(boxes))
+        except OcrError:
+            raise
+        except Exception as exc:
+            raise OcrError(
+                f"VLM glyph reply is unusable: {type(exc).__name__}") from exc

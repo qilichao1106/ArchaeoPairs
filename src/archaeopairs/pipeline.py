@@ -22,6 +22,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
+from PIL import Image
+
 import numpy as np
 
 from archaeopairs.classify import classify, work_line_of
@@ -33,6 +35,7 @@ from archaeopairs.mapping import (
     build_artifact_map,
     build_text_mapping,
     group_views,
+    normalize_seq_label,
 )
 from archaeopairs.models import (
     ArtifactMap,
@@ -45,6 +48,8 @@ from archaeopairs.models import (
     PairRecord,
     Provenance,
     ScaleBar,
+    ScaleBinding,
+    SeqLabel,
     TextArtifact,
     View,
     WorkLine,
@@ -56,6 +61,7 @@ from archaeopairs.text import (
     parse_note,
     split_body,
 )
+from archaeopairs.text.artifact_id import extract_artifacts
 from archaeopairs.vision import load_image, segment_views
 
 __all__ = [
@@ -139,8 +145,6 @@ def _alarms_from_map(amap: ArtifactMap) -> list[str]:
         alarms.append("E001")
     if amap.unbound_groups:
         alarms.append("E005")
-    for item in amap.unbound_views:
-        alarms.append("E002")
     return _unique(alarms)
 
 
@@ -156,7 +160,6 @@ def _dirty(amap: ArtifactMap) -> list[str]:
     for kind, items in (
         ("unbound_seqs", amap.unbound_seqs),
         ("unbound_groups", amap.unbound_groups),
-        ("unbound_views", amap.unbound_views),
     ):
         if items:
             reasons.append(kind)
@@ -199,16 +202,305 @@ def _aux_owned(view_box: tuple, aux_box: tuple) -> bool:
         and inter / aux_area >= 0.8)
 
 
+def _image_shape(path) -> tuple[int, int] | None:
+    try:
+        with Image.open(path) as image:
+            return image.size
+    except Exception:
+        return None
+
+
+def _sane_ocr(ocr: OcrResult, image_shape: tuple[int, int] | None) -> OcrResult:
+    """Drop absurd OCR boxes (a whole image as one 'label') before binding."""
+    if not image_shape:
+        return ocr
+    width, height = image_shape
+    limit = 0.1 * width * height if width > 0 and height > 0 else None
+
+    def ok(box) -> bool:
+        if box[2] <= box[0] or box[3] <= box[1]:
+            return False
+        return limit is None or _box_area(tuple(box)) <= limit
+
+    return ocr.model_copy(update={
+        "seqs": [s for s in ocr.seqs if ok(tuple(s.bbox))],
+        "scales": [s for s in ocr.scales if ok(tuple(s.bbox))],
+        "texts": [s for s in ocr.texts if ok(tuple(s.bbox))],
+    })
+
+
+def _box_gap(a: tuple, b: tuple) -> float:
+    dx = max(0, max(a[0], b[0]) - min(a[2], b[2]))
+    dy = max(0, max(a[1], b[1]) - min(a[3], b[3]))
+    return float((dx * dx + dy * dy) ** 0.5)
+
+
+def _glyph_owned(view_box: tuple, label_box: tuple,
+                 gap_max: float = 12.0) -> bool:
+    """Small view sitting on/near a seq box is that label's own glyph."""
+    if (label_box[2] - label_box[0] > 60 or label_box[3] - label_box[1] > 60
+            or view_box[2] - view_box[0] > 60
+            or view_box[3] - view_box[1] > 60):
+        return False
+    view_area = _box_area(view_box)
+    label_area = _box_area(label_box)
+    if label_area <= 0 or view_area <= 0 or view_area > 4 * label_area:
+        return False
+    return _inter_area(view_box, label_box) > 0 or _box_gap(
+        view_box, label_box) <= gap_max
+
+
+def _sanitize_seq_labels(seqs: list, views: list[View]) -> list:
+    """Drop OCR duplicates that cannot be printed seq labels.
+
+    A VLM occasionally reports one number twice: the real label in the margin
+    and a false box on hatching inside a drawing.  Both would bind to different
+    views and merge two artefacts into one unit.  Duplicates are kept only when
+    both sit on a small glyph (a legitimate repeated label / 1:N view); when no
+    glyph reference exists the smallest box wins.
+    """
+    groups: dict[str, list] = {}
+    passthrough: list = []
+    for label in seqs or []:
+        key = normalize_seq_label(getattr(label, "text", "") or "")
+        if key is None:
+            passthrough.append(label)
+        else:
+            groups.setdefault(key, []).append(label)
+
+    kept = list(passthrough)
+    small = [tuple(view.bbox) for view in views
+             if (view.bbox[2] - view.bbox[0] <= 60
+                 and view.bbox[3] - view.bbox[1] <= 60)]
+    for items in groups.values():
+        if len(items) <= 1:
+            kept.extend(items)
+            continue
+        scored = []
+        for label in items:
+            box = tuple(label.bbox)
+            gaps = [_box_gap(box, glyph) for glyph in small]
+            scored.append((min(gaps) if gaps else float("inf"),
+                           _box_area(box), label))
+        best = min(gap for gap, _area, _label in scored)
+        if best <= 20.0:
+            kept.extend(label for gap, _area, label in scored
+                        if gap <= best + 2.0)
+        else:
+            kept.append(min(items, key=lambda label: _box_area(tuple(label.bbox))))
+    return kept
+
+
+def _expand_scale_boxes(image_path, scales: list[ScaleBar]) -> list[ScaleBar]:
+    """Grow an OCR scale box down to the printed bar line it labels.
+
+    VLM boxes often cover only ``0 ... 4厘米`` and stop above the horizontal
+    bar, so cropping by the raw box loses the bar itself.  A long horizontal
+    ink run within 48 px below the text is the bar; include it and its ticks.
+    """
+    if not scales:
+        return scales
+    try:
+        with Image.open(image_path) as opened:
+            gray = np.asarray(opened.convert("L"))
+    except Exception:
+        return scales
+    height, width = gray.shape[:2]
+    out: list[ScaleBar] = []
+    for scale in scales:
+        x0, y0, x1, y1 = (int(v) for v in scale.bbox)
+        pad_x = max(16, int(0.2 * max(1, x1 - x0)))
+        x0c, x1c = max(0, x0 - pad_x), min(width, x1 + pad_x)
+        y0c, y1c = max(0, y0), min(height, y1 + 48)
+        if x1c <= x0c or y1c <= y0c:
+            out.append(scale)
+            continue
+        ink = gray[y0c:y1c, x0c:x1c] < 160
+        min_run = max(20, int(0.3 * (x1c - x0c)))
+        bar_y = None
+        run_x0, run_x1 = x1c, x0c
+        for row in range(ink.shape[0]):
+            line = ink[row]
+            if not line.any():
+                continue
+            # longest run of consecutive ink pixels in this row
+            padded = np.concatenate(([0], line.astype(np.int8), [0]))
+            edges = np.flatnonzero(np.diff(padded))
+            starts, ends = edges[0::2], edges[1::2]
+            lengths = ends - starts
+            if lengths.size == 0:
+                continue
+            longest = int(lengths.max())
+            if longest < min_run:
+                continue
+            index = int(np.argmax(lengths))
+            bar_y = max(bar_y or 0, y0c + row + 1)
+            run_x0 = min(run_x0, x0c + int(starts[index]))
+            run_x1 = max(run_x1, x0c + int(ends[index]))
+        if bar_y is None:
+            out.append(scale)
+            continue
+        bbox = (min(x0c, run_x0), y0, max(x1c, run_x1), max(y1, bar_y + 1))
+        out.append(scale.model_copy(update={"bbox": bbox}))
+    return out
+
+
+def _text_owned(view_box: tuple, text_box: tuple) -> bool:
+    """Text boxes may remove glyph-sized views, not drawings they cross.
+
+    A VLM sometimes reports a bogus text block over a drawing (e.g. a whole
+    vessel read as "I"); letting that block claim the drawing deletes a real
+    artefact.  Large views are only text-owned when almost wholly covered.
+    """
+    if view_box[2] - view_box[0] <= 60 and view_box[3] - view_box[1] <= 60:
+        return _aux_owned(view_box, text_box)
+    if _box_inside(view_box, text_box):
+        return True
+    view_area = _box_area(view_box)
+    return view_area > 0 and _inter_area(view_box, text_box) / view_area >= 0.75
+
+
+def _glyph_candidate_boxes(views: list[View], ocr: OcrResult,
+                           image_shape: tuple[int, int] | None) -> list[tuple]:
+    """Segmented small components that can be printed seq labels.
+
+    Text lines, scale readings and the top legend band are excluded; digits
+    printed side by side (``10``) are merged into one label box.
+    """
+    if not image_shape:
+        return []
+    height = image_shape[1]
+    text_boxes = [tuple(t.bbox) for t in ocr.texts
+                  if t.bbox[3] - t.bbox[1] <= 60]
+    scale_boxes = [tuple(s.bbox) for s in ocr.scales]
+
+    def centre(box: tuple) -> tuple[float, float]:
+        return (box[0] + box[2]) / 2.0, (box[1] + box[3]) / 2.0
+
+    def inside(box: tuple, outer: tuple, tol: float = 2.0) -> bool:
+        cx, cy = centre(box)
+        return (outer[0] - tol <= cx <= outer[2] + tol
+                and outer[1] - tol <= cy <= outer[3] + tol)
+
+    boxes: list[tuple] = []
+    for view in views:
+        box = tuple(view.bbox)
+        width, height_ = box[2] - box[0], box[3] - box[1]
+        if width > 60 or height_ > 60 or width < 4 or height_ < 6:
+            continue
+        if centre(box)[1] < 0.03 * height:
+            continue
+        if any(inside(box, text) for text in text_boxes):
+            continue
+        if any(inside(box, scale) for scale in scale_boxes):
+            continue
+        boxes.append(box)
+
+    boxes.sort(key=lambda box: (int(centre(box)[1] // 20), box[0]))
+    merged: list[tuple] = []
+    for box in boxes:
+        if merged:
+            last = merged[-1]
+            overlap = (min(box[3], last[3]) - max(box[1], last[1]))
+            same_line = (overlap >= 0.5 * min(box[3] - box[1], last[3] - last[1])
+                         and abs(centre(box)[1] - centre(last)[1])
+                         <= 0.5 * min(box[3] - box[1], last[3] - last[1]))
+            gap = box[0] - last[2]
+            if same_line and 0 <= gap <= 6:
+                merged[-1] = (last[0], min(last[1], box[1]),
+                              max(last[2], box[2]), max(last[3], box[3]))
+                continue
+        merged.append(box)
+    return merged
+
+
+def _read_glyph_labels(ocr, image_path, boxes: list[tuple]) -> list[SeqLabel]:
+    """Ask the OCR provider to read the character in each glyph box."""
+    reader = getattr(ocr, "read_glyphs", None)
+    if not boxes or not callable(reader):
+        return []
+    try:
+        texts = reader(image_path, boxes)
+    except Exception:
+        return []
+    if not isinstance(texts, (list, tuple)) or len(texts) != len(boxes):
+        return []
+    labels: list[SeqLabel] = []
+    for box, text in zip(boxes, texts):
+        seq_id = normalize_seq_label(text or "")
+        if seq_id is None:
+            continue
+        labels.append(SeqLabel(text=seq_id, bbox=box, conf=0.9))
+    return labels
+
+
 def _filter_aux_views(views: list[View], ocr: OcrResult) -> list[View]:
     """Drop views that are just scale bars or sequence-label glyphs.
 
     Those regions are owned by OCR and must not become artefact views.  View
     ids are re-indexed contiguously.
     """
-    aux = [tuple(s.bbox) for s in ocr.scales] + [tuple(s.bbox) for s in ocr.seqs]
-    kept = [v for v in views
-            if not any(_aux_owned(tuple(v.bbox), a) for a in aux)]
+    scale_boxes = [tuple(s.bbox) for s in ocr.scales]
+    text_boxes = [tuple(t.bbox) for t in ocr.texts]
+    seq_boxes = [tuple(s.bbox) for s in ocr.seqs]
+    kept = [
+        view for view in views
+        if not any(_aux_owned(tuple(view.bbox), a) for a in scale_boxes)
+        and not any(_text_owned(tuple(view.bbox), a) for a in text_boxes)
+        and not any(_aux_owned(tuple(view.bbox), a)
+                    or _glyph_owned(tuple(view.bbox), a) for a in seq_boxes)
+    ]
     return [v.model_copy(update={"view_id": i}) for i, v in enumerate(kept)]
+
+
+def _oversized_units(amap: ArtifactMap, views: list[View],
+                     image_shape: tuple[int, int] | None,
+                     limit: float = 0.7) -> set[str]:
+    """Units whose view union spans most of the figure (likely merged noise)."""
+    if not image_shape:
+        return set()
+    width, height = image_shape
+    total = width * height
+    if total <= 0:
+        return set()
+    by_id = _views_by_id(views)
+    oversized: set[str] = set()
+    for unit in amap.units:
+        boxes = [tuple(by_id[vid].bbox) for vid in unit.view_ids if vid in by_id]
+        if not boxes:
+            continue
+        x0 = min(box[0] for box in boxes)
+        y0 = min(box[1] for box in boxes)
+        x1 = max(box[2] for box in boxes)
+        y1 = max(box[3] for box in boxes)
+        if _box_area((x0, y0, x1, y1)) > limit * total:
+            oversized.add(unit.artifact_id)
+    return oversized
+
+
+def _fill_unique_scale(bindings_by_group, scales):
+    """With exactly one scale, copy it to groups that L1 left unbound.
+
+    A single printed bar is the figure's global scale; OCR may miss some of its
+    prefix numbers, so L1-only binding would wrongly leave groups without a
+    bar.  Returns (bindings, filled_count).
+    """
+    if len(scales or []) != 1:
+        return bindings_by_group, 0
+    scale = scales[0]
+    filled = 0
+    for binds in bindings_by_group:
+        if binds:
+            continue
+        binds.append(ScaleBinding(
+            scale_id=0, source="L2_unique_shared", shared=True,
+            text=str(getattr(scale, "text", "") or ""),
+            value=getattr(scale, "value", None),
+            unit=getattr(scale, "unit", None),
+            prefix_nos=[str(n) for n in (getattr(scale, "prefix_nos", None) or [])],
+        ))
+        filled += 1
+    return bindings_by_group, filled
 
 
 def _seq_part(unit: ArtifactUnit) -> str | None:
@@ -261,6 +553,23 @@ def _body_artifacts(paras: list[dict]) -> list[TextArtifact]:
 
 def _body_artifact_ids(paras: list[dict]) -> list[TextArtifact]:
     return _body_artifacts(paras)
+
+
+def _relevant_paras(fig: FigureInput, target_ids: set[str]) -> list[dict]:
+    """Body paragraphs that mention one of the figure's artifact ids.
+
+    ``FigureInput.body_paras`` is the whole book body; without this filter
+    every figure would see every other artifact and raise spurious
+    ``body_artifact_unmapped`` conflicts.
+    """
+    if not target_ids:
+        return []
+    out: list[dict] = []
+    for para in fig.body_paras:
+        text = str(para.get("text", ""))
+        if set(extract_artifacts(text)) & target_ids:
+            out.append(para)
+    return out
 
 
 def _text_index(artifacts: list[TextArtifact]) -> dict[str, TextArtifact]:
@@ -364,7 +673,12 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     ocr = cfg.resolved_ocr()
     note_items = parse_note(fig.figure_note) if fig.figure_note else []
     caption_artifacts = extract_caption_artifacts(fig.caption)
-    body_artifacts = _body_artifacts(fig.body_paras)
+    target_ids = {a for item in note_items for a in item.artifact_ids}
+    target_ids.update(caption_artifacts)
+    body_artifacts = [
+        artifact for artifact in _body_artifacts(_relevant_paras(fig, target_ids))
+        if artifact.artifact_id in target_ids
+    ]
     text_mapping = build_text_mapping(
         note_items, caption_artifacts, body_artifacts
     )
@@ -375,6 +689,19 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
             f"OCR provider returned {type(ocr_result).__name__}, expected OcrResult"
         )
 
+    image_shape = _image_shape(fig.media_path)
+    ocr_result = _sane_ocr(ocr_result, image_shape)
+    ocr_result = ocr_result.model_copy(update={
+        "scales": _expand_scale_boxes(fig.media_path, list(ocr_result.scales)),
+    })
+    # Whole-image box coordinates drift between VLM calls; segmentation gives
+    # exact glyph boxes, so read each digit from its crop when possible.
+    glyph_boxes = _glyph_candidate_boxes(views, ocr_result, image_shape)
+    glyph_labels = _read_glyph_labels(ocr, fig.media_path, glyph_boxes)
+    ocr_result = ocr_result.model_copy(update={
+        "seqs": glyph_labels
+        or _sanitize_seq_labels(list(ocr_result.seqs), views),
+    })
     views = _filter_aux_views(views, ocr_result)
     bindings = bind_labels_to_views(views, list(ocr_result.seqs))
     all_unlabeled_rule_b = bool(
@@ -394,8 +721,28 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     bindings_by_group, _records, scale_alarms = bind_scales(
         groups, list(ocr_result.scales)
     )
+    bindings_by_group, filled = _fill_unique_scale(
+        bindings_by_group, list(ocr_result.scales))
+    # Groups without a Unit only carry contamination/noise; their missing bar
+    # must not block Units that all have one.
+    if amap.units and all(unit.scale_bindings or bindings_by_group[gid]
+                          for unit in amap.units
+                          for gid in (unit.group_ids or []) if gid < len(bindings_by_group)):
+        scale_alarms = [a for a in scale_alarms
+                        if a != "E007" and not str(a).startswith("group_no_scale:")]
     amap = apply_scale_bindings(amap, bindings_by_group)
     amap = amap.model_copy(update={"alarms": _unique(list(amap.alarms) + list(scale_alarms))})
+    oversized = _oversized_units(amap, views, image_shape)
+    if oversized:
+        amap = amap.model_copy(update={
+            "units": [
+                unit.model_copy(update={"status": "review"})
+                if unit.artifact_id in oversized else unit
+                for unit in amap.units
+            ],
+            "alarms": _unique(list(amap.alarms)
+                              + [f"unit_oversized:{a}" for a in sorted(oversized)]),
+        })
 
     alarms = _alarms_from_map(amap)
     conflicts = list(amap.conflicts)
@@ -427,7 +774,7 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         review = bool(dirty) or unit.status == "review"
         image_path: str | None = None
         shared = False
-        if write_image and image is not None:
+        if write_image and image is not None and unit.artifact_id not in oversized:
             # R-IMG-10: identical content + identical bars is one asset; two
             # units holding different bars must not share a PNG.
             key = (tuple(unit.view_ids), bool(unit.whole_image),
@@ -518,7 +865,11 @@ def _resolve_unique_artifact(fig: FigureInput, image_type: ImageType) -> tuple[
         for aid in item.artifact_ids
     ])
     caption_ids = _unique(extract_caption_artifacts(fig.caption))
-    text_ids = _body_artifact_ids(fig.body_paras)
+    target_ids = set(note_ids) | set(caption_ids)
+    text_ids = [
+        artifact for artifact in _body_artifact_ids(_relevant_paras(fig, target_ids))
+        if artifact.artifact_id in target_ids
+    ]
     body_ids = [artifact.artifact_id for artifact in text_ids]
     body = text_ids
     for ids, origin in (

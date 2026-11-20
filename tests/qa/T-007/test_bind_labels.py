@@ -66,11 +66,25 @@ def test_negative_no_containing_view_is_unbound_not_guessed() -> None:
     assert bindings[0].confidence == 0.0
 
 
-def test_negative_label_just_outside_is_not_bound_by_nearest_distance() -> None:
+def test_label_just_outside_binds_to_nearest_view_within_gap() -> None:
+    """Printed labels sit just outside the drawing; R-SEQ-03 allows 'nearby'.
+
+    The 60px threshold is a label-to-drawing attachment only; artifact/scale
+    matching never uses distance.
+    """
     views = [make_view(0, (0, 0, 100, 100))]
 
-    # Centre at x=101 is one pixel outside the right edge: still unbound.
     bindings = bind_labels_to_views(views, [make_label("2", 101, 50)])
+
+    assert bindings[0].view_id == 0
+    assert bindings[0].method == "nearest"
+    assert bindings[0].confidence == 0.7
+
+
+def test_negative_far_label_stays_unbound() -> None:
+    views = [make_view(0, (0, 0, 100, 100))]
+
+    bindings = bind_labels_to_views(views, [make_label("2", 300, 300)])
 
     assert bindings[0].view_id == -1
     assert bindings[0].method == "unbound"

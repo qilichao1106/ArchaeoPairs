@@ -65,3 +65,12 @@ class HybridOCRProvider(OCRProvider):
         return kept.model_copy(
             update={"source": "hybrid", "raw": {**kept.raw, "degraded": degraded}}
         )
+
+    def read_glyphs(self, image_path: str | Path,
+                    boxes: list[tuple]) -> list[str | None]:
+        """Delegate glyph reading to whichever provider supports it."""
+        for provider in (self.primary, self.secondary):
+            reader = getattr(provider, "read_glyphs", None)
+            if callable(reader):
+                return reader(image_path, boxes)
+        raise OcrError("no OCR provider supports glyph reading")

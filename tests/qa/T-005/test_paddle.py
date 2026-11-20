@@ -292,7 +292,7 @@ def test_lazy_engine_is_loaded_once_on_first_read(monkeypatch):
 
     assert seen["imports"] == 1
     assert seen["factory"] == 1
-    assert seen["kwargs"] == {"lang": "ch"}
+    assert seen["kwargs"] == {"lang": "ch", "enable_mkldnn": False}
     assert provider.engine is engine
 
 

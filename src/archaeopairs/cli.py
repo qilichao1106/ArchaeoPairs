@@ -38,11 +38,11 @@ def default_ocr(*, vl: bool = True):
 
     if not vl:
         return PaddleOCRProvider()
+    # Runtime OCR is VLM-first (CR-001); Paddle stays available via --no-vl and
+    # the hybrid provider remains injectable for experiments.
     from archaeopairs.vlm.client import VlmClient
 
-    return HybridOCRProvider(
-        VlmOCRProvider(VlmClient()), PaddleOCRProvider()
-    )
+    return VlmOCRProvider(VlmClient())
 
 
 def _resolve_books_dir(books_dir: str | Path) -> Path:
