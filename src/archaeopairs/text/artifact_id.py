@@ -25,7 +25,7 @@ _ID_RE = re.compile(
     r"(?![A-Za-z0-9])"
 )
 _RANGE_RE = re.compile(
-    r"(?<![A-Za-z0-9])\d+\s*[-\u2010-\u2015~\uff5e\uff0d]\s*\d+(?![A-Za-z0-9])"
+    r"(?<![A-Za-z0-9:\uff1a\u2236])\d+\s*[-\u2010-\u2015~\uff5e\uff0d]\s*\d+(?![A-Za-z0-9])"
 )
 _SCALE_RE = re.compile(r"\d+\s*(?:厘米|公分|cm|CM|mm|毫米)")
 _ELLIPSIS_RE = re.compile(r"\u2026+|\.{2,}")
