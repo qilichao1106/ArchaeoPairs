@@ -66,6 +66,14 @@ class HybridOCRProvider(OCRProvider):
             update={"source": "hybrid", "raw": {**kept.raw, "degraded": degraded}}
         )
 
+    def read_scales(self, image_path: str | Path) -> OcrResult:
+        """Read scales/text only when a provider supports it."""
+        for provider in (self.primary, self.secondary):
+            reader = getattr(provider, "read_scales", None)
+            if callable(reader):
+                return reader(image_path)
+        return self.read(image_path)
+
     def read_glyphs(self, image_path: str | Path,
                     boxes: list[tuple]) -> list[str | None]:
         """Delegate glyph reading to whichever provider supports it."""

@@ -68,24 +68,31 @@ def audit(run_dir: Path) -> dict:
         if artifact_id and artifact_id.replace(":", "-") not in name:
             problems.append(f"name_missing_id: {name} <- {artifact_id}")
         mapping = ((row.get("provenance") or {}).get("mapping") or {})
+        case = (row.get("provenance") or {}).get("case")
+        shared_ok = bool(row.get("quality_flags") and
+                         "shared_image" in row["quality_flags"]) or case == "split_same_seq"
         if mapping.get("line") == "multi_line":
             figure = row.get("figure_id", "")
             for view_id in mapping.get("view_ids") or []:
                 seen = per_figure_views.setdefault(figure, {})
                 if view_id in seen and seen[view_id] != artifact_id:
-                    problems.append(
-                        f"view_reused: {figure} view {view_id} "
-                        f"{seen[view_id]} + {artifact_id}"
-                    )
+                    if not (shared_ok or seen.get((view_id, "shared"))):
+                        problems.append(
+                            f"view_reused: {figure} view {view_id} "
+                            f"{seen[view_id]} + {artifact_id}"
+                        )
                 seen[view_id] = artifact_id
+                seen[(view_id, "shared")] = shared_ok
             for seq_id in mapping.get("seq_ids") or []:
                 seen = per_figure_seqs.setdefault(figure, {})
                 if seq_id in seen and seen[seq_id] != artifact_id:
-                    problems.append(
-                        f"seq_reused: {figure} seq {seq_id} "
-                        f"{seen[seq_id]} + {artifact_id}"
-                    )
+                    if not (shared_ok or seen.get((seq_id, "shared"))):
+                        problems.append(
+                            f"seq_reused: {figure} seq {seq_id} "
+                            f"{seen[seq_id]} + {artifact_id}"
+                        )
                 seen[seq_id] = artifact_id
+                seen[(seq_id, "shared")] = shared_ok
 
         rel = str(row.get("image_path") or "")
         if not rel:

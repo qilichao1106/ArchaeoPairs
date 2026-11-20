@@ -753,8 +753,11 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
     pre_boxes = _glyph_candidate_boxes(
         views, OcrResult(seqs=[], scales=[], texts=[], source="vlm"),
         image_shape)
+    scale_reader = getattr(ocr, "read_scales", None)
     with ThreadPoolExecutor(max_workers=2) as pool:
-        pending_ocr = pool.submit(ocr.read, fig.media_path)
+        pending_ocr = pool.submit(
+            scale_reader if callable(scale_reader) else ocr.read,
+            fig.media_path)
         pending_glyphs = pool.submit(
             _read_glyph_labels, ocr, fig.media_path, pre_boxes)
         ocr_result: OcrResult = pending_ocr.result()
@@ -769,6 +772,10 @@ def _l1(fig: FigureInput, cfg: PipelineConfig) -> tuple:
         "scales": _expand_scale_boxes(fig.media_path, list(ocr_result.scales)),
     })
     glyph_labels = _drop_aux_glyph_labels(glyph_labels, ocr_result)
+    if not glyph_labels and callable(scale_reader):
+        # Glyph grid failed or found nothing: fall back to whole-image seqs.
+        full = ocr.read(fig.media_path)
+        ocr_result = ocr_result.model_copy(update={"seqs": list(full.seqs)})
     # Whole-image box coordinates drift between VLM calls; segmentation gives
     # exact glyph boxes, so read each digit from its crop when possible.
     ocr_result = ocr_result.model_copy(update={

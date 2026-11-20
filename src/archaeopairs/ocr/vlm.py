@@ -20,7 +20,7 @@ from pydantic import ValidationError
 from archaeopairs.models import OcrResult, ScaleBar, SeqLabel, TextBlock
 from archaeopairs.ocr.base import OCRProvider
 from archaeopairs.vlm.client import VlmClient
-from archaeopairs.vlm.prompts import GLYPH_PROMPT, OCR_PROMPT
+from archaeopairs.vlm.prompts import GLYPH_PROMPT, OCR_PROMPT, SCALE_PROMPT
 
 __all__ = ["OcrError", "VlmOCRProvider"]
 
@@ -250,6 +250,34 @@ class VlmOCRProvider(OCRProvider):
             raise
         except Exception as exc:  # defensive: never leak a partial result
             raise OcrError(f"VLM OCR reply is unusable: {type(exc).__name__}") from exc
+
+    def read_scales(self, image_path: str | Path) -> OcrResult:
+        """Read only scales/text; seq digits come from the glyph grid."""
+        try:
+            reply = self.client.describe_image(
+                image_path, SCALE_PROMPT, json_mode=True
+            )
+        except OcrError:
+            raise
+        except Exception as exc:
+            raise OcrError(
+                f"VLM scale OCR request failed: {type(exc).__name__}") from exc
+        if not isinstance(reply, str):
+            raise OcrError("VLM scale reply content is not text")
+        try:
+            payload = _load_payload(reply)
+            return OcrResult(
+                seqs=[],
+                scales=_parse_scales(payload),
+                texts=_parse_texts(payload),
+                source="vlm",
+                raw=payload,
+            )
+        except OcrError:
+            raise
+        except Exception as exc:
+            raise OcrError(
+                f"VLM scale reply is unusable: {type(exc).__name__}") from exc
 
     def read_glyphs(self, image_path: str | Path,
                     boxes: list[tuple]) -> list[str | None]:
