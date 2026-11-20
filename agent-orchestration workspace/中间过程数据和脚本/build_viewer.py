@@ -118,7 +118,9 @@ def build(book: str, run_dir: Path) -> dict:
         })
 
     out.sort(key=lambda item: _num(item["id"]))
-    demo_path = ROOT / "runs" / "diag_l2" / "sample.json"
+    demo_path = ROOT / "agent-orchestration workspace" / "specs" / "l2_sample.json"
+    if not demo_path.is_file():
+        demo_path = ROOT / "runs" / "diag_l2" / "sample.json"
     l2_demo = json.loads(demo_path.read_text(encoding="utf-8")) if demo_path.is_file() else None
     return {
         "book": book,
