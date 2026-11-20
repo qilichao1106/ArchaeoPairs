@@ -20,6 +20,14 @@
 - Anthropic 兼容：`https://llm-1pxqd38dwq24f1gn.cn-beijing.maas.aliyuncs.com/apps/anthropic`
 - 已实测：`/responses` 与 `/chat/completions` 均 HTTP 200。
 
+## 运行时 VLM（CR-001）
+
+- 用途：OCR（序号/比例尺/说明文字）、整体视觉识别（图类/归组/分割校验）、效果判断/QC。
+- Provider：MaaS OpenAI 兼容端点；模型 `deepseek-v4.1-flash-1017`。
+- 密钥：`DASHSCOPE_API_KEY`（用户环境变量）；不入仓库、不进日志。
+- 约束：结构化 JSON 输出；超时/失败 fail-closed 转复核；记录模型 ID、耗时、token；离线模式禁用。
+- 图片以 base64 发送；仅内部训练使用，不公开发布。
+
 ## 凭据
 
 | 变量 | 使用方 | 存放 |

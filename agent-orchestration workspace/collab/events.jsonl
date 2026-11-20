@@ -9,3 +9,7 @@
 {"ts":"2026-11-20T21:55:00+08:00","card":"T-002","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh full-access run: 52 passed; negative control caption-first -> 1 failed, restore -> 52 passed"}
 {"ts":"2026-11-20T21:58:00+08:00","card":"T-002","from":"passed","to":"merged","actor":"orchestrator","note":"rebase onto main; regression 66 passed; ff merge 6d80d95; pushed"}
 {"ts":"2026-11-20T22:05:00+08:00","card":"T-003","from":"proposed","to":"ready","actor":"orchestrator","note":"note parser + text mapping; deps T-002 merged"}
+{"ts":"2026-11-20T22:20:00+08:00","card":"T-003","from":"ready","to":"implementing","actor":"orchestrator","note":"codex worktree; 3 fix rounds"}
+{"ts":"2026-11-20T22:38:00+08:00","card":"T-003","from":"implementing","to":"verifying","actor":"orchestrator","note":"surrogate commits e23e67c + 3c6eeee"}
+{"ts":"2026-11-20T22:45:00+08:00","card":"T-003","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 69 passed; negative control range bug -> 2 failed -> 69 passed; AC-02 pass"}
+{"ts":"2026-11-20T22:48:00+08:00","card":"T-003","from":"passed","to":"merged","actor":"orchestrator","note":"regression 135 passed; ff merge f3738cb; pushed"}

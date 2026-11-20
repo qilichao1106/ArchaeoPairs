@@ -116,3 +116,11 @@
 - 修正：Codex 首轮把图题当主源，fix_request 改为图注优先；docstring 编码修正。
 - 口径：AC-01 `partial`（分类→四线映射已覆盖；流水线路由/L4 零 Pair 待后续卡）。
 - 环境：dsh 验证改用 `danger-full-access --approval-policy never`；read-only 无 tmp 目录。
+
+## D-014 T-003 文本层合并 + CR-001 VLM
+
+- 日期：2026-11-20
+- T-003：Codex `e23e67c` + 编排侧例外修复 `3c6eeee`（`_RANGE_RE` 误吞 `M39:8-1`）；dsh 测试 `f3738cb`，独立 69 passed，负向对照红/绿成立；全量 135 passed。
+- 口径：AC-02 `partial`（文本层四类基数已覆盖；视图/比例尺映射待后续卡）。
+- CR-001：运行时启用 `deepseek-v4.1-flash-1017` VLM，用于 OCR、整体视觉识别、效果判断/QC；需求 §6.4 新增 R-VLM-01–05；T-004 实现。
+- 例外记录：Codex 在 T-003 的圈号/映射/正则修复上多次超时，编排侧对 `_RANGE_RE` 做了一行修复，已由 dsh 测试复核。

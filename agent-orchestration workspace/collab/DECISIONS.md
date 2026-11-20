@@ -69,3 +69,11 @@
 - 决策：`contracts/` 标记 frozen；依据 T-001 契约测试 14 passed（commit 04c1109）
   与用户明确授权“Codex 实现、dsh 验证、Claude 编排及整体效果负责”。
 - 变更：任何 schema/命名/报警码变更走 CR/ADR，实现者不得直接改。
+
+## ADR-010 / CR-001 运行时 VLM
+
+- 日期：2026-11-20
+- 决策：运行时启用 `deepseek-v4.1-flash-1017` 作为 VLM，用于 OCR、整体视觉识别、效果判断/QC；
+  PaddleOCR 并行/兜底；VLM 失败 fail-closed；结构化 JSON；密钥 `DASHSCOPE_API_KEY`。
+- 影响：需求 §6.4 新增 R-VLM-01–05；后续 T-004 实现 VLM client + OCR 适配器。
+- 失效条件：模型/端点下线；VLM 质量或成本不可接受；离线部署要求禁用 VLM。
