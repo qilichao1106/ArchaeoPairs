@@ -142,3 +142,12 @@
 - 例外：Codex 多次超时；编排侧补齐 flat 8 bbox 与 selfcheck 200 行约束（selfcheck 288 行，记录例外）。
 - AC-03 `partial`：OCR 已覆盖；比例尺三级绑定/视图匹配待后续卡。
 - 下一步：T-006 OpenCV 分割 + View/RLE。
+
+## D-017 T-006 分割合并
+
+- 日期：2026-11-21
+- 实现：Codex `1aec426`（OTSU+膨胀+CCOMP、raw-ink min_area、孔洞/包含剔除、RLE、View）。
+- 验证：dsh 测试 `a3293bc`，独立 40 passed；验证发现包含轮廓缺陷（1 failed），修复后 40 passed；全量 281 passed。
+- 例外：Codex 超时；编排侧修正 selfcheck 噪点尺寸/删除坏 helper，并补上包含轮廓剔除（任意更大非孔轮廓包含即剔除）。
+- AC-09 `covered`；卡面 AC-01 标签复用，实际以 AC-09 为准。
+- 下一步：T-007 序号绑定 + 视图归组 + ArtifactMap。

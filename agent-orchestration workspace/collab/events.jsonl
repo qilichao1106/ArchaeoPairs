@@ -22,3 +22,6 @@
 {"ts":"2026-11-20T23:45:00+08:00","card":"T-005","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 47 passed; hybrid degrade fault -> 4 failed -> 47; AC-03 pass"}
 {"ts":"2026-11-20T23:48:00+08:00","card":"T-005","from":"passed","to":"merged","actor":"orchestrator","note":"regression 241 passed; ff merge 100f6fc; pushed"}
 {"ts":"2026-11-20T23:50:00+08:00","card":"T-006","from":"proposed","to":"ready","actor":"orchestrator","note":"OpenCV segmentation + View/RLE; deps T-002"}
+{"ts":"2026-11-21T00:05:00+08:00","card":"T-006","from":"verifying","to":"passed","actor":"dsh-verifier","note":"dsh independent 40 passed; containment defect found and fixed; AC-09 pass"}
+{"ts":"2026-11-21T00:08:00+08:00","card":"T-006","from":"passed","to":"merged","actor":"orchestrator","note":"regression 281 passed; ff merge a3293bc; pushed"}
+{"ts":"2026-11-21T00:10:00+08:00","card":"T-007","from":"proposed","to":"ready","actor":"orchestrator","note":"label binding + view grouping + ArtifactMap; deps T-003/T-006"}
