@@ -520,9 +520,12 @@ def _aux_contaminated_units(amap: ArtifactMap,
     small = {view.view_id for view in views
              if view.bbox[2] - view.bbox[0] <= 60
              and view.bbox[3] - view.bbox[1] <= 60}
+    scale_like = {view.view_id for view in views
+                  if view.bbox[3] - view.bbox[1] <= 25
+                  and view.bbox[2] - view.bbox[0] >= 40}
     bad: set[str] = set()
     for unit in amap.units:
-        if small.intersection(unit.view_ids):
+        if (small | scale_like).intersection(unit.view_ids):
             bad.add(unit.artifact_id)
             continue
         scale_ids = [int(binding.get("scale_id", -1))
